@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Register — Daily Order</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<!-- Firebase (compat SDK — works directly in a static HTML file, no build step) -->
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+<script>
+  // ===== PASTE YOUR FIREBASE CONFIG HERE (from Firebase Console → Project Settings → Your apps) =====
+  const firebaseConfig = {
+    apiKey: "AIzaSyARt03_wneUelXwJgWrLVMpyEhdil6zngg",
+    authDomain: "self-improvement-44e97.firebaseapp.com",
+    projectId: "self-improvement-44e97",
+    storageBucket: "self-improvement-44e97.firebasestorage.app",
+    messagingSenderId: "479088097565",
+    appId: "1:479088097565:web:7bd1d82bb9a565077749f4"
+  };
+  // ======================================================================================
+</script>
+<style>
+  :root{
+    --bg: #0F1420;
+    --surface: #171D30;
+    --surface-raised: #1E2540;
+    --line: #2A3252;
+    --ink: #E8E4D9;
+    --ink-dim: #9AA0B8;
+    --ink-faint: #5C6284;
+    --gold: #C9A227;
+    --gold-dim: #8A7220;
+    --teal: #3A9184;
+    --teal-dim: #245248;
+    --rose: #C2604D;
+    --rose-dim: #6B3428;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'IBM Plex Sans', sans-serif;
+    min-height: 100vh;
+    padding-bottom: 80px;
+  }
+  ::selection{ background: var(--gold-dim); color: var(--ink); }
+
+  .display{ font-family: 'Fraunces', serif; }
+  .mono{ font-family: 'IBM Plex Mono', monospace; }
+
+  /* ---------- Header / Masthead ---------- */
+  header.masthead{
+    padding: 28px 20px 20px;
+    border-bottom: 1px solid var(--line);
+    background: linear-gradient(180deg, #131829 0%, var(--bg) 100%);
+    position: sticky; top:0; z-index: 20;
+  }
+  .masthead-row{
+    display:flex; align-items:flex-start; justify-content:space-between; gap:16px;
+  }
+  .masthead-title{
+    font-size: 22px; font-weight: 600; letter-spacing: 0.02em;
+  }
+  .masthead-sub{
+    color: var(--ink-dim); font-size: 12px; margin-top: 4px; letter-spacing: 0.04em; text-transform: uppercase;
+  }
+  .seal{
+    width: 62px; height: 62px; border-radius: 50%;
+    border: 2px solid var(--gold-dim);
+    display:flex; align-items:center; justify-content:center;
+    flex-direction: column;
+    position: relative;
+    flex-shrink:0;
+    background: radial-gradient(circle at 30% 30%, #1c2340, #10142200);
+  }
+  .seal-fill{
+    position:absolute; inset:0; border-radius:50%;
+    background: conic-gradient(var(--gold) calc(var(--pct,0)*1%), transparent 0);
+    -webkit-mask: radial-gradient(circle, transparent 62%, black 63%);
+    mask: radial-gradient(circle, transparent 62%, black 63%);
+    transition: --pct 0.4s;
+  }
+  .seal-num{ font-family:'IBM Plex Mono', monospace; font-size:16px; font-weight:600; z-index:1;}
+  .seal-label{ font-size: 8px; letter-spacing: 0.08em; color: var(--ink-faint); text-transform:uppercase; z-index:1; margin-top:1px;}
+
+  .date-line{ margin-top: 14px; display:flex; justify-content:space-between; align-items:baseline; }
+  .date-big{ font-family:'Fraunces',serif; font-size: 15px; color: var(--ink-dim); }
+  .day-progress-bar{ height: 3px; background: var(--line); border-radius: 2px; margin-top: 10px; overflow:hidden; }
+  .day-progress-fill{ height:100%; background: linear-gradient(90deg, var(--teal), var(--gold)); width:0%; transition: width 0.5s; }
+
+  /* ---------- Nav ---------- */
+  nav.tabs{
+    display:flex; gap:2px; padding: 0 16px; margin-top: 18px;
+    overflow-x:auto; scrollbar-width:none;
+  }
+  nav.tabs::-webkit-scrollbar{display:none;}
+  .tab-btn{
+    background:none; border:none; color: var(--ink-faint);
+    font-family:'IBM Plex Sans'; font-size: 13px; font-weight:500;
+    padding: 8px 14px; cursor:pointer; white-space:nowrap;
+    border-bottom: 2px solid transparent;
+    letter-spacing:0.02em;
+  }
+  .tab-btn.active{ color: var(--gold); border-bottom-color: var(--gold); }
+
+  main{ max-width: 720px; margin: 0 auto; padding: 20px 16px; }
+  .view{ display:none; animation: fadeIn 0.3s ease; }
+  .view.active{ display:block; }
+  @keyframes fadeIn{ from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);} }
+
+  .section-label{
+    font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--ink-faint); margin: 24px 0 10px; display:flex; align-items:center; gap:8px;
+  }
+  .section-label:first-child{ margin-top:0; }
+  .section-label::after{ content:''; flex:1; height:1px; background: var(--line); }
+
+  /* ---------- Timeline ---------- */
+  .timeline{ display:flex; flex-direction:column; }
+  .tl-item{
+    display:flex; gap:12px; padding: 10px 0; border-bottom: 1px solid var(--line);
+    position:relative;
+  }
+  .tl-item:last-child{ border-bottom:none; }
+  .tl-time{
+    font-family:'IBM Plex Mono'; font-size:11px; color: var(--ink-faint); width: 46px; flex-shrink:0; padding-top:2px;
+  }
+  .tl-dot{
+    width:8px; height:8px; border-radius:50%; background: var(--ink-faint); margin-top:5px; flex-shrink:0;
+  }
+  .tl-item.current .tl-dot{ background: var(--gold); box-shadow: 0 0 0 4px var(--gold-dim); }
+  .tl-item.done .tl-dot{ background: var(--teal); }
+  .tl-body{ flex:1; }
+  .tl-name{ font-size: 14px; font-weight:500; }
+  .tl-item.done .tl-name{ color: var(--ink-dim); text-decoration: line-through; text-decoration-color: var(--ink-faint); }
+  .tl-dur{ font-size: 11px; color: var(--ink-faint); margin-top:1px; }
+  .tl-check{
+    width:22px; height:22px; border-radius:5px; border:1.5px solid var(--line);
+    background:transparent; cursor:pointer; flex-shrink:0; align-self:center;
+    display:flex; align-items:center; justify-content:center; color:transparent;
+    transition: all 0.15s;
+  }
+  .tl-check.checked{ background: var(--teal); border-color: var(--teal); color: var(--bg); font-weight:700; font-size:13px;}
+
+  /* ---------- Habit grid ---------- */
+  .habit-grid{ display:grid; grid-template-columns: 1fr 1fr; gap:8px; }
+  .habit-cell{
+    background: var(--surface); border:1px solid var(--line); border-radius:8px;
+    padding: 10px 12px; display:flex; align-items:center; gap:9px; cursor:pointer;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .habit-cell.on{ border-color: var(--teal-dim); background: #172723; }
+  .habit-box{
+    width:18px; height:18px; border-radius:4px; border:1.5px solid var(--ink-faint); flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; color:transparent;
+  }
+  .habit-cell.on .habit-box{ background: var(--teal); border-color: var(--teal); color: var(--bg); }
+  .habit-text{ font-size: 12.5px; color: var(--ink-dim); }
+  .habit-cell.on .habit-text{ color: var(--ink); }
+
+  .completion-summary{
+    display:flex; justify-content:space-between; align-items:center;
+    background: var(--surface-raised); border:1px solid var(--line); border-radius:10px;
+    padding: 14px 16px; margin-bottom:16px;
+  }
+  .completion-pct{ font-family:'Fraunces'; font-size: 28px; font-weight:600; }
+  .completion-pct.good{ color: var(--teal); }
+  .completion-pct.warn{ color: var(--gold); }
+  .completion-pct.low{ color: var(--rose); }
+  .completion-note{ font-size: 11.5px; color: var(--ink-faint); max-width:180px; text-align:right; line-height:1.4;}
+
+  /* ---------- Cards ---------- */
+  .card{
+    background: var(--surface); border:1px solid var(--line); border-radius: 10px;
+    padding: 16px; margin-bottom: 12px;
+  }
+  .card-title{ font-size: 13px; font-weight:600; letter-spacing:0.01em; margin-bottom:10px;}
+
+  /* ---------- Pomodoro ---------- */
+  .pomo-wrap{ text-align:center; padding: 10px 0 4px; }
+  .pomo-time{ font-family:'IBM Plex Mono'; font-size: 44px; font-weight:600; letter-spacing:0.02em; }
+  .pomo-slot-label{ font-size:11px; color: var(--ink-faint); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:6px;}
+  .pomo-controls{ display:flex; gap:8px; justify-content:center; margin-top: 14px; flex-wrap:wrap; }
+  .btn{
+    background: var(--surface-raised); border:1px solid var(--line); color: var(--ink);
+    padding: 8px 16px; border-radius: 7px; font-size: 13px; cursor:pointer; font-family:'IBM Plex Sans'; font-weight:500;
+  }
+  .btn.primary{ background: var(--teal-dim); border-color: var(--teal); color: var(--ink); }
+  .btn.gold{ background: #3a2f0d; border-color: var(--gold-dim); color: var(--gold); }
+  .btn.ghost{ background:transparent; }
+  .btn:active{ transform: scale(0.97); }
+  select, input[type=number], input[type=text]{
+    background: var(--bg); border:1px solid var(--line); color: var(--ink);
+    padding: 8px 10px; border-radius:6px; font-family:'IBM Plex Sans'; font-size:13px;
+  }
+
+  /* ---------- Stats row ---------- */
+  .stat-row{ display:grid; grid-template-columns: repeat(3,1fr); gap:8px; margin-bottom:12px; }
+  .stat-box{ background: var(--surface); border:1px solid var(--line); border-radius:9px; padding: 12px 10px; text-align:center;}
+  .stat-num{ font-family:'IBM Plex Mono'; font-size:19px; font-weight:600; color: var(--gold);}
+  .stat-lbl{ font-size: 9.5px; color: var(--ink-faint); text-transform:uppercase; letter-spacing:0.06em; margin-top:3px;}
+
+  /* ---------- Subject log ---------- */
+  .subject-row{ display:flex; gap:8px; margin-bottom:8px; }
+  .subject-row select, .subject-row input{ flex:1; }
+  .subject-log-item{
+    display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--line); font-size:13px;
+  }
+  .subject-log-item:last-child{border-bottom:none;}
+  .subject-log-item .mins{ color: var(--gold); font-family:'IBM Plex Mono'; }
+
+  /* ---------- Heatmap ---------- */
+  .heatmap-wrap{ overflow-x:auto; padding-bottom:6px; }
+  .heatmap-grid{ display:grid; grid-auto-flow:column; grid-template-rows: repeat(7, 12px); gap:3px; width:max-content;}
+  .hm-cell{ width:12px; height:12px; border-radius:2px; background: var(--surface-raised); }
+  .hm-cell[data-lvl="1"]{ background: #1E3B34; }
+  .hm-cell[data-lvl="2"]{ background: #2C5B4E; }
+  .hm-cell[data-lvl="3"]{ background: #3A9184; }
+  .hm-cell[data-lvl="4"]{ background: var(--gold); }
+  .heatmap-legend{ display:flex; align-items:center; gap:6px; margin-top:10px; font-size:10px; color:var(--ink-faint); }
+  .heatmap-legend .hm-cell{ width:10px; height:10px; }
+
+  .month-labels{ display:flex; gap: 0; font-size:10px; color:var(--ink-faint); margin-bottom:4px; width:max-content; }
+
+  footer.bottomnote{ text-align:center; color: var(--ink-faint); font-size:11px; padding: 30px 16px 10px; }
+
+  @media (min-width: 600px){
+    .habit-grid{ grid-template-columns: 1fr 1fr 1fr; }
+  }
+
+  /* ---------- Auth overlay ---------- */
+  #authOverlay{
+    position:fixed; inset:0; background: var(--bg); z-index: 100;
+    display:flex; align-items:center; justify-content:center; padding:20px;
+  }
+  .auth-card{
+    width:100%; max-width: 360px; background: var(--surface); border:1px solid var(--line);
+    border-radius: 12px; padding: 28px 24px;
+  }
+  .auth-title{ font-family:'Fraunces'; font-size:20px; font-weight:600; margin-bottom:4px; }
+  .auth-sub{ font-size:12px; color:var(--ink-faint); margin-bottom:20px; }
+  .auth-field{ margin-bottom:12px; }
+  .auth-field label{ font-size:11px; color:var(--ink-faint); text-transform:uppercase; letter-spacing:0.06em; display:block; margin-bottom:5px; }
+  .auth-field input{ width:100%; }
+  .auth-error{ font-size:12px; color: var(--rose); margin: 8px 0; min-height:14px; }
+  .auth-actions{ display:flex; flex-direction:column; gap:8px; margin-top:14px; }
+  .auth-toggle{ text-align:center; font-size:12px; color:var(--ink-faint); margin-top:16px; cursor:pointer; }
+  .auth-toggle span{ color: var(--gold); text-decoration:underline; }
+
+  #syncStatus{
+    font-size:10px; color: var(--ink-faint); display:flex; align-items:center; gap:5px; margin-top:6px;
+  }
+  #syncStatus .dot{ width:6px; height:6px; border-radius:50%; background: var(--ink-faint); }
+  #syncStatus.synced .dot{ background: var(--teal); }
+  #syncStatus.syncing .dot{ background: var(--gold); }
+  #syncStatus.error .dot{ background: var(--rose); }
+
+  .logout-btn{
+    background:none; border:none; color: var(--ink-faint); font-size:11px; cursor:pointer;
+    text-decoration:underline; padding:0;
+  }
+</style>
+</head>
+<body>
+
+<div id="authOverlay">
+  <div class="auth-card">
+    <div class="auth-title display" id="authTitle">Sign In</div>
+    <div class="auth-sub">Access your register from any device.</div>
+    <div class="auth-field">
+      <label>Email</label>
+      <input type="text" id="authEmail" placeholder="you@example.com">
+    </div>
+    <div class="auth-field">
+      <label>Password</label>
+      <input type="password" id="authPassword" placeholder="At least 6 characters">
+    </div>
+    <div class="auth-error" id="authError"></div>
+    <div class="auth-actions">
+      <button class="btn primary" id="authSubmitBtn">Sign In</button>
+    </div>
+    <div class="auth-toggle" id="authToggle">New here? <span>Create an account</span></div>
+  </div>
+</div>
+
+<header class="masthead">
+  <div class="masthead-row">
+    <div>
+      <div class="masthead-title display">The Register</div>
+      <div class="masthead-sub">Daily Order — UPSC Preparation</div>
+    </div>
+    <div style="text-align:right;">
+      <div class="seal">
+        <div class="seal-fill" id="sealFill" style="--pct:0"></div>
+        <div class="seal-num mono" id="streakNum">0</div>
+        <div class="seal-label">day streak</div>
+      </div>
+      <div id="syncStatus"><span class="dot"></span><span id="syncStatusText">offline</span></div>
+      <button class="logout-btn" id="logoutBtn">sign out</button>
+    </div>
+  </div>
+  <div class="date-line">
+    <div class="date-big" id="todayDate">—</div>
+    <div class="mono" style="font-size:12px; color:var(--ink-faint);" id="dayProgressPct">0%</div>
+  </div>
+  <div class="day-progress-bar"><div class="day-progress-fill" id="dayProgressFill"></div></div>
+
+  <nav class="tabs">
+    <button class="tab-btn active" data-view="today">Today's Order</button>
+    <button class="tab-btn" data-view="study">Study Tracker</button>
+    <button class="tab-btn" data-view="record">Service Record</button>
+  </nav>
+</header>
+
+<main>
+
+  <!-- ===================== TODAY VIEW ===================== -->
+  <section class="view active" id="view-today">
+
+    <div class="completion-summary">
+      <div>
+        <div class="completion-pct" id="todayPct">0%</div>
+        <div style="font-size:11px; color:var(--ink-faint); margin-top:2px;">of today's register complete</div>
+      </div>
+      <div class="completion-note" id="completionNote">Mark items as you go. 70% clears the day for streak.</div>
+    </div>
+
+    <div class="section-label">The Day's Arc</div>
+    <div class="timeline" id="timeline"></div>
+
+    <div class="section-label">Habit Register</div>
+    <div class="habit-grid" id="habitGrid"></div>
+
+  </section>
+
+  <!-- ===================== STUDY VIEW ===================== -->
+  <section class="view" id="view-study">
+
+    <div class="stat-row">
+      <div class="stat-box"><div class="stat-num" id="statToday">0h</div><div class="stat-lbl">Today</div></div>
+      <div class="stat-box"><div class="stat-num" id="statWeek">0h</div><div class="stat-lbl">This week</div></div>
+      <div class="stat-box"><div class="stat-num" id="statMonth">0h</div><div class="stat-lbl">This month</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Pomodoro — Study Slot</div>
+      <div class="pomo-wrap">
+        <div class="pomo-slot-label" id="pomoSlotLabel">Slot 1</div>
+        <div class="pomo-time mono" id="pomoTime">25:00</div>
+        <div class="pomo-controls">
+          <select id="pomoSlotSelect">
+            <option value="slot1">Study Slot 1</option>
+            <option value="slot2">Study Slot 2</option>
+          </select>
+          <select id="pomoSubjectSelect"></select>
+        </div>
+        <div class="pomo-controls">
+          <button class="btn primary" id="pomoStart">Start Focus</button>
+          <button class="btn ghost" id="pomoBreak">Take 5m Break</button>
+          <button class="btn ghost" id="pomoReset">Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Log Study Time Manually</div>
+      <div class="subject-row">
+        <select id="logSubjectSelect"></select>
+        <input type="number" id="logMinutes" placeholder="minutes" min="1" style="max-width:100px;">
+        <button class="btn primary" id="logAddBtn">Add</button>
+      </div>
+      <div class="subject-row">
+        <input type="text" id="newSubjectName" placeholder="Add new subject...">
+        <button class="btn ghost" id="addSubjectBtn">+ Subject</button>
+      </div>
+      <div id="todaySubjectLog"></div>
+    </div>
+
+  </section>
+
+  <!-- ===================== RECORD VIEW ===================== -->
+  <section class="view" id="view-record">
+
+    <div class="stat-row">
+      <div class="stat-box"><div class="stat-num" id="recBest">0</div><div class="stat-lbl">Best streak</div></div>
+      <div class="stat-box"><div class="stat-num" id="recDays">0</div><div class="stat-lbl">Days tracked</div></div>
+      <div class="stat-box"><div class="stat-num" id="recAvg">0%</div><div class="stat-lbl">Avg completion</div></div>
+    </div>
+
+    <div class="section-label">12-Month Record</div>
+    <div class="card">
+      <div class="heatmap-wrap">
+        <div class="month-labels" id="monthLabels"></div>
+        <div class="heatmap-grid" id="heatmapGrid"></div>
+      </div>
+      <div class="heatmap-legend">
+        <span>Less</span>
+        <div class="hm-cell" data-lvl="0"></div>
+        <div class="hm-cell" data-lvl="1"></div>
+        <div class="hm-cell" data-lvl="2"></div>
+        <div class="hm-cell" data-lvl="3"></div>
+        <div class="hm-cell" data-lvl="4"></div>
+        <span>More</span>
+      </div>
+    </div>
+
+    <div class="section-label">Reset</div>
+    <div class="card">
+      <div style="font-size:12px; color:var(--ink-faint); margin-bottom:10px;">All data lives only in this browser (localStorage). Clearing it cannot be undone.</div>
+      <button class="btn ghost" id="wipeBtn" style="border-color:var(--rose-dim); color:var(--rose);">Clear all data</button>
+    </div>
+
+  </section>
+
+</main>
+
+<footer class="bottomnote">Data stored locally on this device only · no account, no server</footer>
+
+<script>
+(function(){
+  const DB_KEY = 'upsc_register_v1';
+
+  const SCHEDULE = [
+    {id:'wake', time:'06:30', name:'Wake up', dur:'', habit:true},
+    {id:'morning1', time:'06:35', name:'Water · fresh up · potty · brush', dur:'25 min', habit:false},
+    {id:'newspaper', time:'07:00', name:'Newspaper', dur:'20 min', habit:true},
+    {id:'sprouts', time:'07:20', name:'Sprouts', dur:'10 min', habit:true},
+    {id:'stretch', time:'07:30', name:'Light stretching', dur:'5 min', habit:true},
+    {id:'gym', time:'07:35', name:'Gym', dur:'1.5 hr', habit:true},
+    {id:'cooldown', time:'09:05', name:'Cooldown · walk · protein', dur:'20 min', habit:false},
+    {id:'nap', time:'09:25', name:'Power nap', dur:'25 min', habit:true},
+    {id:'bath', time:'09:50', name:'Bath · skincare', dur:'25 min', habit:true},
+    {id:'breakfast', time:'10:15', name:'Breakfast', dur:'30 min', habit:true},
+    {id:'buffer1', time:'10:45', name:'Buffer / settle in', dur:'45 min', habit:false},
+    {id:'slot1', time:'11:30', name:'Study Slot 1', dur:'4.5 hr', habit:true},
+    {id:'lunch', time:'16:00', name:'Lunch', dur:'40 min', habit:true},
+    {id:'break', time:'16:40', name:'Break — walk, no phone', dur:'35 min', habit:false},
+    {id:'slot2', time:'17:15', name:'Study Slot 2', dur:'4.5 hr', habit:true},
+    {id:'dinner', time:'21:45', name:'Dinner', dur:'40 min', habit:true},
+    {id:'evening', time:'22:25', name:'Free time — family / walk', dur:'50 min', habit:false},
+    {id:'night', time:'23:15', name:'Night routine · journal', dur:'20 min', habit:true},
+    {id:'sleep', time:'23:00', name:'Sleep by 11 PM', dur:'', habit:true},
+  ];
+
+  const HABIT_ONLY = [
+    {id:'water', name:'Water intake (8+ glasses)'},
+    {id:'nophone', name:'No unnecessary phone use'},
+    {id:'reading', name:'Read 5 pages'},
+  ];
+
+  const ALL_HABITS = SCHEDULE.filter(s=>s.habit).map(s=>({id:s.id, name:s.name})).concat(HABIT_ONLY);
+
+  const DEFAULT_SUBJECTS = ['Polity','History','Geography','Economy','Environment','CSAT','Current Affairs','Essay/Ethics','Revision','Mock Test'];
+
+  // ---------- storage ----------
+  function loadDB(){
+    try{
+      const raw = localStorage.getItem(DB_KEY);
+      if(raw) return JSON.parse(raw);
+    }catch(e){}
+    return {days:{}, subjects: DEFAULT_SUBJECTS.slice(), streak:0, bestStreak:0};
+  }
+
+  // ---------- Firebase ----------
+  let fbApp=null, auth=null, firestore=null, currentUser=null;
+  let syncTimer = null;
+  let firebaseReady = false;
+
+  try{
+    if(firebaseConfig.apiKey !== "PASTE_API_KEY_HERE"){
+      fbApp = firebase.initializeApp(firebaseConfig);
+      auth = firebase.auth();
+      firestore = firebase.firestore();
+      firebaseReady = true;
+    }
+  }catch(e){ console.error('Firebase init failed', e); }
+
+  function setSyncStatus(state, text){
+    const el = document.getElementById('syncStatus');
+    el.className = state;
+    document.getElementById('syncStatusText').textContent = text;
+  }
+
+  function userDocRef(){
+    if(!firestore || !currentUser) return null;
+    return firestore.collection('users').doc(currentUser.uid).collection('data').doc('register');
+  }
+
+  function saveDB(){
+    localStorage.setItem(DB_KEY, JSON.stringify(db));
+    if(firebaseReady && currentUser){
+      setSyncStatus('syncing','syncing...');
+      clearTimeout(syncTimer);
+      syncTimer = setTimeout(()=>{
+        userDocRef().set(db).then(()=>{
+          setSyncStatus('synced','synced');
+        }).catch(err=>{
+          console.error(err);
+          setSyncStatus('error','sync failed');
+        });
+      }, 1200); // debounce so rapid taps don't spam writes
+    }
+  }
+
+  async function loadFromCloud(){
+    if(!firebaseReady || !currentUser) return;
+    setSyncStatus('syncing','loading...');
+    try{
+      const snap = await userDocRef().get();
+      if(snap.exists){
+        db = snap.data();
+        if(!db.subjects) db.subjects = DEFAULT_SUBJECTS.slice();
+        if(!db.days) db.days = {};
+        localStorage.setItem(DB_KEY, JSON.stringify(db));
+      } else {
+        // no cloud data yet — push whatever is local (migrates existing localStorage data up)
+        await userDocRef().set(db);
+      }
+      setSyncStatus('synced','synced');
+      renderAll();
+    }catch(err){
+      console.error(err);
+      setSyncStatus('error','sync failed — using local copy');
+    }
+  }
+
+  let db = loadDB();
+  if(!db.subjects) db.subjects = DEFAULT_SUBJECTS.slice();
+
+  function todayKey(d){
+    d = d || new Date();
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+  function getDay(key){
+    if(!db.days[key]) db.days[key] = {habits:{}, subjectMinutes:{}};
+    if(!db.days[key].subjectMinutes) db.days[key].subjectMinutes = {};
+    return db.days[key];
+  }
+
+  // ---------- date/header ----------
+  function renderHeader(){
+    const now = new Date();
+    document.getElementById('todayDate').textContent = now.toLocaleDateString('en-IN', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+
+    // day progress: based on time between 06:30 and 23:00
+    const startMins = 6*60+30, endMins = 23*60;
+    const nowMins = now.getHours()*60+now.getMinutes();
+    let pct = Math.max(0, Math.min(100, ((nowMins-startMins)/(endMins-startMins))*100));
+    document.getElementById('dayProgressFill').style.width = pct+'%';
+    document.getElementById('dayProgressPct').textContent = Math.round(pct)+'%';
+
+    computeStreak();
+    document.getElementById('streakNum').textContent = db.streak;
+    document.getElementById('sealFill').style.setProperty('--pct', Math.min(100, db.streak*10));
+  }
+
+  function dayCompletionPct(key){
+    const day = getDay(key);
+    const total = ALL_HABITS.length;
+    let done = 0;
+    ALL_HABITS.forEach(h=>{ if(day.habits[h.id]) done++; });
+    return total? Math.round((done/total)*100) : 0;
+  }
+
+  function computeStreak(){
+    let streak = 0;
+    let d = new Date();
+    // don't count today unless it already hit threshold; walk backwards from yesterday, then check today separately
+    for(let i=0;i<400;i++){
+      const key = todayKey(d);
+      const pct = dayCompletionPct(key);
+      const isToday = (i===0);
+      if(pct>=70){ streak++; }
+      else if(isToday){ /* today not yet 70%, don't break streak counting, just don't include */ }
+      else { break; }
+      d.setDate(d.getDate()-1);
+    }
+    db.streak = streak;
+    if(streak > (db.bestStreak||0)) db.bestStreak = streak;
+    saveDB();
+  }
+
+  // ---------- Today view: timeline ----------
+  function renderTimeline(){
+    const key = todayKey();
+    const day = getDay(key);
+    const now = new Date();
+    const nowMins = now.getHours()*60+now.getMinutes();
+    const el = document.getElementById('timeline');
+    el.innerHTML = '';
+    SCHEDULE.forEach(item=>{
+      const [h,m] = item.time.split(':').map(Number);
+      const itemMins = h*60+m;
+      const isDone = item.habit ? !!day.habits[item.id] : false;
+      const isCurrent = Math.abs(itemMins-nowMins) < 30 && !isDone;
+      const row = document.createElement('div');
+      row.className = 'tl-item' + (isDone?' done':'') + (isCurrent?' current':'');
+      row.innerHTML = `
+        <div class="tl-time mono">${item.time}</div>
+        <div class="tl-dot"></div>
+        <div class="tl-body">
+          <div class="tl-name">${item.name}</div>
+          ${item.dur?`<div class="tl-dur">${item.dur}</div>`:''}
+        </div>
+        ${item.habit?`<button class="tl-check ${isDone?'checked':''}" data-id="${item.id}">✓</button>`:''}
+      `;
+      el.appendChild(row);
+    });
+    el.querySelectorAll('.tl-check').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const id = btn.dataset.id;
+        day.habits[id] = !day.habits[id];
+        saveDB();
+        renderAll();
+      });
+    });
+  }
+
+  // ---------- Today view: habit grid ----------
+  function renderHabitGrid(){
+    const key = todayKey();
+    const day = getDay(key);
+    const grid = document.getElementById('habitGrid');
+    grid.innerHTML = '';
+    ALL_HABITS.forEach(h=>{
+      const on = !!day.habits[h.id];
+      const cell = document.createElement('div');
+      cell.className = 'habit-cell' + (on?' on':'');
+      cell.innerHTML = `<div class="habit-box">${on?'✓':''}</div><div class="habit-text">${h.name}</div>`;
+      cell.addEventListener('click', ()=>{
+        day.habits[h.id] = !day.habits[h.id];
+        saveDB();
+        renderAll();
+      });
+      grid.appendChild(cell);
+    });
+
+    const pct = dayCompletionPct(key);
+    const pctEl = document.getElementById('todayPct');
+    pctEl.textContent = pct+'%';
+    pctEl.className = 'completion-pct ' + (pct>=70?'good':pct>=40?'warn':'low');
+    const note = document.getElementById('completionNote');
+    if(pct>=70) note.textContent = "Day secured for streak. Well kept.";
+    else if(pct>=40) note.textContent = "Getting there — a few more and the day counts.";
+    else note.textContent = "Mark items as you go. 70% clears the day for streak.";
+  }
+
+  // ---------- Study view ----------
+  function minsToH(mins){ return (mins/60).toFixed(1)+'h'; }
+
+  function subjectTotalsForRange(fromDate, toDate){
+    let total = 0;
+    Object.keys(db.days).forEach(key=>{
+      const d = new Date(key);
+      if(d>=fromDate && d<=toDate){
+        const day = db.days[key];
+        if(day.subjectMinutes){
+          Object.values(day.subjectMinutes).forEach(m=>total+=m);
+        }
+      }
+    });
+    return total;
+  }
+
+  function renderStudyStats(){
+    const key = todayKey();
+    const day = getDay(key);
+    let todayMins = 0;
+    Object.values(day.subjectMinutes||{}).forEach(m=>todayMins+=m);
+    document.getElementById('statToday').textContent = minsToH(todayMins);
+
+    const now = new Date();
+    const weekStart = new Date(now); weekStart.setDate(now.getDate()-now.getDay());
+    weekStart.setHours(0,0,0,0);
+    const weekMins = subjectTotalsForRange(weekStart, now);
+    document.getElementById('statWeek').textContent = minsToH(weekMins);
+
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const monthMins = subjectTotalsForRange(monthStart, now);
+    document.getElementById('statMonth').textContent = minsToH(monthMins);
+  }
+
+  function populateSubjectSelects(){
+    const selects = [document.getElementById('pomoSubjectSelect'), document.getElementById('logSubjectSelect')];
+    selects.forEach(sel=>{
+      const cur = sel.value;
+      sel.innerHTML = db.subjects.map(s=>`<option value="${s}">${s}</option>`).join('');
+      if(cur) sel.value = cur;
+    });
+  }
+
+  function renderTodaySubjectLog(){
+    const key = todayKey();
+    const day = getDay(key);
+    const el = document.getElementById('todaySubjectLog');
+    const entries = Object.entries(day.subjectMinutes||{}).filter(([k,v])=>v>0);
+    if(entries.length===0){
+      el.innerHTML = '<div style="font-size:12px; color:var(--ink-faint); padding-top:6px;">No study time logged yet today.</div>';
+      return;
+    }
+    el.innerHTML = '<div style="margin-top:10px; border-top:1px solid var(--line); padding-top:8px;">' +
+      entries.map(([subj,mins])=>`<div class="subject-log-item"><span>${subj}</span><span class="mins">${minsToH(mins)}</span></div>`).join('') +
+      '</div>';
+  }
+
+  function addStudyMinutes(subject, minutes){
+    if(!minutes || minutes<=0) return;
+    const key = todayKey();
+    const day = getDay(key);
+    day.subjectMinutes[subject] = (day.subjectMinutes[subject]||0) + minutes;
+    saveDB();
+    renderAll();
+  }
+
+  // ---------- Pomodoro ----------
+  let pomoSeconds = 25*60;
+  let pomoTotal = 25*60;
+  let pomoRunning = false;
+  let pomoInterval = null;
+  let pomoMode = 'focus';
+
+  function formatTime(s){
+    const m = Math.floor(s/60), sec = s%60;
+    return String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0');
+  }
+  function renderPomo(){
+    document.getElementById('pomoTime').textContent = formatTime(pomoSeconds);
+  }
+  function pomoTick(){
+    pomoSeconds--;
+    if(pomoSeconds<=0){
+      clearInterval(pomoInterval);
+      pomoRunning = false;
+      if(pomoMode==='focus'){
+        const subject = document.getElementById('pomoSubjectSelect').value;
+        addStudyMinutes(subject, Math.round(pomoTotal/60));
+        alert('Focus session complete. Logged to '+subject+'. Take a 5 minute break.');
+      } else {
+        alert('Break over. Back to focus when ready.');
+      }
+      resetPomo();
+      return;
+    }
+    renderPomo();
+  }
+  function resetPomo(){
+    clearInterval(pomoInterval);
+    pomoRunning = false;
+    pomoMode = 'focus';
+    pomoTotal = 25*60;
+    pomoSeconds = 25*60;
+    renderPomo();
+  }
+
+  document.getElementById('pomoStart').addEventListener('click', ()=>{
+    if(pomoRunning) return;
+    pomoMode = 'focus';
+    pomoRunning = true;
+    pomoInterval = setInterval(pomoTick, 1000);
+  });
+  document.getElementById('pomoBreak').addEventListener('click', ()=>{
+    clearInterval(pomoInterval);
+    pomoMode = 'break';
+    pomoTotal = 5*60;
+    pomoSeconds = 5*60;
+    pomoRunning = true;
+    renderPomo();
+    pomoInterval = setInterval(pomoTick, 1000);
+  });
+  document.getElementById('pomoReset').addEventListener('click', resetPomo);
+  document.getElementById('pomoSlotSelect').addEventListener('change', (e)=>{
+    document.getElementById('pomoSlotLabel').textContent = e.target.value==='slot1'?'Slot 1':'Slot 2';
+  });
+
+  document.getElementById('logAddBtn').addEventListener('click', ()=>{
+    const subj = document.getElementById('logSubjectSelect').value;
+    const mins = parseInt(document.getElementById('logMinutes').value,10);
+    if(!subj || !mins || mins<=0){ return; }
+    addStudyMinutes(subj, mins);
+    document.getElementById('logMinutes').value = '';
+  });
+  document.getElementById('addSubjectBtn').addEventListener('click', ()=>{
+    const name = document.getElementById('newSubjectName').value.trim();
+    if(!name) return;
+    if(!db.subjects.includes(name)) db.subjects.push(name);
+    saveDB();
+    document.getElementById('newSubjectName').value = '';
+    populateSubjectSelects();
+  });
+
+  // ---------- Heatmap ----------
+  function renderHeatmap(){
+    const grid = document.getElementById('heatmapGrid');
+    const labels = document.getElementById('monthLabels');
+    grid.innerHTML = '';
+    labels.innerHTML = '';
+
+    const days = 364; // 52 weeks
+    const today = new Date();
+    const start = new Date(today);
+    start.setDate(today.getDate() - days + 1);
+    // align start to a Sunday
+    while(start.getDay() !== 0){ start.setDate(start.getDate()-1); }
+
+    let cur = new Date(start);
+    let lastMonth = -1;
+    let weekIndex = 0;
+    const cellsByWeek = [];
+
+    while(cur <= today){
+      const key = todayKey(cur);
+      const pct = db.days[key] ? dayCompletionPct(key) : -1;
+      let lvl = 0;
+      if(pct>=85) lvl=4; else if(pct>=70) lvl=3; else if(pct>=40) lvl=2; else if(pct>0) lvl=1; else lvl=0;
+
+      const cell = document.createElement('div');
+      cell.className = 'hm-cell';
+      cell.setAttribute('data-lvl', pct<0? '0' : lvl);
+      cell.title = key + (pct>=0? ' — '+pct+'%' : ' — no data');
+      grid.appendChild(cell);
+
+      if(cur.getDate()<=7 && cur.getMonth()!==lastMonth){
+        lastMonth = cur.getMonth();
+        const lbl = document.createElement('div');
+        lbl.style.width = '15px';
+        lbl.textContent = cur.toLocaleDateString('en-IN',{month:'short'});
+        labels.appendChild(lbl);
+      }
+
+      cur.setDate(cur.getDate()+1);
+    }
+  }
+
+  function renderRecordStats(){
+    document.getElementById('recBest').textContent = db.bestStreak||0;
+    const dayKeys = Object.keys(db.days).filter(k=>Object.keys(db.days[k].habits||{}).length>0);
+    document.getElementById('recDays').textContent = dayKeys.length;
+    let avg = 0;
+    if(dayKeys.length>0){
+      avg = Math.round(dayKeys.reduce((sum,k)=>sum+dayCompletionPct(k),0)/dayKeys.length);
+    }
+    document.getElementById('recAvg').textContent = avg+'%';
+  }
+
+  // ---------- Tabs ----------
+  document.querySelectorAll('.tab-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+      document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('view-'+btn.dataset.view).classList.add('active');
+    });
+  });
+
+  document.getElementById('wipeBtn').addEventListener('click', ()=>{
+    if(confirm('This will permanently erase all tracked data on this device. Continue?')){
+      localStorage.removeItem(DB_KEY);
+      db = loadDB();
+      renderAll();
+    }
+  });
+
+  // ---------- render all ----------
+  function renderAll(){
+    renderHeader();
+    renderTimeline();
+    renderHabitGrid();
+    populateSubjectSelects();
+    renderStudyStats();
+    renderTodaySubjectLog();
+    renderHeatmap();
+    renderRecordStats();
+  }
+
+  renderPomo();
+
+  // ---------- Auth UI ----------
+  let authMode = 'signin'; // or 'signup'
+  const authOverlay = document.getElementById('authOverlay');
+  const authTitle = document.getElementById('authTitle');
+  const authToggle = document.getElementById('authToggle');
+  const authError = document.getElementById('authError');
+  const authSubmitBtn = document.getElementById('authSubmitBtn');
+
+  function startApp(){
+    authOverlay.style.display = 'none';
+    renderAll();
+    setInterval(renderHeader, 60000);
+  }
+
+  if(!firebaseReady){
+    // No config pasted in yet — run in local-only mode so the app still works while you set up Firebase
+    authOverlay.style.display = 'none';
+    setSyncStatus('', 'local only — add Firebase config to sync');
+    startApp();
+  } else {
+    auth.onAuthStateChanged(user=>{
+      if(user){
+        currentUser = user;
+        loadFromCloud().then(startApp);
+      } else {
+        currentUser = null;
+        authOverlay.style.display = 'flex';
+      }
+    });
+  }
+
+  authToggle.addEventListener('click', ()=>{
+    authMode = authMode==='signin' ? 'signup' : 'signin';
+    authTitle.textContent = authMode==='signin' ? 'Sign In' : 'Create Account';
+    authSubmitBtn.textContent = authMode==='signin' ? 'Sign In' : 'Create Account';
+    authToggle.innerHTML = authMode==='signin'
+      ? 'New here? <span>Create an account</span>'
+      : 'Already have an account? <span>Sign in</span>';
+    authError.textContent = '';
+  });
+
+  authSubmitBtn.addEventListener('click', async ()=>{
+    authError.textContent = '';
+    const email = document.getElementById('authEmail').value.trim();
+    const password = document.getElementById('authPassword').value;
+    if(!email || !password){ authError.textContent = 'Enter both email and password.'; return; }
+    if(!firebaseReady){ authError.textContent = 'Firebase config not set up yet.'; return; }
+    authSubmitBtn.disabled = true;
+    try{
+      if(authMode==='signin'){
+        await auth.signInWithEmailAndPassword(email, password);
+      } else {
+        await auth.createUserWithEmailAndPassword(email, password);
+      }
+    }catch(err){
+      authError.textContent = err.message.replace('Firebase: ','');
+    }
+    authSubmitBtn.disabled = false;
+  });
+
+  document.getElementById('logoutBtn').addEventListener('click', ()=>{
+    if(firebaseReady && currentUser){ auth.signOut(); }
+  });
+
+})();
+</script>
+</body>
+</html>

@@ -906,6 +906,10 @@
   .trade-card.expanded .trade-detail{ display:block; animation: fadeIn .25s var(--ease); }
   .trade-detail-row{ margin-bottom:10px; }
   .trade-detail-row .lbl{ color:var(--ink-faint); font-size:10.5px; text-transform:uppercase; letter-spacing:0.04em; display:block; margin-bottom:3px; font-weight:600; }
+  .td-kv-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:9px 18px; margin-bottom:14px; padding-bottom:14px; border-bottom:1px solid var(--line); }
+  .td-kv{ display:flex; justify-content:space-between; align-items:baseline; gap:8px; }
+  .td-kv-lbl{ color:var(--ink-faint); font-size:10.5px; text-transform:uppercase; letter-spacing:0.04em; font-weight:600; flex-shrink:0; }
+  .td-kv-val{ font-family:'IBM Plex Mono'; font-weight:600; font-size:12px; color:var(--ink); text-align:right; }
   .trade-actions{ display:flex; gap:8px; margin-top:12px; }
   .trade-actions .btn{ padding:8px 16px; font-size:12px; }
 
@@ -1058,6 +1062,78 @@
   .td-rdist-bar.neg{ background: var(--rose); }
   .td-rdist-count{ font-family:'IBM Plex Mono'; font-size:10px; color:var(--ink-faint); }
   .td-rdist-label{ font-size:8.5px; color:var(--ink-faint); margin-top:4px; text-align:center; white-space:nowrap; }
+
+  /* ---- Groww-inspired hero summary card (Overview / Gym) ---- */
+  .td-hero-card{
+    background: linear-gradient(160deg, var(--surface) 0%, var(--surface-raised) 100%);
+    border:1px solid var(--line); border-radius: var(--radius-lg); padding:20px 22px; margin-bottom:16px; box-shadow: var(--shadow-sm);
+  }
+  .td-hero-lbl{ font-size:11px; color:var(--ink-faint); font-weight:600; text-transform:uppercase; letter-spacing:0.05em; }
+  .td-hero-value{ font-family:'Sora'; font-size:32px; font-weight:800; margin-top:6px; letter-spacing:-0.01em; }
+  .td-hero-value.pos{ color: var(--teal); }
+  .td-hero-value.neg{ color: var(--rose); }
+  .td-hero-stats-row{ display:flex; gap:22px; margin-top:16px; padding-top:16px; border-top:1px dashed var(--line); flex-wrap:wrap; }
+  .td-hero-stat-lbl{ font-size:10px; color:var(--ink-faint); font-weight:600; }
+  .td-hero-stat-val{ font-family:'IBM Plex Mono'; font-size:14px; font-weight:700; margin-top:3px; }
+  .td-hero-stat-val.pos{ color: var(--teal); }
+  .td-hero-stat-val.neg{ color: var(--rose); }
+
+  /* ---- sortable ticker/exercise list with inline sparkline (Groww holdings-row style) ---- */
+  .td-list-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px; }
+  .td-list-sort{
+    padding:7px 12px; border-radius:999px; border:1px solid var(--line); background:var(--surface);
+    color:var(--ink-dim); font-family:'Inter'; font-size:11.5px; font-weight:600; cursor:pointer;
+  }
+  .td-list-row{ display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--line); }
+  .td-list-row:last-child{ border-bottom:none; }
+  .td-list-name-wrap{ flex:1; min-width:0; }
+  .td-list-name{ font-weight:700; font-size:13px; }
+  .td-list-sub{ font-size:10.5px; color:var(--ink-faint); margin-top:2px; }
+  .td-list-spark{ flex-shrink:0; width:64px; height:26px; }
+  .td-list-right{ text-align:right; flex-shrink:0; }
+  .td-list-val{ font-family:'IBM Plex Mono'; font-weight:700; font-size:13px; }
+  .td-list-val.pos{ color: var(--teal); }
+  .td-list-val.neg{ color: var(--rose); }
+  .td-list-subval{ font-size:10px; color:var(--ink-faint); margin-top:2px; }
+
+  /* ================= Gym Log ================= */
+  .gym-exercise-block{ border:1px solid var(--line); border-radius: var(--radius-md); padding:12px 14px; margin-bottom:10px; background: var(--surface-raised); }
+  .gym-exercise-name{ font-weight:700; font-size:13px; margin-bottom:10px; }
+  .gym-sets-wrap{ display:flex; flex-direction:column; gap:7px; }
+  .gym-set-row{ display:grid; grid-template-columns:20px 1fr 1fr 28px; align-items:center; gap:8px; }
+  .gym-set-num{ font-size:10.5px; color:var(--ink-faint); font-weight:700; text-align:center; }
+  .gym-set-row input{
+    padding:8px 10px; border-radius:8px; border:1px solid var(--line); background:var(--surface);
+    color:var(--ink); font-family:'IBM Plex Mono'; font-size:12.5px; width:100%;
+  }
+  .gym-set-row input:focus{ outline:none; border-color:var(--accent); }
+  .gym-set-remove{
+    width:26px; height:26px; border-radius:50%; border:1px solid var(--line); background:var(--surface);
+    color:var(--ink-faint); cursor:pointer; font-size:14px; line-height:1; display:flex; align-items:center; justify-content:center;
+  }
+  .gym-set-remove:hover{ color:var(--rose); border-color:var(--rose-dim); }
+  .gym-add-set-btn{
+    margin-top:9px; font-size:11.5px; font-weight:700; padding:6px 12px; border-radius:999px;
+    border:1px dashed var(--line); background:transparent; color:var(--ink-dim); cursor:pointer;
+  }
+  .gym-add-set-btn:hover{ border-color:var(--accent); color:var(--accent); }
+  .gym-plan-day-card .modal-field label{ font-family:'Sora'; font-weight:800; font-size:13px; color:var(--ink); }
+  .gym-exercise-chip-row{ display:flex; flex-wrap:wrap; gap:7px; margin:10px 0 12px; }
+  .gym-exercise-chip{
+    display:inline-flex; align-items:center; gap:6px; font-size:11.5px; font-weight:600; padding:5px 6px 5px 12px;
+    border-radius:999px; background:var(--surface-raised); color:var(--ink-dim); border:1px solid var(--line);
+  }
+  .gym-chip-remove{
+    width:17px; height:17px; border-radius:50%; border:none; background:var(--surface); color:var(--ink-faint);
+    cursor:pointer; font-size:12px; line-height:1; display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  .gym-chip-remove:hover{ background:var(--rose-bg); color:var(--rose); }
+  .gym-add-exercise-row{ display:flex; gap:8px; }
+  .gym-add-exercise-input{
+    flex:1; padding:9px 12px; border-radius:999px; border:1px solid var(--line); background:var(--surface);
+    color:var(--ink); font-family:'Inter'; font-size:12.5px;
+  }
+  .gym-add-exercise-input:focus{ outline:none; border-color:var(--accent); }
 
   .subsection-label{ font-size:11px; font-weight:700; color: var(--accent); text-transform:uppercase; letter-spacing:0.06em; margin:22px 0 10px; }
   .subsection-label:first-child{ margin-top:0; }
@@ -1655,6 +1731,10 @@
     <span class="tab-icon-box"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg></span>
     <span class="tab-label">Trade Log</span>
   </button>
+  <button class="tab-btn" data-view="gym" id="gymTabBtn">
+    <span class="tab-icon-box"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5 17.5 17.5"/><path d="m21 21-1.5-1.5M3 3l1.5 1.5"/><path d="M18.5 15.5 21 18a1.5 1.5 0 0 1-2.5 2.5L16 18"/><path d="M8 5.5 5.5 8a1.5 1.5 0 0 1-2.5-2.5L5.5 3"/><path d="m15.5 8.5-7 7"/></svg></span>
+    <span class="tab-label">Gym Log</span>
+  </button>
   <button class="tab-btn" data-view="record">
     <span class="tab-icon-box"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span>
     <span class="tab-label">Analysis</span>
@@ -2038,6 +2118,7 @@
 
     <!-- ---- OVERVIEW PANEL ---- -->
     <div class="trade-panel active" id="tpanel-overview">
+      <div class="td-hero-card" id="tdHeroCard"></div>
       <div class="td-stat-grid" id="tdOverviewStats"></div>
       <div class="td-card">
         <div class="td-card-head"><span>Equity Curve</span><span class="td-card-sub" id="tdEquityRange"></span></div>
@@ -2057,6 +2138,10 @@
 
     <!-- ---- HISTORY PANEL ---- -->
     <div class="trade-panel" id="tpanel-history">
+      <div class="td-list-head">
+        <div class="td-card-head" style="margin-bottom:0;"><span>Trade History</span></div>
+        <button class="td-list-sort" id="tdExportTradesBtn">⬇ Trade analysis</button>
+      </div>
       <div class="trades-toolbar">
         <div class="trades-search-wrap">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
@@ -2104,6 +2189,18 @@
 
     <!-- ---- STRATEGY / SETUP PANEL ---- -->
     <div class="trade-panel" id="tpanel-strategy">
+      <div class="td-card">
+        <div class="td-list-head">
+          <div class="td-card-head" style="margin-bottom:0;"><span>Performance by Ticker</span></div>
+          <select id="tdTickerSort" class="td-list-sort">
+            <option value="pnl">Sort: Net P&amp;L</option>
+            <option value="winrate">Sort: Win Rate</option>
+            <option value="count">Sort: Trade Count</option>
+            <option value="alpha">Sort: A–Z</option>
+          </select>
+        </div>
+        <div id="tdByTicker"></div>
+      </div>
       <div class="td-card">
         <div class="td-card-head"><span>Performance by Catalyst / Setup</span></div>
         <div id="tdByCatalyst"></div>
@@ -2267,6 +2364,67 @@
 
   </section>
 
+  <!-- ===================== GYM LOG VIEW ===================== -->
+  <section class="view" id="view-gym">
+
+    <div class="trade-subnav" id="gymSubnav">
+      <button class="trade-subnav-btn active" data-gpanel="overview">Overview</button>
+      <button class="trade-subnav-btn" data-gpanel="log">Log Workout</button>
+      <button class="trade-subnav-btn" data-gpanel="history">History</button>
+      <button class="trade-subnav-btn" data-gpanel="plan">Plan</button>
+    </div>
+
+    <!-- ---- OVERVIEW PANEL ---- -->
+    <div class="trade-panel active" id="gpanel-overview">
+      <div class="td-hero-card" id="gymHeroCard"></div>
+      <div class="td-stat-grid" id="gymOverviewStats"></div>
+      <div class="td-card">
+        <div class="td-card-head"><span>This Week by Day</span></div>
+        <div id="gymWeeklyChart"></div>
+      </div>
+      <div class="td-card">
+        <div class="td-list-head">
+          <div class="td-card-head" style="margin-bottom:0;"><span>Exercise Progress</span></div>
+          <select id="gymExerciseSort" class="td-list-sort">
+            <option value="recent">Sort: Most Recent</option>
+            <option value="weight">Sort: Heaviest</option>
+            <option value="count">Sort: Most Logged</option>
+            <option value="alpha">Sort: A–Z</option>
+          </select>
+        </div>
+        <div id="gymExerciseList"></div>
+      </div>
+    </div>
+
+    <!-- ---- LOG WORKOUT PANEL ---- -->
+    <div class="trade-panel" id="gpanel-log">
+      <div class="card">
+        <div class="card-title" id="gymLogFormTitle">Log a Workout</div>
+        <div class="modal-row">
+          <div class="modal-field"><label>Date</label><input type="date" id="gymLogDate"></div>
+          <div class="modal-field"><label>Day</label><select id="gymLogDaySelect"></select></div>
+        </div>
+        <div id="gymLogExercisesWrap"></div>
+        <div class="modal-actions">
+          <button class="btn primary" id="gymLogSaveBtn">Save Workout</button>
+          <button class="btn ghost" id="gymLogCancelBtn" style="display:none;">Cancel edit</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ---- HISTORY PANEL ---- -->
+    <div class="trade-panel" id="gpanel-history">
+      <div id="gymHistoryList"></div>
+    </div>
+
+    <!-- ---- PLAN PANEL ---- -->
+    <div class="trade-panel" id="gpanel-plan">
+      <p style="font-size:12.5px; color:var(--ink-dim); margin-bottom:16px;">Your 5-day split. Rename any day and add or remove exercises — the Log Workout tab always follows this plan.</p>
+      <div id="gymPlanCards"></div>
+    </div>
+
+  </section>
+
   <!-- ===================== SETTINGS VIEW ===================== -->
   <section class="view" id="view-settings">
 
@@ -2367,8 +2525,8 @@
       </div>
       <div class="card">
         <div class="card-title">Reset Progress</div>
-        <p style="font-size:12.5px; color:var(--ink-dim); margin-bottom:14px;">Permanently erase all tracked data on this device. This can't be undone.</p>
-        <button class="btn ghost" id="wipeBtn" style="width:100%; border-color:var(--rose-dim); color:var(--rose);">Clear all data</button>
+        <p style="font-size:12.5px; color:var(--ink-dim); margin-bottom:14px;">Erase your Trading, Gym Log, Notes, and Goals data on this device. This can't be undone. Your To Do list, Habits, and Schedule are kept.</p>
+        <button class="btn ghost" id="wipeBtn" style="width:100%; border-color:var(--rose-dim); color:var(--rose);">Clear trading &amp; other data</button>
       </div>
     </div>
 
@@ -2683,13 +2841,23 @@
 
   const DEFAULT_SUBJECTS = ['Subject 1','Subject 2','Subject 3','Revision','Practice Test'];
 
+  // A default 5-day split so the Gym Log has something to log against immediately;
+  // fully editable from the Plan tab.
+  const DEFAULT_GYM_PLAN = [
+    {id:'gd1', label:'Day 1', name:'Push (Chest/Shoulders/Triceps)', exercises:['Bench Press','Overhead Press','Incline Dumbbell Press','Lateral Raise','Triceps Pushdown']},
+    {id:'gd2', label:'Day 2', name:'Pull (Back/Biceps)', exercises:['Deadlift','Lat Pulldown','Barbell Row','Face Pull','Barbell Curl']},
+    {id:'gd3', label:'Day 3', name:'Legs', exercises:['Squat','Leg Press','Romanian Deadlift','Leg Curl','Calf Raise']},
+    {id:'gd4', label:'Day 4', name:'Upper Body', exercises:['Incline Bench Press','Pull-Up','Dumbbell Shoulder Press','Seated Row','Hammer Curl']},
+    {id:'gd5', label:'Day 5', name:'Lower Body + Core', exercises:['Front Squat','Walking Lunge','Hip Thrust','Plank','Hanging Leg Raise']},
+  ];
+
   // ---------- storage ----------
   function loadDB(){
     try{
       const raw = localStorage.getItem(DB_KEY);
       if(raw) return JSON.parse(raw);
     }catch(e){}
-    return {days:{}, subjects: DEFAULT_SUBJECTS.slice(), streak:0, bestStreak:0, schedule: JSON.parse(JSON.stringify(DEFAULT_SCHEDULE)), trades:[], notes:[], notesPin:'', goals:[], customHabits: JSON.parse(JSON.stringify(DEFAULT_CUSTOM_HABITS))};
+    return {days:{}, subjects: DEFAULT_SUBJECTS.slice(), streak:0, bestStreak:0, schedule: JSON.parse(JSON.stringify(DEFAULT_SCHEDULE)), trades:[], notes:[], notesPin:'', goals:[], customHabits: JSON.parse(JSON.stringify(DEFAULT_CUSTOM_HABITS)), gymPlan: JSON.parse(JSON.stringify(DEFAULT_GYM_PLAN)), gymLogs:[]};
   }
 
   // ---------- Firebase ----------
@@ -2796,6 +2964,8 @@
   if(!db.goals) db.goals = [];
   if(!db.todos) db.todos = [];
   if(!db.customHabits) db.customHabits = JSON.parse(JSON.stringify(DEFAULT_CUSTOM_HABITS));
+  if(!db.gymPlan) db.gymPlan = JSON.parse(JSON.stringify(DEFAULT_GYM_PLAN));
+  if(!db.gymLogs) db.gymLogs = [];
 
   function todayKey(d){
     d = d || new Date();
@@ -3571,6 +3741,7 @@
     document.getElementById('trSaveBtn').textContent = 'Update Trade';
     document.getElementById('trCancelBtn').style.display = 'block';
     document.querySelector('[data-view="trades"]').click();
+    activateTradePanel('entry');
     window.scrollTo({top:0, behavior:'smooth'});
   }
 
@@ -3669,27 +3840,33 @@
           <div class="trade-card-top">
             <div>
               <div class="trade-ticker-row">
-                <span class="trade-ticker">${t.ticker}</span>
+                <span class="trade-ticker">${escapeHtml(t.ticker||'')}</span>
                 <span class="trade-outcome-badge ${outcome}">${badgeLabel}</span>
               </div>
-              <div class="trade-date">${t.date||''} · ${t.timeframe||''} ${t.grade?('· Grade '+t.grade):''}</div>
+              <div class="trade-date">${t.date||''} · ${escapeHtml(t.timeframe||'')} ${t.grade?('· Grade '+escapeHtml(t.grade)):''}</div>
             </div>
             <div class="trade-card-right">
               <div class="trade-pnl ${pnlClass}">${isNaN(pnlNum)?'—':pnlNum}</div>
               ${t.rMultiple?`<div class="trade-r">${t.rMultiple}R</div>`:''}
             </div>
           </div>
-          <div class="trade-meta">${allTags.map(tag=>`<span class="trade-tag">${tag}</span>`).join('')}</div>
+          <div class="trade-meta">${allTags.map(tag=>`<span class="trade-tag">${escapeHtml(tag)}</span>`).join('')}</div>
           <div class="trade-detail">
-            <div class="trade-detail-row"><span class="lbl">Market context</span>${t.context||'—'}</div>
-            <div class="trade-detail-row"><span class="lbl">Catalyst</span>${t.catalyst||'—'}</div>
-            <div class="trade-detail-row"><span class="lbl">Entry</span>${t.entryDT||'—'} @ ${t.entryPrice||'—'} · Qty ${t.qty||'—'} · SL ${t.slPrice||'—'}</div>
-            <div class="trade-detail-row"><span class="lbl">Why this trade</span>${t.thesisWhy||'—'}</div>
-            <div class="trade-detail-row"><span class="lbl">Invalidation</span>${t.thesisInvalidate||'—'}</div>
-            <div class="trade-detail-row"><span class="lbl">Psychology</span>${(t.psychTags||[]).join(', ')||'—'} · Following system: ${t.followingSystem||'—'}</div>
-            <div class="trade-detail-row"><span class="lbl">Management</span>${t.mgmtNotes||'—'}</div>
-            <div class="trade-detail-row"><span class="lbl">Exit</span>${t.exitDT||'—'} @ ${t.exitPrice||'—'} · R: ${t.rMultiple||'—'}</div>
-            <div class="trade-detail-row"><span class="lbl">One lesson</span>${t.lesson||'—'}</div>
+            <div class="td-kv-grid">
+              <div class="td-kv"><span class="td-kv-lbl">Entry Price</span><span class="td-kv-val">${t.entryPrice||'—'}</span></div>
+              <div class="td-kv"><span class="td-kv-lbl">Exit Price</span><span class="td-kv-val">${t.exitPrice||'—'}</span></div>
+              <div class="td-kv"><span class="td-kv-lbl">Qty</span><span class="td-kv-val">${t.qty||'—'}</span></div>
+              <div class="td-kv"><span class="td-kv-lbl">Stop Loss</span><span class="td-kv-val">${t.slPrice||'—'}</span></div>
+              <div class="td-kv"><span class="td-kv-lbl">Entry Time</span><span class="td-kv-val">${t.entryDT?t.entryDT.replace('T',' '):'—'}</span></div>
+              <div class="td-kv"><span class="td-kv-lbl">Exit Time</span><span class="td-kv-val">${t.exitDT?t.exitDT.replace('T',' '):'—'}</span></div>
+            </div>
+            <div class="trade-detail-row"><span class="lbl">Market context</span>${escapeHtml(t.context||'—')}</div>
+            <div class="trade-detail-row"><span class="lbl">Catalyst</span>${escapeHtml(t.catalyst||'—')}</div>
+            <div class="trade-detail-row"><span class="lbl">Why this trade</span>${escapeHtml(t.thesisWhy||'—')}</div>
+            <div class="trade-detail-row"><span class="lbl">Invalidation</span>${escapeHtml(t.thesisInvalidate||'—')}</div>
+            <div class="trade-detail-row"><span class="lbl">Psychology</span>${escapeHtml((t.psychTags||[]).join(', ')||'—')} · Following system: ${escapeHtml(t.followingSystem||'—')}</div>
+            <div class="trade-detail-row"><span class="lbl">Management</span>${escapeHtml(t.mgmtNotes||'—')}</div>
+            <div class="trade-detail-row"><span class="lbl">One lesson</span>${escapeHtml(t.lesson||'—')}</div>
             ${t.screenshot?`<img src="${t.screenshot}" style="max-width:100%; border-radius:6px; margin-top:6px; border:1px solid var(--line);">`:''}
             <div class="trade-actions">
               <button class="btn ghost" data-edit-trade="${t.id}">Edit</button>
@@ -3791,13 +3968,34 @@
     const trades = db.trades||[];
     const m = computeTradeMetrics(trades);
 
+    // ---- Groww-style hero card: big net P&L + today/week/capital-deployed row ----
+    const heroEl = document.getElementById('tdHeroCard');
+    if(heroEl){
+      const tKey = todayKey();
+      const now = new Date();
+      const weekAgo = new Date(now); weekAgo.setDate(now.getDate()-7);
+      const weekKey = todayKey(weekAgo);
+      const withPnl = trades.filter(t=> t.pnl!==undefined && t.pnl!=='' && !isNaN(parseFloat(t.pnl)));
+      const todayPnl = withPnl.filter(t=>t.date===tKey).reduce((s,t)=>s+parseFloat(t.pnl),0);
+      const weekPnl = withPnl.filter(t=> t.date && t.date>=weekKey).reduce((s,t)=>s+parseFloat(t.pnl),0);
+      const capitalDeployed = trades.reduce((s,t)=>{ const n=parseFloat(t.posSize); return s+(isNaN(n)?0:n); },0);
+      heroEl.innerHTML = `
+        <div class="td-hero-lbl">Net P&amp;L · All Time</div>
+        <div class="td-hero-value ${m.net>=0?'pos':'neg'}">${fmtPnl(Math.round(m.net))}</div>
+        <div class="td-hero-stats-row">
+          <div class="td-hero-stat"><div class="td-hero-stat-lbl">Today</div><div class="td-hero-stat-val ${todayPnl>=0?'pos':'neg'}">${fmtPnl(Math.round(todayPnl))}</div></div>
+          <div class="td-hero-stat"><div class="td-hero-stat-lbl">Last 7 Days</div><div class="td-hero-stat-val ${weekPnl>=0?'pos':'neg'}">${fmtPnl(Math.round(weekPnl))}</div></div>
+          <div class="td-hero-stat"><div class="td-hero-stat-lbl">Capital Deployed</div><div class="td-hero-stat-val">${capitalDeployed?fmtMoney(capitalDeployed):'—'}</div></div>
+        </div>`;
+    }
+
     grid.innerHTML = [
-      statCardHtml('Net P&amp;L', fmtPnl(m.net), m.net>=0?'pos':'neg'),
       statCardHtml('Win Rate', m.withPnlCount? Math.round(m.winRate)+'%' : '—', '', m.wins+'W / '+m.losses+'L'),
       statCardHtml('Profit Factor', m.profitFactor===Infinity ? '∞' : (m.grossLoss||m.grossProfit ? m.profitFactor.toFixed(2) : '—')),
       statCardHtml('Avg R-Multiple', m.avgR!==null ? m.avgR.toFixed(2)+'R' : '—'),
       statCardHtml('Max Drawdown', m.maxDD? '-'+Math.round(m.maxDD) : '—', m.maxDD?'neg':''),
       statCardHtml(m.streakType==='loss'?'Losing Streak':'Winning Streak', m.streakCount||0, m.streakType==='loss'?'neg':(m.streakType==='win'?'pos':'')),
+      statCardHtml('Total Trades', trades.length),
     ].join('');
 
     // ---- Equity curve (SVG line + area) ----
@@ -3950,6 +4148,96 @@
   if(tcalPrevBtn) tcalPrevBtn.addEventListener('click', ()=>{ tcalViewDate = new Date(tcalViewDate.getFullYear(), tcalViewDate.getMonth()-1, 1); tcalSelectedKey=null; renderTradeCalendar(); });
   if(tcalNextBtn) tcalNextBtn.addEventListener('click', ()=>{ tcalViewDate = new Date(tcalViewDate.getFullYear(), tcalViewDate.getMonth()+1, 1); tcalSelectedKey=null; renderTradeCalendar(); });
 
+  // Tiny inline trend line for list rows (Groww holdings-style). Returns an SVG string,
+  // not a chart library — consistent with the rest of the dashboard's zero-dependency charts.
+  function miniSparkSvg(vals, color){
+    const w=64, h=26;
+    if(!vals || vals.length<2){
+      return `<svg class="td-list-spark" viewBox="0 0 ${w} ${h}"><line x1="0" y1="${h/2}" x2="${w}" y2="${h/2}" stroke="var(--line)" stroke-width="1"/></svg>`;
+    }
+    const min=Math.min(...vals), max=Math.max(...vals), span=(max-min)||1;
+    const pts = vals.map((v,i)=> (i/(vals.length-1)*w).toFixed(1)+','+(h-((v-min)/span)*h).toFixed(1)).join(' ');
+    return `<svg class="td-list-spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.6"/></svg>`;
+  }
+
+  // ---- By-ticker performance list: sortable, with a per-ticker cumulative-P&L sparkline ----
+  let tdTickerSortMode = 'pnl';
+  function renderTickerBreakdown(){
+    const el = document.getElementById('tdByTicker');
+    if(!el) return;
+    const trades = db.trades||[];
+    const groups = {};
+    trades.forEach(t=>{
+      const key = (t.ticker||'').trim().toUpperCase() || 'Unspecified';
+      (groups[key] = groups[key]||[]).push(t);
+    });
+    let rows = Object.entries(groups).map(([name, list])=>{
+      const chrono = list.slice().sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+      const withPnl = chrono.filter(t=> t.pnl!==undefined && t.pnl!=='' && !isNaN(parseFloat(t.pnl)));
+      const wins = withPnl.filter(t=>parseFloat(t.pnl)>=0).length;
+      const net = withPnl.reduce((s,t)=>s+parseFloat(t.pnl),0);
+      const winRate = withPnl.length ? (wins/withPnl.length)*100 : null;
+      let running=0;
+      const sparkVals = withPnl.length ? [0, ...withPnl.map(t=>{ running+=parseFloat(t.pnl); return running; })] : [0,0];
+      return {name, count:list.length, net, winRate, sparkVals};
+    });
+    const sortFns = {
+      pnl: (a,b)=> b.net-a.net,
+      winrate: (a,b)=> (b.winRate??-1)-(a.winRate??-1),
+      count: (a,b)=> b.count-a.count,
+      alpha: (a,b)=> a.name.localeCompare(b.name),
+    };
+    rows = rows.sort(sortFns[tdTickerSortMode]||sortFns.pnl);
+    if(rows.length===0){ el.innerHTML = '<div class="td-empty-note">No trades yet.</div>'; return; }
+    el.innerHTML = rows.map(r=>{
+      const cls = r.net>=0?'pos':'neg';
+      const color = r.net>=0 ? 'var(--teal)' : 'var(--rose)';
+      return `<div class="td-list-row">
+        <div class="td-list-name-wrap">
+          <div class="td-list-name">${escapeHtml(r.name)}</div>
+          <div class="td-list-sub">${r.count} trade${r.count===1?'':'s'}${r.winRate!==null?(' · '+Math.round(r.winRate)+'% win'):''}</div>
+        </div>
+        ${miniSparkSvg(r.sparkVals, color)}
+        <div class="td-list-right"><div class="td-list-val ${cls}">${fmtPnl(Math.round(r.net))}</div></div>
+      </div>`;
+    }).join('');
+  }
+  const tdTickerSortEl = document.getElementById('tdTickerSort');
+  if(tdTickerSortEl){
+    tdTickerSortEl.addEventListener('change', ()=>{ tdTickerSortMode = tdTickerSortEl.value; renderTickerBreakdown(); });
+  }
+
+  // ---- Trade analysis export (History panel) — same XLSX lib the Settings export uses ----
+  function exportTradesAnalysis(){
+    try{
+      if(typeof XLSX === 'undefined'){ showToast('Excel library failed to load.', 'error'); return; }
+      const wb = XLSX.utils.book_new();
+      const tradeRows = (db.trades||[]).map(t=>({
+        Ticker:t.ticker||'', Date:t.date||'', Timeframe:t.timeframe||'', Conviction:t.conviction||'',
+        'Entry price':t.entryPrice||'', 'Exit price':t.exitPrice||'', Qty:t.qty||'',
+        'P&L':t.pnl||'', 'R-multiple':t.rMultiple||'', 'Exit reason':(t.exitReasonTags||[]).join(', '),
+        Verdict:(t.verdictTags||[]).join(', '), Grade:t.grade||'', Lesson:t.lesson||''
+      }));
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(tradeRows), 'Trades');
+      const m = computeTradeMetrics(db.trades||[]);
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet([
+        {Metric:'Total trades', Value:m.count},
+        {Metric:'Win rate %', Value: m.withPnlCount? Math.round(m.winRate):''},
+        {Metric:'Net P&L', Value: Math.round(m.net)},
+        {Metric:'Profit factor', Value: m.profitFactor===Infinity?'Infinity':m.profitFactor.toFixed(2)},
+        {Metric:'Avg R-multiple', Value: m.avgR!==null? m.avgR.toFixed(2):''},
+        {Metric:'Max drawdown', Value: Math.round(m.maxDD)},
+      ]), 'Summary');
+      XLSX.writeFile(wb, 'trade-analysis-'+todayKey()+'.xlsx');
+      showToast('Trade analysis exported.', 'success');
+    }catch(e){
+      console.error(e);
+      showToast('Export failed.', 'error');
+    }
+  }
+  const tdExportTradesBtnEl = document.getElementById('tdExportTradesBtn');
+  if(tdExportTradesBtnEl) tdExportTradesBtnEl.addEventListener('click', exportTradesAnalysis);
+
   // ---- Strategy / setup breakdown (grouped by catalyst text, and by timeframe) ----
   function renderBreakdownGroups(containerId, trades, keyFn, emptyMsg){
     const el = document.getElementById(containerId);
@@ -3984,6 +4272,7 @@
   }
   function renderStrategyBreakdown(){
     const trades = db.trades||[];
+    renderTickerBreakdown();
     renderBreakdownGroups('tdByCatalyst', trades, t=>t.catalyst, 'Add a catalyst to your trades to see setup performance.');
     renderBreakdownGroups('tdByTimeframe', trades, t=>t.timeframe, 'No trades logged yet.');
   }
@@ -4040,22 +4329,394 @@
     renderStrategyBreakdown();
     renderRiskPanel();
   }
+  // Activates one trade sub-panel (Overview/History/Calendar/Strategies/Risk/New Trade) and
+  // keeps the subnav button state in sync. Shared by the subnav click handler and editTrade(),
+  // so opening the entry form for editing reliably shows the form instead of whatever panel
+  // happened to be active.
+  function activateTradePanel(name){
+    const nav = document.getElementById('tradeSubnav');
+    if(nav) nav.querySelectorAll('.trade-subnav-btn').forEach(b=> b.classList.toggle('active', b.dataset.tpanel===name));
+    document.querySelectorAll('#view-trades .trade-panel').forEach(p=>p.classList.remove('active'));
+    const panel = document.getElementById('tpanel-'+name);
+    if(panel) panel.classList.add('active');
+  }
   const tradeSubnavEl = document.getElementById('tradeSubnav');
   if(tradeSubnavEl){
     tradeSubnavEl.addEventListener('click', (e)=>{
       const btn = e.target.closest('.trade-subnav-btn');
       if(!btn) return;
-      tradeSubnavEl.querySelectorAll('.trade-subnav-btn').forEach(b=>b.classList.remove('active'));
-      btn.classList.add('active');
-      document.querySelectorAll('.trade-panel').forEach(p=>p.classList.remove('active'));
-      const panel = document.getElementById('tpanel-'+btn.dataset.tpanel);
-      if(panel) panel.classList.add('active');
+      // Entering the entry form directly from the subnav (not via Edit) always starts fresh.
+      if(btn.dataset.tpanel==='entry' && editingTradeId===null) resetTradeForm();
+      activateTradePanel(btn.dataset.tpanel);
     });
   }
 
   // Kept for backward compatibility with existing call sites — now drives the full dashboard.
   function renderTradeStats(){
     renderTradeDashboard();
+  }
+
+  // ================= Gym Log =================
+  function activateGymPanel(name){
+    const nav = document.getElementById('gymSubnav');
+    if(nav) nav.querySelectorAll('.trade-subnav-btn').forEach(b=> b.classList.toggle('active', b.dataset.gpanel===name));
+    document.querySelectorAll('#view-gym .trade-panel').forEach(p=>p.classList.remove('active'));
+    const panel = document.getElementById('gpanel-'+name);
+    if(panel) panel.classList.add('active');
+  }
+  const gymSubnavEl = document.getElementById('gymSubnav');
+  if(gymSubnavEl){
+    gymSubnavEl.addEventListener('click', (e)=>{
+      const btn = e.target.closest('.trade-subnav-btn');
+      if(!btn) return;
+      if(btn.dataset.gpanel==='log' && gymEditingLogId===null) resetGymLogForm();
+      activateGymPanel(btn.dataset.gpanel);
+    });
+  }
+
+  // ---- Log Workout form ----
+  let gymEditingLogId = null;
+  let gymCurrentExerciseNames = []; // exercise names for the currently-selected plan day, in order — used to read the form back
+
+  function gymSetRowHtml(exIdx, setIdx, reps, weight){
+    return `<div class="gym-set-row" data-ex="${exIdx}" data-set="${setIdx}">
+      <span class="gym-set-num">${setIdx+1}</span>
+      <input type="number" class="gym-set-reps" placeholder="Reps" value="${reps!==undefined && reps!==null ? reps : ''}">
+      <input type="number" class="gym-set-weight" placeholder="Weight (kg)" step="0.5" value="${weight!==undefined && weight!==null ? weight : ''}">
+      <button type="button" class="gym-set-remove" data-ex="${exIdx}" title="Remove set">×</button>
+    </div>`;
+  }
+  function gymExerciseBlockHtml(exIdx, name, sets){
+    sets = (sets && sets.length) ? sets : [{}];
+    return `<div class="gym-exercise-block" data-ex="${exIdx}">
+      <div class="gym-exercise-name">${escapeHtml(name)}</div>
+      <div class="gym-sets-wrap" data-ex="${exIdx}">${sets.map((s,i)=>gymSetRowHtml(exIdx,i,s.reps,s.weight)).join('')}</div>
+      <button type="button" class="gym-add-set-btn" data-ex="${exIdx}">+ Add set</button>
+    </div>`;
+  }
+  function renderGymLogDaySelect(){
+    const sel = document.getElementById('gymLogDaySelect');
+    if(!sel) return;
+    sel.innerHTML = (db.gymPlan||[]).map(d=>`<option value="${d.id}">${escapeHtml(d.label)} — ${escapeHtml(d.name)}</option>`).join('');
+  }
+  function renderGymLogExercises(dayId, existingExercises){
+    const wrap = document.getElementById('gymLogExercisesWrap');
+    if(!wrap) return;
+    const day = (db.gymPlan||[]).find(d=>d.id===dayId) || (db.gymPlan||[])[0];
+    if(!day){ wrap.innerHTML = '<div class="td-empty-note">Set up your 5-day plan first (Plan tab).</div>'; gymCurrentExerciseNames=[]; return; }
+    gymCurrentExerciseNames = day.exercises.slice();
+    wrap.innerHTML = day.exercises.map((name,i)=>{
+      const existing = existingExercises && existingExercises.find(e=>e.name===name);
+      return gymExerciseBlockHtml(i, name, existing ? existing.sets : null);
+    }).join('');
+  }
+  function resetGymLogForm(){
+    gymEditingLogId = null;
+    const titleEl = document.getElementById('gymLogFormTitle');
+    const saveBtn = document.getElementById('gymLogSaveBtn');
+    const cancelBtn = document.getElementById('gymLogCancelBtn');
+    const dateEl = document.getElementById('gymLogDate');
+    if(titleEl) titleEl.textContent = 'Log a Workout';
+    if(saveBtn) saveBtn.textContent = 'Save Workout';
+    if(cancelBtn) cancelBtn.style.display = 'none';
+    if(dateEl) dateEl.value = todayKey();
+    renderGymLogDaySelect();
+    const sel = document.getElementById('gymLogDaySelect');
+    if(sel && sel.options.length) sel.value = sel.options[0].value;
+    renderGymLogExercises(sel ? sel.value : null, null);
+  }
+  function readGymLogForm(){
+    const date = document.getElementById('gymLogDate').value;
+    const dayId = document.getElementById('gymLogDaySelect').value;
+    const exercises = [];
+    document.querySelectorAll('#gymLogExercisesWrap .gym-exercise-block').forEach(block=>{
+      const exIdx = block.dataset.ex;
+      const name = gymCurrentExerciseNames[exIdx];
+      const sets = [];
+      block.querySelectorAll('.gym-set-row').forEach(row=>{
+        const reps = row.querySelector('.gym-set-reps').value;
+        const weight = row.querySelector('.gym-set-weight').value;
+        if(reps!=='' || weight!=='') sets.push({reps: reps!==''?parseFloat(reps):null, weight: weight!==''?parseFloat(weight):null});
+      });
+      if(sets.length) exercises.push({name, sets});
+    });
+    return {date, dayId, exercises};
+  }
+  const gymLogDaySelectEl = document.getElementById('gymLogDaySelect');
+  if(gymLogDaySelectEl) gymLogDaySelectEl.addEventListener('change', (e)=> renderGymLogExercises(e.target.value, null));
+
+  const gymLogExercisesWrapEl = document.getElementById('gymLogExercisesWrap');
+  if(gymLogExercisesWrapEl){
+    gymLogExercisesWrapEl.addEventListener('click', (e)=>{
+      const addBtn = e.target.closest('.gym-add-set-btn');
+      if(addBtn){
+        const exIdx = addBtn.dataset.ex;
+        const setsWrap = gymLogExercisesWrapEl.querySelector('.gym-sets-wrap[data-ex="'+exIdx+'"]');
+        if(setsWrap) setsWrap.insertAdjacentHTML('beforeend', gymSetRowHtml(exIdx, setsWrap.children.length, '', ''));
+        return;
+      }
+      const rmBtn = e.target.closest('.gym-set-remove');
+      if(rmBtn){
+        const row = rmBtn.closest('.gym-set-row');
+        const setsWrap = row.parentElement;
+        if(setsWrap.children.length>1) row.remove();
+        else { row.querySelector('.gym-set-reps').value=''; row.querySelector('.gym-set-weight').value=''; }
+      }
+    });
+  }
+  const gymLogSaveBtnEl = document.getElementById('gymLogSaveBtn');
+  if(gymLogSaveBtnEl){
+    gymLogSaveBtnEl.addEventListener('click', ()=>{
+      const data = readGymLogForm();
+      if(!data.date){ showToast('Pick a date.', 'error'); return; }
+      if(!data.dayId){ showToast('Set up your plan first (Plan tab).', 'error'); return; }
+      if(!data.exercises.length){ showToast('Log at least one set.', 'error'); return; }
+      if(gymEditingLogId){
+        const idx = db.gymLogs.findIndex(l=>l.id===gymEditingLogId);
+        if(idx>-1) db.gymLogs[idx] = Object.assign({id:gymEditingLogId}, data);
+      } else {
+        db.gymLogs.push(Object.assign({id:'gymlog_'+Date.now()}, data));
+      }
+      saveDB();
+      resetGymLogForm();
+      renderGymDashboard();
+      showToast('Workout saved.', 'success');
+    });
+  }
+  const gymLogCancelBtnEl = document.getElementById('gymLogCancelBtn');
+  if(gymLogCancelBtnEl) gymLogCancelBtnEl.addEventListener('click', resetGymLogForm);
+
+  function editGymLog(id){
+    const log = (db.gymLogs||[]).find(l=>l.id===id);
+    if(!log) return;
+    gymEditingLogId = id;
+    document.getElementById('gymLogFormTitle').textContent = 'Edit Workout';
+    document.getElementById('gymLogSaveBtn').textContent = 'Update Workout';
+    document.getElementById('gymLogCancelBtn').style.display = 'block';
+    document.getElementById('gymLogDate').value = log.date || todayKey();
+    renderGymLogDaySelect();
+    document.getElementById('gymLogDaySelect').value = log.dayId;
+    renderGymLogExercises(log.dayId, log.exercises);
+    document.querySelector('[data-view="gym"]').click();
+    activateGymPanel('log');
+    window.scrollTo({top:0, behavior:'smooth'});
+  }
+  function deleteGymLog(id){
+    if(!confirm('Delete this workout log permanently?')) return;
+    db.gymLogs = (db.gymLogs||[]).filter(l=>l.id!==id);
+    saveDB();
+    renderGymDashboard();
+  }
+
+  // ---- History ----
+  function gymWorkoutVolume(log){
+    return (log.exercises||[]).reduce((s,ex)=> s + (ex.sets||[]).reduce((s2,st)=> s2+((st.reps||0)*(st.weight||0)), 0), 0);
+  }
+  function renderGymHistory(){
+    const el = document.getElementById('gymHistoryList');
+    if(!el) return;
+    const logs = (db.gymLogs||[]).slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+    if(logs.length===0){
+      el.innerHTML = '<div class="card empty-state"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6.5 6.5 17.5 17.5"/><path d="m15.5 8.5-7 7"/></svg><div>No workouts logged yet.</div></div>';
+      return;
+    }
+    el.innerHTML = logs.map(log=>{
+      const day = (db.gymPlan||[]).find(d=>d.id===log.dayId);
+      const totalVolume = gymWorkoutVolume(log);
+      const totalSets = (log.exercises||[]).reduce((s,ex)=>s+(ex.sets||[]).length,0);
+      return `<div class="trade-card" data-gymlog-id="${log.id}">
+        <div class="trade-card-top">
+          <div>
+            <div class="trade-ticker-row"><span class="trade-ticker">${day?escapeHtml(day.name):'Workout'}</span></div>
+            <div class="trade-date">${log.date||''} · ${(log.exercises||[]).length} exercises · ${totalSets} sets</div>
+          </div>
+          <div class="trade-card-right"><div class="trade-pnl">${Math.round(totalVolume).toLocaleString('en-IN')}</div><div class="trade-r">kg volume</div></div>
+        </div>
+        <div class="trade-detail">
+          ${(log.exercises||[]).map(ex=>`<div class="trade-detail-row"><span class="lbl">${escapeHtml(ex.name)}</span>${(ex.sets||[]).map(s=>(s.reps??'—')+'×'+(s.weight??'—')+'kg').join(', ')}</div>`).join('')}
+          <div class="trade-actions">
+            <button class="btn ghost" data-edit-gymlog="${log.id}">Edit</button>
+            <button class="btn ghost" data-del-gymlog="${log.id}" style="border-color:var(--rose-dim); color:var(--rose);">Delete</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+    el.querySelectorAll('.trade-card').forEach(card=>{
+      card.addEventListener('click', (e)=>{
+        if(e.target.closest('[data-edit-gymlog]') || e.target.closest('[data-del-gymlog]')) return;
+        card.classList.toggle('expanded');
+      });
+    });
+    el.querySelectorAll('[data-edit-gymlog]').forEach(btn=> btn.addEventListener('click', (e)=>{ e.stopPropagation(); editGymLog(btn.dataset.editGymlog); }));
+    el.querySelectorAll('[data-del-gymlog]').forEach(btn=> btn.addEventListener('click', (e)=>{ e.stopPropagation(); deleteGymLog(btn.dataset.delGymlog); }));
+  }
+
+  // ---- Plan (5-day split editor) ----
+  function renderGymPlanCards(){
+    const wrap = document.getElementById('gymPlanCards');
+    if(!wrap) return;
+    wrap.innerHTML = (db.gymPlan||[]).map((day,dIdx)=>`
+      <div class="td-card gym-plan-day-card" data-day="${dIdx}">
+        <div class="modal-field"><label>${escapeHtml(day.label)}</label><input type="text" class="gym-plan-name-input" data-day="${dIdx}" value="${escapeHtml(day.name)}" placeholder="e.g. Push day"></div>
+        <div class="gym-exercise-chip-row" data-day="${dIdx}">
+          ${day.exercises.map((ex,eIdx)=>`<span class="gym-exercise-chip">${escapeHtml(ex)}<button type="button" class="gym-chip-remove" data-day="${dIdx}" data-ex="${eIdx}" title="Remove">×</button></span>`).join('') || '<span class="td-empty-note" style="padding:6px 0;">No exercises yet.</span>'}
+        </div>
+        <div class="gym-add-exercise-row">
+          <input type="text" class="gym-add-exercise-input" data-day="${dIdx}" placeholder="Add exercise…">
+          <button type="button" class="btn ghost gym-add-exercise-btn" data-day="${dIdx}">Add</button>
+        </div>
+      </div>
+    `).join('');
+  }
+  const gymPlanCardsEl = document.getElementById('gymPlanCards');
+  if(gymPlanCardsEl){
+    gymPlanCardsEl.addEventListener('change', (e)=>{
+      const nameInput = e.target.closest('.gym-plan-name-input');
+      if(nameInput){
+        const dIdx = nameInput.dataset.day;
+        db.gymPlan[dIdx].name = nameInput.value.trim() || db.gymPlan[dIdx].name;
+        saveDB();
+        renderGymDashboard();
+      }
+    });
+    gymPlanCardsEl.addEventListener('click', (e)=>{
+      const rmBtn = e.target.closest('.gym-chip-remove');
+      if(rmBtn){
+        db.gymPlan[rmBtn.dataset.day].exercises.splice(rmBtn.dataset.ex,1);
+        saveDB();
+        renderGymPlanCards();
+        return;
+      }
+      const addBtn = e.target.closest('.gym-add-exercise-btn');
+      if(addBtn){
+        const dIdx = addBtn.dataset.day;
+        const input = gymPlanCardsEl.querySelector('.gym-add-exercise-input[data-day="'+dIdx+'"]');
+        const val = (input.value||'').trim();
+        if(val){
+          db.gymPlan[dIdx].exercises.push(val);
+          saveDB();
+          renderGymPlanCards();
+        }
+      }
+    });
+    gymPlanCardsEl.addEventListener('keydown', (e)=>{
+      if(e.key==='Enter' && e.target.classList.contains('gym-add-exercise-input')){
+        e.preventDefault();
+        const dIdx = e.target.dataset.day;
+        const addBtn = gymPlanCardsEl.querySelector('.gym-add-exercise-btn[data-day="'+dIdx+'"]');
+        if(addBtn) addBtn.click();
+      }
+    });
+  }
+
+  // ---- Overview: hero card, stat grid, weekly-by-day chart, exercise progress list ----
+  function computeGymMetrics(){
+    const logs = db.gymLogs||[];
+    const now = new Date();
+    const weekAgoKey = todayKey(new Date(now.getTime()-6*86400000));
+    const prevWeekStartKey = todayKey(new Date(now.getTime()-13*86400000));
+    const thisWeekLogs = logs.filter(l=> l.date>=weekAgoKey);
+    const lastWeekLogs = logs.filter(l=> l.date>=prevWeekStartKey && l.date<weekAgoKey);
+    const thisWeekVol = thisWeekLogs.reduce((s,l)=>s+gymWorkoutVolume(l),0);
+    const lastWeekVol = lastWeekLogs.reduce((s,l)=>s+gymWorkoutVolume(l),0);
+    const totalVol = logs.reduce((s,l)=>s+gymWorkoutVolume(l),0);
+    const avgVol = logs.length ? totalVol/logs.length : 0;
+    const dayCounts = {};
+    thisWeekLogs.forEach(l=>{ dayCounts[l.dayId] = (dayCounts[l.dayId]||0)+1; });
+    return {totalWorkouts:logs.length, thisWeekCount:thisWeekLogs.length, lastWeekCount:lastWeekLogs.length, thisWeekVol, lastWeekVol, totalVol, avgVol, dayCounts};
+  }
+  function renderGymOverview(){
+    const gm = computeGymMetrics();
+    const heroEl = document.getElementById('gymHeroCard');
+    if(heroEl){
+      const delta = gm.lastWeekVol>0 ? Math.round(((gm.thisWeekVol-gm.lastWeekVol)/gm.lastWeekVol)*100) : null;
+      heroEl.innerHTML = `
+        <div class="td-hero-lbl">This Week's Volume</div>
+        <div class="td-hero-value pos">${Math.round(gm.thisWeekVol).toLocaleString('en-IN')} kg</div>
+        <div class="td-hero-stats-row">
+          <div class="td-hero-stat"><div class="td-hero-stat-lbl">Sessions This Week</div><div class="td-hero-stat-val">${gm.thisWeekCount}</div></div>
+          <div class="td-hero-stat"><div class="td-hero-stat-lbl">Vs Last Week</div><div class="td-hero-stat-val ${delta===null?'':(delta>=0?'pos':'neg')}">${delta===null?'—':(delta>=0?'+':'')+delta+'%'}</div></div>
+          <div class="td-hero-stat"><div class="td-hero-stat-lbl">Total Workouts</div><div class="td-hero-stat-val">${gm.totalWorkouts}</div></div>
+        </div>`;
+    }
+    const statGrid = document.getElementById('gymOverviewStats');
+    if(statGrid){
+      statGrid.innerHTML = [
+        statCardHtml('Avg Volume / Session', gm.totalWorkouts? Math.round(gm.avgVol).toLocaleString('en-IN')+' kg' : '—'),
+        statCardHtml('Total Volume Lifted', gm.totalVol? Math.round(gm.totalVol).toLocaleString('en-IN')+' kg' : '—'),
+        statCardHtml('Workouts This Week', gm.thisWeekCount),
+        statCardHtml('Workouts Last Week', gm.lastWeekCount),
+      ].join('');
+    }
+    const chartEl = document.getElementById('gymWeeklyChart');
+    if(chartEl){
+      const days = db.gymPlan||[];
+      if(days.length===0 || gm.totalWorkouts===0){
+        chartEl.innerHTML = '<div class="td-empty-note">Log a workout to see your weekly split.</div>';
+      } else {
+        const counts = days.map(d=> gm.dayCounts[d.id]||0);
+        const maxCount = Math.max(1, ...counts);
+        const w=340, h=120, barW=(w/days.length)*0.5, gap=(w/days.length);
+        const bars = days.map((d,i)=>{
+          const barH = (counts[i]/maxCount)*(h-24);
+          const x = i*gap+(gap-barW)/2, y = h-20-barH;
+          return `<rect class="td-bar" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${Math.max(barH,1).toFixed(1)}" rx="2" fill="var(--accent)"><title>${escapeHtml(d.label)}: ${counts[i]}</title></rect>
+            <text x="${(x+barW/2).toFixed(1)}" y="${h-6}" text-anchor="middle" class="td-chart-axis-label" style="font-size:8px;">${escapeHtml(d.label.replace('Day ','D'))}</text>`;
+        }).join('');
+        chartEl.innerHTML = `<svg class="td-chart-svg" viewBox="0 0 ${w} ${h}">${bars}</svg>`;
+      }
+    }
+    renderGymExerciseList();
+  }
+  let gymExerciseSortMode = 'recent';
+  function renderGymExerciseList(){
+    const el = document.getElementById('gymExerciseList');
+    if(!el) return;
+    const logs = (db.gymLogs||[]).slice().sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+    const byExercise = {};
+    logs.forEach(log=>{
+      (log.exercises||[]).forEach(ex=>{
+        const maxW = Math.max(0, ...(ex.sets||[]).map(s=>s.weight||0));
+        (byExercise[ex.name] = byExercise[ex.name]||[]).push({date:log.date, maxW});
+      });
+    });
+    let rows = Object.entries(byExercise).map(([name, points])=>{
+      const sparkVals = points.map(p=>p.maxW);
+      const latest = points[points.length-1], first = points[0];
+      const trend = latest.maxW - first.maxW;
+      return {name, count:points.length, latestWeight:latest.maxW, trend, sparkVals, lastDate:latest.date};
+    });
+    const sortFns = {
+      recent: (a,b)=> (b.lastDate||'').localeCompare(a.lastDate||''),
+      weight: (a,b)=> b.latestWeight-a.latestWeight,
+      count: (a,b)=> b.count-a.count,
+      alpha: (a,b)=> a.name.localeCompare(b.name),
+    };
+    rows = rows.sort(sortFns[gymExerciseSortMode]||sortFns.recent);
+    if(rows.length===0){ el.innerHTML = '<div class="td-empty-note">Log workouts to see exercise progress.</div>'; return; }
+    el.innerHTML = rows.map(r=>{
+      const cls = r.trend>0?'pos':(r.trend<0?'neg':'');
+      const color = r.trend>0?'var(--teal)':(r.trend<0?'var(--rose)':'var(--ink-faint)');
+      return `<div class="td-list-row">
+        <div class="td-list-name-wrap">
+          <div class="td-list-name">${escapeHtml(r.name)}</div>
+          <div class="td-list-sub">${r.count} session${r.count===1?'':'s'} logged</div>
+        </div>
+        ${miniSparkSvg(r.sparkVals, color)}
+        <div class="td-list-right">
+          <div class="td-list-val ${cls}">${r.latestWeight||'—'} kg</div>
+          <div class="td-list-subval">${r.trend===0?'steady':(r.trend>0?'+':'')+r.trend+' kg'}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  const gymExerciseSortEl = document.getElementById('gymExerciseSort');
+  if(gymExerciseSortEl) gymExerciseSortEl.addEventListener('change', ()=>{ gymExerciseSortMode = gymExerciseSortEl.value; renderGymExerciseList(); });
+
+  function renderGymDashboard(){
+    renderGymOverview();
+    renderGymHistory();
+    renderGymPlanCards();
   }
 
   // ---------- Analysis tab: Pomodoro + Trading overview, and AI-generated insights ----------
@@ -4735,6 +5396,7 @@
     if(viewName==='today') renderTodos();
     if(viewName==='study') renderStudyAnalysis();
     if(viewName==='record') renderAiAnalysisPanel();
+    if(viewName==='gym') renderGymDashboard();
     if(viewName==='settings'){ refreshProfilePanel(); renderGoals(); }
     if(viewName==='home') try{ renderHome(); }catch(e){}
     try{ updateThemeToggleVisibility(); }catch(e){}
@@ -4762,9 +5424,14 @@
   if(brandLink) brandLink.addEventListener('click', goHome);
 
   document.getElementById('wipeBtn').addEventListener('click', ()=>{
-    if(confirm('This will permanently erase all tracked data on this device. Continue?')){
+    if(confirm('This will erase your Trading, Gym Log, Notes, and Goals data on this device. Your To Do list, Habits, and Schedule are kept. This can\'t be undone. Continue?')){
+      const keep = {
+        days: db.days, todos: db.todos, schedule: db.schedule, customHabits: db.customHabits,
+        streak: db.streak, bestStreak: db.bestStreak, subjects: db.subjects
+      };
       localStorage.removeItem(DB_KEY);
-      db = loadDB();
+      db = Object.assign(loadDB(), keep);
+      saveDB();
       renderAll();
     }
   });
@@ -4904,10 +5571,12 @@
     renderGoals();
     renderTodos();
     renderHome();
+    renderGymDashboard();
   }
 
   renderPomo();
   resetTradeForm();
+  resetGymLogForm();
   setupAutoTheme();
   updateThemeToggleVisibility();
 

@@ -1955,7 +1955,7 @@
       <div class="cc-stat-row">
         <div class="cc-stat" data-view="planner"><div class="cc-stat-num" id="ccTodayCount">0</div><div class="cc-stat-lbl">Today's Tasks</div></div>
         <div class="cc-stat" data-view="planner"><div class="cc-stat-num warn" id="ccOverdueCount">0</div><div class="cc-stat-lbl">Overdue</div></div>
-        <div class="cc-stat" data-view="record"><div class="cc-stat-num" id="ccProgressPct">0%</div><div class="cc-stat-lbl">Day Progress</div></div>
+        <div class="cc-stat" data-view="home"><div class="cc-stat-num" id="ccInboxCount">0</div><div class="cc-stat-lbl">In Inbox</div></div>
       </div>
     </div>
 
@@ -6129,14 +6129,20 @@
     const overdueTasks = todos.filter(t=>!t.done && t.due && t.due<tKey);
     const todayCountEl = document.getElementById('ccTodayCount');
     const overdueCountEl = document.getElementById('ccOverdueCount');
-    const progressEl = document.getElementById('ccProgressPct');
+    const inboxCountEl = document.getElementById('ccInboxCount');
     if(todayCountEl) todayCountEl.textContent = todayTasks.length;
     if(overdueCountEl) overdueCountEl.textContent = overdueTasks.length;
-    if(progressEl) progressEl.textContent = dayCompletionPct(tKey)+'%';
+    if(inboxCountEl) inboxCountEl.textContent = (db.inbox||[]).length;
   }
   document.addEventListener('click', (e)=>{
     const jump = e.target.closest('#commandCenter [data-view]');
-    if(jump) switchToView(jump.dataset.view);
+    if(!jump) return;
+    if(jump.dataset.view==='home'){
+      const inboxEl = document.getElementById('inboxCard');
+      if(inboxEl) inboxEl.scrollIntoView({behavior:'smooth', block:'center'});
+      return;
+    }
+    switchToView(jump.dataset.view);
   });
 
   function switchToView(viewName, scrollToId){

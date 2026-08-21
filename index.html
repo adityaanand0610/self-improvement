@@ -104,6 +104,15 @@
 
   *{box-sizing:border-box; margin:0; padding:0;}
   html{ scroll-behavior:smooth; }
+  html,body{ -webkit-tap-highlight-color: transparent; }
+  button, a, [role="button"], .tab-btn, .icon-btn, input, select, textarea{ touch-action: manipulation; }
+  /* Paint/layout containment so switching tabs or opening modals doesn't force the
+     browser to re-measure the entire page — each view and card is isolated. */
+  .view{ contain: layout style; }
+  .card, .modal-card{ contain: content; }
+  @media (prefers-reduced-motion: reduce){
+    *, *::before, *::after{ animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition-duration:0.001ms !important; scroll-behavior:auto !important; }
+  }
   body{
     background: var(--bg);
     color: var(--ink);
@@ -167,14 +176,49 @@
   }
   .streak-pop-wrap{ position:relative; flex-shrink:0; width:100%; z-index:65; padding-bottom:10px; margin-bottom:6px; border-bottom:1px solid var(--line); }
   .streak-popover{
-    position:absolute; top: calc(100% + 8px); left:0; z-index:65;
-    width:216px; background: var(--surface); border:1px solid var(--line); border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-lg); padding:12px; animation: fadeIn 0.15s var(--ease);
+    position:absolute; top: calc(100% + 10px); left:0; z-index:65;
+    width:252px; background: var(--surface); border:1px solid var(--line); border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg); padding:16px; overflow:hidden;
+    transform-origin: 24px -6px;
+    animation: streakPopIn 0.22s var(--ease);
   }
-  .streak-pop-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; font-size:12.5px; padding:7px 4px; }
-  .streak-pop-row span{ color: var(--ink-dim); }
-  .streak-pop-row b{ font-family:'IBM Plex Mono'; color: var(--ink); }
-  .streak-pop-row + .streak-pop-row{ border-top:1px solid var(--line); }
+  @keyframes streakPopIn{
+    from{ opacity:0; transform: scale(0.92) translateY(-6px); }
+    to{ opacity:1; transform: scale(1) translateY(0); }
+  }
+  .streak-pop-glow{
+    position:absolute; top:-40px; left:-30px; width:140px; height:140px; border-radius:50%;
+    background: radial-gradient(circle, var(--accent) 0%, transparent 70%); opacity:0.16; pointer-events:none;
+  }
+  .streak-pop-head{ display:flex; align-items:center; gap:11px; margin-bottom:14px; position:relative; }
+  .streak-pop-flame{
+    width:42px; height:42px; border-radius:50%; flex-shrink:0;
+    background: linear-gradient(145deg, var(--accent-bg), var(--surface-raised));
+    border:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center; font-size:20px;
+  }
+  .streak-pop-headline{ display:flex; flex-direction:column; gap:1px; }
+  .streak-pop-headline .num{ font-family:'IBM Plex Mono'; font-size:19px; font-weight:700; color:var(--ink); line-height:1.15; }
+  .streak-pop-headline .sub{ font-size:11px; color:var(--ink-faint); font-weight:600; }
+  .streak-pop-week{ display:flex; justify-content:space-between; gap:5px; margin-bottom:14px; position:relative; }
+  .streak-pop-day{ display:flex; flex-direction:column; align-items:center; gap:5px; flex:1; }
+  .streak-pop-day .dot{
+    width:22px; height:22px; border-radius:50%; background:var(--surface-raised);
+    border:1.5px solid var(--line); display:flex; align-items:center; justify-content:center;
+    font-size:10px; color:transparent; transition: background .2s, border-color .2s, transform .15s;
+  }
+  .streak-pop-day.done .dot{ background: linear-gradient(145deg, var(--accent), var(--accent-dim)); border-color:var(--accent-dim); color:var(--accent-ink); }
+  .streak-pop-day.done .dot::after{ content:'✓'; }
+  .streak-pop-day.today .dot{ box-shadow: 0 0 0 2px var(--surface), 0 0 0 3.5px var(--accent); }
+  .streak-pop-day .dlabel{ font-size:9px; font-weight:700; color:var(--ink-faint); letter-spacing:0.03em; text-transform:uppercase; }
+  .streak-pop-stats{ display:flex; gap:8px; margin-bottom:12px; position:relative; }
+  .streak-pop-stat{ flex:1; background:var(--surface-raised); border:1px solid var(--line); border-radius:var(--radius-md); padding:9px 10px; }
+  .streak-pop-stat .n{ font-family:'IBM Plex Mono'; font-size:15px; font-weight:700; color:var(--ink); }
+  .streak-pop-stat .l{ font-size:10px; color:var(--ink-faint); font-weight:600; margin-top:1px; }
+  .streak-pop-msg{
+    font-size:11.5px; line-height:1.45; background:var(--accent-bg); color:var(--accent-dim);
+    border-radius:var(--radius-md); padding:9px 10px; font-weight:600; position:relative;
+  }
   .seal-fill{
     position:absolute; inset:0; border-radius:50%;
     background: conic-gradient(var(--accent) calc(var(--pct,0)*1%), transparent 0);
@@ -238,6 +282,8 @@
     gap:2px; overflow-y:auto;
     transform: translateX(-100%);
     transition: transform .3s var(--ease);
+    will-change: transform;
+    -webkit-overflow-scrolling: touch;
   }
   body.sidebar-open nav.tabs{ transform: translateX(0); }
   .sidebar-brand-row{
@@ -1725,9 +1771,21 @@
         <span class="lbl">Tap for details</span>
       </div>
     </div>
-    <div class="streak-popover" id="streakPopover" style="display:none;">
-      <div class="streak-pop-row"><span>🔥 Current streak</span><b id="popCurrentStreak">0 days</b></div>
-      <div class="streak-pop-row"><span>🏆 Best streak</span><b id="popBestStreak">0 days</b></div>
+    <div class="streak-popover" id="streakPopover" style="display:none;" role="dialog" aria-label="Streak details">
+      <div class="streak-pop-glow"></div>
+      <div class="streak-pop-head">
+        <div class="streak-pop-flame">🔥</div>
+        <div class="streak-pop-headline">
+          <span class="num" id="popHeadlineNum">0 day streak</span>
+          <span class="sub" id="popHeadlineSub">Start today to light it up</span>
+        </div>
+      </div>
+      <div class="streak-pop-week" id="popWeekStrip"></div>
+      <div class="streak-pop-stats">
+        <div class="streak-pop-stat"><div class="n" id="popCurrentStreak">0</div><div class="l">Current</div></div>
+        <div class="streak-pop-stat"><div class="n" id="popBestStreak">0</div><div class="l">Best ever</div></div>
+      </div>
+      <div class="streak-pop-msg" id="popStreakMsg">Complete today's habits to keep the streak alive.</div>
     </div>
   </div>
 
@@ -3016,10 +3074,56 @@
     computeStreak();
     document.getElementById('streakNum').textContent = db.streak;
     document.getElementById('sealFill').style.setProperty('--pct', Math.min(100, db.streak*10));
+    renderStreakPopover();
+  }
+
+  // Builds the redesigned streak popover: headline, a 7-day activity strip
+  // (today + the 6 days before it), current/best stat tiles, and a short
+  // context-aware message — all driven by the same data computeStreak() uses.
+  function renderStreakPopover(){
     const popCurrent = document.getElementById('popCurrentStreak');
     const popBest = document.getElementById('popBestStreak');
-    if(popCurrent) popCurrent.textContent = db.streak + (db.streak===1 ? ' day' : ' days');
-    if(popBest) popBest.textContent = (db.bestStreak||0) + ((db.bestStreak||0)===1 ? ' day' : ' days');
+    const streak = db.streak||0, best = db.bestStreak||0;
+    if(popCurrent) popCurrent.textContent = streak;
+    if(popBest) popBest.textContent = best;
+
+    const headlineNum = document.getElementById('popHeadlineNum');
+    const headlineSub = document.getElementById('popHeadlineSub');
+    if(headlineNum) headlineNum.textContent = streak + ' day streak';
+    if(headlineSub){
+      headlineSub.textContent = streak===0 ? 'Start today to light it up'
+        : (streak >= best && streak > 0) ? 'Personal best — right now!'
+        : "You're on a roll, keep going";
+    }
+
+    const strip = document.getElementById('popWeekStrip');
+    if(strip){
+      const dayInitials = ['S','M','T','W','T','F','S'];
+      let html = '';
+      const target = getTargetPct();
+      for(let i=6;i>=0;i--){
+        const d = new Date();
+        d.setDate(d.getDate()-i);
+        const key = todayKey(d);
+        const pct = dayCompletionPct(key);
+        const done = pct >= target;
+        const isToday = (i===0);
+        html += `<div class="streak-pop-day${done?' done':''}${isToday?' today':''}"><div class="dot"></div><div class="dlabel">${dayInitials[d.getDay()]}</div></div>`;
+      }
+      strip.innerHTML = html;
+    }
+
+    const msgEl = document.getElementById('popStreakMsg');
+    if(msgEl){
+      if(streak===0){
+        msgEl.textContent = best>0 ? `Your best run was ${best} day${best===1?'':'s'}. One good day today gets you moving again.` : "Complete today's habits to start your first streak.";
+      } else if(streak>=best && streak>1){
+        msgEl.textContent = `New personal best! Keep today boring and consistent to stretch it further.`;
+      } else {
+        const toGo = Math.max(0, best-streak);
+        msgEl.textContent = toGo>0 ? `${toGo} more day${toGo===1?'':'s'} to beat your best of ${best}.` : `Keep today's habits on track to extend the streak.`;
+      }
+    }
   }
 
   function dayCompletionPct(key){
@@ -3912,9 +4016,13 @@
 
   const tradeSearchInputEl = document.getElementById('tradeSearchInput');
   if(tradeSearchInputEl){
+    let tradeSearchDebounce;
     tradeSearchInputEl.addEventListener('input', ()=>{
-      tradesViewState.search = tradeSearchInputEl.value;
-      renderTradesList();
+      clearTimeout(tradeSearchDebounce);
+      tradeSearchDebounce = setTimeout(()=>{
+        tradesViewState.search = tradeSearchInputEl.value;
+        renderTradesList();
+      }, 150);
     });
   }
   const tradeSortSelectEl = document.getElementById('tradeSortSelect');
@@ -5424,7 +5532,13 @@
     if(viewName==='home'){ try{ renderHome(); }catch(e){} }
     if(viewName==='planner') renderTodos();
     try{ updateThemeToggleVisibility(); }catch(e){}
-    if(!scrollToId) window.scrollTo(0, 0);
+    // Always jump to top INSTANTLY on tab switch. The page has `scroll-behavior:smooth`
+    // globally (for in-page anchor jumps), which — without an explicit `behavior:'auto'`
+    // here — hijacks this reset into an animated scroll. If you switch tabs again before
+    // that animation finishes, the new view opens mid-scroll, looking like it "inherited"
+    // the previous page's scroll position. Forcing 'auto' makes every tab switch land at
+    // the top immediately, every time.
+    if(!scrollToId) window.scrollTo({top:0, left:0, behavior:'auto'});
     if(scrollToId){
       setTimeout(()=>{
         const el = document.getElementById(scrollToId);
@@ -6006,20 +6120,44 @@
   });
 
   const streakSealBtnEl = document.getElementById('streakSealBtn');
+  const streakRowEl = document.querySelector('.sidebar-streak-row');
+  function toggleStreakPopover(){
+    const pop = document.getElementById('streakPopover');
+    if(!pop) return;
+    const opening = pop.style.display==='none';
+    if(opening) renderStreakPopover();
+    pop.style.display = opening ? 'block' : 'none';
+  }
   if(streakSealBtnEl){
-    streakSealBtnEl.addEventListener('click', (e)=>{
-      e.stopPropagation();
-      const pop = document.getElementById('streakPopover');
-      if(pop) pop.style.display = (pop.style.display==='none') ? 'block' : 'none';
-    });
+    streakSealBtnEl.addEventListener('click', (e)=>{ e.stopPropagation(); toggleStreakPopover(); });
     streakSealBtnEl.addEventListener('keydown', (e)=>{
-      if(e.key==='Enter' || e.key===' '){ e.preventDefault(); streakSealBtnEl.click(); }
+      if(e.key==='Enter' || e.key===' '){ e.preventDefault(); toggleStreakPopover(); }
+    });
+  }
+  // The whole row (icon + "Tap for details" text) is tappable, not just the icon —
+  // matches what the label promises and gives a bigger, easier target on mobile.
+  if(streakRowEl){
+    streakRowEl.setAttribute('role','button');
+    streakRowEl.setAttribute('tabindex','0');
+    streakRowEl.addEventListener('click', (e)=>{
+      if(e.target.closest('#streakSealBtn')) return; // avoid double-toggle with the icon's own handler
+      e.stopPropagation();
+      toggleStreakPopover();
+    });
+    streakRowEl.addEventListener('keydown', (e)=>{
+      if(e.key==='Enter' || e.key===' '){ e.preventDefault(); toggleStreakPopover(); }
     });
   }
   document.addEventListener('click', (e)=>{
     const pop = document.getElementById('streakPopover');
     if(pop && pop.style.display!=='none' && !e.target.closest('.streak-pop-wrap')){
       pop.style.display = 'none';
+    }
+  });
+  document.addEventListener('keydown', (e)=>{
+    if(e.key==='Escape'){
+      const pop = document.getElementById('streakPopover');
+      if(pop && pop.style.display!=='none') pop.style.display = 'none';
     }
   });
 

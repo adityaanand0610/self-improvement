@@ -96,62 +96,11 @@
     color-scheme: dark;
   }
 
-  /* ================= TRADER MODE: Groww-inspired theme =================
-     When "Are you a trader?" is on, we swap the palette for a clean, mint-green
-     fintech look (à la Groww's investing app) instead of the default cream/espresso
-     theme. The existing light/dark toggle keeps working — it just re-skins this
-     palette instead of cream/espresso. Toggling trader mode off restores the
-     original theme untouched. */
-  :root[data-mode="groww"]{
-    --bg: #FAFBFC;
-    --surface: #FFFFFF;
-    --surface-raised: #F3F6F9;
-    --surface-hover: #E9EEF3;
-    --line: #E6EAEF;
-    --ink: #1A1D22;
-    --ink-dim: #5C6470;
-    --ink-faint: #98A0AC;
-    --accent: #00A67D;
-    --accent-dim: #008F6B;
-    --accent-ink: #FFFFFF;
-    --accent-bg: #E3F7EF;
-    --teal: #00A67D;
-    --teal-dim: #008F6B;
-    --teal-bg: #E3F7EF;
-    --rose: #E85A3D;
-    --rose-dim: #CC4A2E;
-    --rose-bg: #FDEAE3;
-    --focus-ring: #00A67D;
-    --shadow-sm: 0 1px 2px rgba(20,24,29,0.05);
-    --shadow-md: 0 10px 26px rgba(20,24,29,0.07);
-    --shadow-lg: 0 24px 56px rgba(20,24,29,0.13);
-    color-scheme: light;
-  }
-  :root[data-mode="groww"][data-theme="dark"]{
-    --bg: #0D1013;
-    --surface: #171A1F;
-    --surface-raised: #1D2128;
-    --surface-hover: #252A32;
-    --line: #292E36;
-    --ink: #EFF1F3;
-    --ink-dim: #A2A9B5;
-    --ink-faint: #6B7280;
-    --accent: #00D9A3;
-    --accent-dim: #00B98C;
-    --accent-ink: #0D1013;
-    --accent-bg: #0E2E27;
-    --teal: #00D9A3;
-    --teal-dim: #00B98C;
-    --teal-bg: #0E2E27;
-    --rose: #FF7A5C;
-    --rose-dim: #EB5B3C;
-    --rose-bg: #33170F;
-    --focus-ring: #00D9A3;
-    --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
-    --shadow-md: 0 10px 26px rgba(0,0,0,0.38);
-    --shadow-lg: 0 24px 56px rgba(0,0,0,0.48);
-    color-scheme: dark;
-  }
+  /* ================= TRADER MODE =================
+     "Are you a trader?" now shares the app's standard warm graphite + amber
+     theme rather than a separate palette — no CSS variable overrides needed
+     here. The data-mode="groww" attribute is still applied by JS in case any
+     other trader-specific (non-color) behavior depends on it. */
 
   *{box-sizing:border-box; margin:0; padding:0;}
   html{ scroll-behavior:smooth; }
@@ -216,9 +165,9 @@
     background: var(--surface-raised);
     cursor: pointer;
   }
-  .streak-pop-wrap{ position:relative; flex-shrink:0; width:100%; z-index:65; }
+  .streak-pop-wrap{ position:relative; flex-shrink:0; width:100%; z-index:65; padding-bottom:10px; margin-bottom:6px; border-bottom:1px solid var(--line); }
   .streak-popover{
-    position:absolute; bottom: calc(100% + 8px); left:0; z-index:65;
+    position:absolute; top: calc(100% + 8px); left:0; z-index:65;
     width:216px; background: var(--surface); border:1px solid var(--line); border-radius: var(--radius-lg);
     box-shadow: var(--shadow-lg); padding:12px; animation: fadeIn 0.15s var(--ease);
   }
@@ -342,6 +291,7 @@
     transition: background .15s var(--ease), color .15s var(--ease);
   }
   .sidebar-profile-btn:hover{ background: var(--surface-hover); color: var(--ink); }
+  .sidebar-profile-btn.active{ background: var(--accent-bg); color: var(--accent-dim); font-weight:700; }
   .sidebar-profile-btn svg{ width:18px; height:18px; flex-shrink:0; opacity:0.7; }
 
   main{ max-width: 1200px; margin: 0 auto; padding: 22px 16px 40px; }
@@ -1763,6 +1713,24 @@
   <button class="sidebar-collapse-btn" id="sidebarCollapseBtn" title="Toggle compact sidebar" aria-label="Toggle compact sidebar">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></svg>
   </button>
+
+  <div class="streak-pop-wrap">
+    <div class="sidebar-streak-row">
+      <div class="seal" id="streakSealBtn" title="Streak — tap for details" role="button" tabindex="0">
+        <div class="seal-fill" id="sealFill" style="--pct:0"></div>
+        <div class="seal-num mono" id="streakNum">0</div>
+      </div>
+      <div class="sidebar-streak-text">
+        <span class="n" id="streakStreakDaysLabel">Day streak</span>
+        <span class="lbl">Tap for details</span>
+      </div>
+    </div>
+    <div class="streak-popover" id="streakPopover" style="display:none;">
+      <div class="streak-pop-row"><span>🔥 Current streak</span><b id="popCurrentStreak">0 days</b></div>
+      <div class="streak-pop-row"><span>🏆 Best streak</span><b id="popBestStreak">0 days</b></div>
+    </div>
+  </div>
+
   <div class="sidebar-section-label">Menu</div>
   <button class="tab-btn" data-view="home" id="homeTabBtn" style="display:none;">
     <span class="tab-icon-box"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg></span>
@@ -1792,28 +1760,8 @@
     <span class="tab-icon-box"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h5"/></svg></span>
     <span class="tab-label">Notes</span>
   </button>
-  <button class="tab-btn" data-view="settings">
-    <span class="tab-icon-box"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
-    <span class="tab-label">Settings</span>
-  </button>
 
   <div class="sidebar-footer">
-    <div class="streak-pop-wrap">
-      <div class="sidebar-streak-row">
-        <div class="seal" id="streakSealBtn" title="Streak — tap for details" role="button" tabindex="0">
-          <div class="seal-fill" id="sealFill" style="--pct:0"></div>
-          <div class="seal-num mono" id="streakNum">0</div>
-        </div>
-        <div class="sidebar-streak-text">
-          <span class="n" id="streakStreakDaysLabel">Day streak</span>
-          <span class="lbl">Tap for details</span>
-        </div>
-      </div>
-      <div class="streak-popover" id="streakPopover" style="display:none;">
-        <div class="streak-pop-row"><span>🔥 Current streak</span><b id="popCurrentStreak">0 days</b></div>
-        <div class="streak-pop-row"><span>🏆 Best streak</span><b id="popBestStreak">0 days</b></div>
-      </div>
-    </div>
     <button class="sidebar-profile-btn" id="topProfileBtn" title="Profile & settings" aria-label="Profile and settings">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>
       <span>Profile &amp; Settings</span>
@@ -5461,6 +5409,8 @@
     document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
     const targetBtn = document.querySelector('.tab-btn[data-view="'+viewName+'"]');
     if(targetBtn) targetBtn.classList.add('active');
+    const profileBtnEl = document.getElementById('topProfileBtn');
+    if(profileBtnEl) profileBtnEl.classList.toggle('active', viewName==='settings');
     const targetView = document.getElementById('view-'+viewName);
     if(targetView) targetView.classList.add('active');
     const homeBtn = document.getElementById('homeTabBtn');
@@ -5474,6 +5424,7 @@
     if(viewName==='home'){ try{ renderHome(); }catch(e){} }
     if(viewName==='planner') renderTodos();
     try{ updateThemeToggleVisibility(); }catch(e){}
+    if(!scrollToId) window.scrollTo(0, 0);
     if(scrollToId){
       setTimeout(()=>{
         const el = document.getElementById(scrollToId);
@@ -6580,7 +6531,6 @@
   }
 
   document.querySelector('.tab-btn[data-view="study"]').addEventListener('click', renderStudyAnalysis);
-  document.querySelector('.tab-btn[data-view="settings"]').addEventListener('click', refreshProfilePanel);
 
   // Keep the analysis view live after any data change, without editing saveDB itself.
   const _origSaveDB = saveDB;

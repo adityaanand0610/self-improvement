@@ -1130,6 +1130,56 @@
   .fy-range-field label{ font-size:10.5px; color:var(--ink-faint); font-weight:600; }
   .fy-range-field input, .fy-range-field select{ border:1px solid var(--line); background:var(--surface); color:var(--ink); border-radius:8px; padding:7px 9px; font-size:12.5px; }
   @media (min-width:640px){ .fy-bestworst-grid{ grid-template-columns:repeat(4,1fr); } }
+
+  /* ---------- Phase 2: Milestones ---------- */
+  .goal-progress-bar{ height:5px; border-radius:4px; background:var(--surface-raised); overflow:hidden; margin-top:8px; }
+  .goal-progress-fill{ height:100%; background:var(--accent); border-radius:4px; }
+  .milestone-toggle{ font-size:11px; color:var(--accent); cursor:pointer; margin-top:8px; display:inline-block; background:none; border:none; padding:0; }
+  .milestone-list{ margin-top:8px; }
+  .milestone-item{ display:flex; align-items:center; gap:8px; padding:6px 0; border-bottom:1px solid var(--line); }
+  .milestone-item:last-child{ border-bottom:none; }
+  .milestone-check{ width:18px; height:18px; border-radius:5px; border:1.5px solid var(--ink-faint); background:none; cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:11px; color:var(--accent); }
+  .milestone-check.checked{ background:var(--accent); border-color:var(--accent); color:var(--accent-ink); }
+  .milestone-text{ flex:1; font-size:12.5px; color:var(--ink); }
+  .milestone-item.done .milestone-text{ text-decoration:line-through; color:var(--ink-faint); }
+  .milestone-del{ background:none; border:none; color:var(--ink-faint); cursor:pointer; font-size:13px; padding:2px 4px; }
+  .milestone-add-row{ display:flex; gap:6px; margin-top:8px; }
+  .milestone-add-row input{ flex:1; border:1px solid var(--line); background:var(--surface); color:var(--ink); border-radius:8px; padding:6px 9px; font-size:12px; }
+
+  /* ---------- Phase 2: Weekly Planning & Review ---------- */
+  .wr-week-nav{ display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+  .wr-week-lbl{ font-family:'Sora'; font-weight:700; font-size:13.5px; }
+  .wr-target-row{ display:flex; align-items:center; gap:8px; padding:7px 0; border-bottom:1px solid var(--line); }
+  .wr-target-row:last-child{ border-bottom:none; }
+  .wr-target-text{ flex:1; font-size:13px; }
+  .wr-target-row.done .wr-target-text{ text-decoration:line-through; color:var(--ink-faint); }
+  .wr-section-lbl{ font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.03em; color:var(--ink-faint); margin:14px 0 6px; }
+  .wr-section-lbl:first-child{ margin-top:0; }
+
+  /* ---------- Phase 2: Spaced Revision ---------- */
+  .rev-item{ display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--line); }
+  .rev-item:last-child{ border-bottom:none; }
+  .rev-item-body{ flex:1; min-width:0; }
+  .rev-item-topic{ font-size:13.5px; font-weight:600; color:var(--ink); }
+  .rev-item-meta{ font-size:11px; color:var(--ink-faint); margin-top:2px; }
+  .rev-stage-dots{ display:flex; gap:3px; margin-top:4px; }
+  .rev-stage-dot{ width:6px; height:6px; border-radius:50%; background:var(--line); }
+  .rev-stage-dot.filled{ background:var(--accent); }
+  .rev-due-badge{ font-size:10px; font-weight:700; padding:3px 8px; border-radius:20px; text-transform:uppercase; flex-shrink:0; }
+  .rev-due-badge.overdue{ background:var(--rose-bg); color:var(--rose); }
+  .rev-due-badge.today{ background:var(--accent-bg); color:var(--accent-dim); }
+  .rev-due-badge.upcoming{ background:var(--surface-raised); color:var(--ink-faint); }
+
+  /* ---------- Phase 2: Morning / Night check-in ---------- */
+  .checkin-prompt-row{ display:flex; gap:8px; margin-bottom:var(--space-6); }
+  .checkin-prompt-btn{ flex:1; padding:12px; border-radius:var(--radius-md); border:1px solid var(--line); background:var(--surface-raised); text-align:left; cursor:pointer; }
+  .checkin-prompt-btn.done{ border-color:var(--teal-dim); background:var(--teal-bg); }
+  .checkin-prompt-icon{ font-size:16px; }
+  .checkin-prompt-lbl{ font-size:12px; font-weight:700; margin-top:4px; }
+  .checkin-prompt-sub{ font-size:10.5px; color:var(--ink-faint); margin-top:2px; }
+  .mood-row{ display:flex; gap:8px; margin:6px 0 14px; }
+  .mood-btn{ flex:1; padding:10px 4px; border-radius:var(--radius-md); border:1px solid var(--line); background:var(--surface); font-size:20px; text-align:center; cursor:pointer; }
+  .mood-btn.on{ border-color:var(--accent); background:var(--accent-bg); }
   .td-bd-row:last-child{ border-bottom:none; }
   .td-bd-top{ display:flex; align-items:baseline; justify-content:space-between; gap:10px; margin-bottom:7px; }
   .td-bd-name{ font-weight:700; font-size:13px; text-transform:capitalize; }
@@ -1959,6 +2009,19 @@
       </div>
     </div>
 
+    <div class="checkin-prompt-row">
+      <button class="checkin-prompt-btn" id="morningCheckinBtn">
+        <div class="checkin-prompt-icon">☀️</div>
+        <div class="checkin-prompt-lbl" id="morningCheckinLbl">Morning Check-in</div>
+        <div class="checkin-prompt-sub" id="morningCheckinSub">Set today's intention</div>
+      </button>
+      <button class="checkin-prompt-btn" id="nightCheckinBtn">
+        <div class="checkin-prompt-icon">🌙</div>
+        <div class="checkin-prompt-lbl" id="nightCheckinLbl">Night Review</div>
+        <div class="checkin-prompt-sub" id="nightCheckinSub">Reflect on the day</div>
+      </button>
+    </div>
+
     <div class="card" id="inboxCard" style="display:none; margin-bottom:var(--space-6);">
       <div class="section-label" style="margin-top:0;">Inbox — needs triage</div>
       <div id="inboxList"></div>
@@ -2026,6 +2089,37 @@
       </div>
     </div>
 
+    <div class="card" style="margin-bottom:var(--space-6);">
+      <div class="card-title-row">
+        <div class="card-title">Weekly Planning &amp; Review</div>
+        <button class="collapse-toggle-btn" data-collapse-target="weeklyReviewBody" title="Collapse"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>
+      </div>
+      <div class="collapsible-body" id="weeklyReviewBody">
+        <div class="wr-week-nav">
+          <button class="btn ghost" id="wrPrevWeekBtn" style="padding:5px 10px;">‹</button>
+          <div class="wr-week-lbl" id="wrWeekLabel"></div>
+          <button class="btn ghost" id="wrNextWeekBtn" style="padding:5px 10px;">›</button>
+        </div>
+
+        <div class="wr-section-lbl">This week's targets</div>
+        <div id="wrTargetsList"></div>
+        <div class="milestone-add-row">
+          <input type="text" id="wrTargetInput" placeholder="Add a target for the week…">
+          <button class="btn ghost" id="wrTargetAddBtn" style="padding:6px 12px; font-size:12px;">Add</button>
+        </div>
+
+        <div class="wr-section-lbl">Wins</div>
+        <textarea id="wrWins" placeholder="What went well this week?"></textarea>
+        <div class="wr-section-lbl">Weaknesses / what slipped</div>
+        <textarea id="wrWeaknesses" placeholder="What didn't go to plan?"></textarea>
+        <div class="wr-section-lbl">Next actions for next week</div>
+        <textarea id="wrNextActions" placeholder="What will you change or carry forward?"></textarea>
+        <div class="modal-actions" style="margin-top:10px;">
+          <button class="btn primary" id="wrSaveBtn">Save Review</button>
+        </div>
+      </div>
+    </div>
+
     <div class="dashboard-grid">
       <div class="card">
         <div class="card-title-row">
@@ -2063,6 +2157,25 @@
       <div class="stat-box"><div class="stat-num" id="statToday">0h</div><div class="stat-lbl">Today</div></div>
       <div class="stat-box"><div class="stat-num" id="statWeek">0h</div><div class="stat-lbl">This week</div></div>
       <div class="stat-box"><div class="stat-num" id="statMonth">0h</div><div class="stat-lbl">This month</div></div>
+    </div>
+
+    <div class="card" style="margin-bottom:var(--space-6);">
+      <div class="card-title-row">
+        <div class="card-title">Spaced Revision</div>
+        <button class="collapse-toggle-btn" data-collapse-target="revisionBody" title="Collapse"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>
+      </div>
+      <div class="collapsible-body" id="revisionBody">
+        <div class="modal-row">
+          <div class="modal-field"><label>Topic</label><input type="text" id="revTopicInput" placeholder="e.g. Mughal Administration"></div>
+          <div class="modal-field"><label>Subject</label><select id="revSubjectSelect"></select></div>
+        </div>
+        <div class="modal-actions"><button class="btn primary" id="revAddBtn">Add to Revision Queue</button></div>
+        <p style="font-size:11px; color:var(--ink-faint); margin:8px 0 0;">Schedules follow-ups at 1, 3, 7, 14, 30 and 60 days after you last revised — mark each one done as you go through it.</p>
+        <div class="wr-section-lbl">Due now</div>
+        <div id="revDueList"></div>
+        <div class="wr-section-lbl">Upcoming</div>
+        <div id="revUpcomingList"></div>
+      </div>
     </div>
 
     <div class="dashboard-grid">
@@ -2895,6 +3008,41 @@
     </div>
   </div>
 
+  <!-- ---------- Morning Check-in / Night Review ---------- -->
+  <div class="modal-backdrop" id="checkinModalBackdrop">
+    <div class="modal-sheet">
+      <button class="modal-close" id="checkinModalClose">✕</button>
+      <div class="modal-title" id="checkinModalTitle">Morning Check-in</div>
+
+      <div id="checkinMorningFields">
+        <div class="modal-field"><label>Today's #1 intention</label><input type="text" id="ciIntention" placeholder="What matters most today?"></div>
+        <div class="modal-field"><label>Top 3 priorities</label>
+          <input type="text" id="ciPriority1" placeholder="1." style="margin-bottom:6px;">
+          <input type="text" id="ciPriority2" placeholder="2." style="margin-bottom:6px;">
+          <input type="text" id="ciPriority3" placeholder="3.">
+        </div>
+      </div>
+
+      <div id="checkinNightFields" style="display:none;">
+        <div class="modal-field"><label>How did today go?</label>
+          <div class="mood-row" id="ciMoodRow">
+            <div class="mood-btn" data-val="1">😞</div>
+            <div class="mood-btn" data-val="2">😕</div>
+            <div class="mood-btn" data-val="3">😐</div>
+            <div class="mood-btn" data-val="4">🙂</div>
+            <div class="mood-btn" data-val="5">😄</div>
+          </div>
+        </div>
+        <div class="modal-field"><label>One thing that went well</label><input type="text" id="ciGoodThing" placeholder="…"></div>
+        <div class="modal-field"><label>One thing to improve tomorrow</label><input type="text" id="ciImprove" placeholder="…"></div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn primary" id="checkinSaveBtn">Save</button>
+      </div>
+    </div>
+  </div>
+
 <script>
 (function(){
   const DB_KEY = 'study_register_v1';
@@ -3123,7 +3271,7 @@
       const raw = localStorage.getItem(DB_KEY);
       if(raw) return JSON.parse(raw);
     }catch(e){}
-    return {days:{}, subjects: DEFAULT_SUBJECTS.slice(), streak:0, bestStreak:0, schedule: JSON.parse(JSON.stringify(DEFAULT_SCHEDULE)), trades:[], notes:[], notesPin:'', goals:[], todos:[], inbox:[], customHabits: JSON.parse(JSON.stringify(DEFAULT_CUSTOM_HABITS)), gymPlan: JSON.parse(JSON.stringify(DEFAULT_GYM_PLAN)), gymLogs:[]};
+    return {days:{}, subjects: DEFAULT_SUBJECTS.slice(), streak:0, bestStreak:0, schedule: JSON.parse(JSON.stringify(DEFAULT_SCHEDULE)), trades:[], notes:[], notesPin:'', goals:[], todos:[], inbox:[], weeklyReviews:{}, revisions:[], customHabits: JSON.parse(JSON.stringify(DEFAULT_CUSTOM_HABITS)), gymPlan: JSON.parse(JSON.stringify(DEFAULT_GYM_PLAN)), gymLogs:[]};
   }
 
   // ---------- Firebase ----------
@@ -3491,6 +3639,10 @@
         const diff = daysUntilGoal(g.targetDate);
         const numText = g.achieved ? '✓' : (diff>0 ? diff : diff===0 ? '0' : Math.abs(diff));
         const smallText = g.achieved ? 'Achieved' : (diff>0 ? 'Days Until' : diff===0 ? 'Today' : 'Days Overdue');
+        const milestones = g.milestones||[];
+        const msDone = milestones.filter(m=>m.done).length;
+        const msPct = milestones.length ? Math.round((msDone/milestones.length)*100) : 0;
+        const expanded = expandedGoalIds.has(g.id);
         return `
           <div class="goal-card${g.achieved?' achieved':''}" data-id="${g.id}">
             <div class="goal-card-top">
@@ -3501,6 +3653,26 @@
             <div class="goal-meta-row"><span>${formatGoalDate(g.targetDate)}</span></div>
             ${g.note ? `<div class="goal-note">${escapeHtml(g.note)}</div>` : ''}
             ${g.achieved ? '<div class="goal-badge-achieved">🏆 Achieved</div>' : ''}
+            ${milestones.length ? `
+              <div class="goal-progress-bar"><div class="goal-progress-fill" style="width:${msPct}%;"></div></div>
+              <div style="font-size:10.5px; color:var(--ink-faint); margin-top:4px;">${msDone}/${milestones.length} milestones</div>
+            ` : ''}
+            <button class="milestone-toggle" data-action="toggle-ms">${expanded?'Hide milestones ▲':'Milestones '+(milestones.length?`(${milestones.length}) ▾`:'▾')}</button>
+            ${expanded ? `
+              <div class="milestone-list">
+                ${milestones.map(m=>`
+                  <div class="milestone-item${m.done?' done':''}" data-ms-id="${m.id}">
+                    <button class="milestone-check${m.done?' checked':''}" data-action="ms-toggle">${m.done?'✓':''}</button>
+                    <div class="milestone-text">${escapeHtml(m.title)}</div>
+                    <button class="milestone-del" data-action="ms-delete" title="Delete">✕</button>
+                  </div>
+                `).join('')}
+              </div>
+              <div class="milestone-add-row">
+                <input type="text" placeholder="Add a milestone…" data-ms-input>
+                <button class="btn ghost" data-action="ms-add" style="padding:6px 12px; font-size:12px;">Add</button>
+              </div>
+            ` : ''}
             <div class="goal-card-actions">
               <button class="btn ghost" data-action="achieve">${g.achieved?'Mark active':'Mark achieved'}</button>
               <button class="btn ghost" data-action="edit">Edit</button>
@@ -3539,6 +3711,9 @@
     });
   }
 
+  // Goal → Milestone → Task hierarchy: which goal cards have their milestone checklist open.
+  // Kept as UI-only state (not persisted) so it doesn't clutter the saved data model.
+  const expandedGoalIds = new Set();
   const goalsListEl = document.getElementById('goalsList');
   if(goalsListEl){
     goalsListEl.addEventListener('click', (e)=>{
@@ -3568,6 +3743,45 @@
       if(actionBtn && actionBtn.dataset.action==='edit'){
         openGoalModal(goal);
         return;
+      }
+      if(actionBtn && actionBtn.dataset.action==='toggle-ms'){
+        if(expandedGoalIds.has(id)) expandedGoalIds.delete(id); else expandedGoalIds.add(id);
+        renderGoals();
+        return;
+      }
+      if(actionBtn && actionBtn.dataset.action==='ms-add'){
+        const input = card.querySelector('[data-ms-input]');
+        const title = input ? input.value.trim() : '';
+        if(!title) return;
+        if(!goal.milestones) goal.milestones = [];
+        goal.milestones.push({id:'ms_'+Date.now(), title, done:false});
+        saveDB();
+        renderGoals();
+        return;
+      }
+      if(actionBtn && (actionBtn.dataset.action==='ms-toggle' || actionBtn.dataset.action==='ms-delete')){
+        const msRow = e.target.closest('[data-ms-id]');
+        if(!msRow) return;
+        const msId = msRow.dataset.msId;
+        if(!goal.milestones) goal.milestones = [];
+        if(actionBtn.dataset.action==='ms-toggle'){
+          const ms = goal.milestones.find(m=>m.id===msId);
+          if(ms) ms.done = !ms.done;
+        } else {
+          goal.milestones = goal.milestones.filter(m=>m.id!==msId);
+        }
+        saveDB();
+        renderGoals();
+        return;
+      }
+    });
+    // Enter key in the milestone input adds it without needing to click "Add"
+    goalsListEl.addEventListener('keydown', (e)=>{
+      if(e.key==='Enter' && e.target.matches('[data-ms-input]')){
+        e.preventDefault();
+        const card = e.target.closest('.goal-card');
+        const addBtn = card && card.querySelector('[data-action="ms-add"]');
+        if(addBtn) addBtn.click();
       }
     });
   }
@@ -3677,7 +3891,6 @@
         renderTodos();
         try{ renderCommandCenter(); }catch(e){}
       } else if(actionBtn.dataset.action==='priority'){
-        // Only one task can be the #1 priority at a time — mirrors a real "focus on this" pick
         const makingPriority = !todo.priority;
         if(makingPriority) (db.todos||[]).forEach(t=>{ t.priority = false; });
         todo.priority = makingPriority;
@@ -3842,7 +4055,6 @@
       closeCmdk();
     }
   });
-
 
   // ---------- Today view: habit grid ----------
   function renderHabitGrid(){
@@ -4440,244 +4652,6 @@
   function fmtPnl(n){ return (n>=0?'+':'')+Math.round(n); }
   function fmtMoney(n){ return (n<0?'-':'')+'₹'+Math.round(Math.abs(n)).toLocaleString('en-IN'); }
 
-  // ================= FY / Periods analytics (Indian Financial Year: Apr 1 – Mar 31) =================
-  // FY key is the starting calendar year, e.g. a trade dated 2025-06-01 or 2026-02-01 both
-  // belong to FY key 2025 ("FY 2025–26"), since the Indian FY runs April→March.
-  function fyKeyForDate(dateStr){
-    if(!dateStr) return null;
-    const d = new Date(dateStr+'T00:00:00');
-    if(isNaN(d.getTime())) return null;
-    const y = d.getFullYear(), m = d.getMonth()+1; // 1-12
-    return m>=4 ? y : y-1;
-  }
-  function fyLabel(fyKey){ return 'FY '+fyKey+'–'+String(fyKey+1).slice(-2); }
-  function currentFyKey(){ return fyKeyForDate(todayKey()); }
-
-  function groupTradesBy(trades, keyFn){
-    const groups = {};
-    trades.forEach(t=>{
-      if(!t.date) return;
-      const k = keyFn(t.date);
-      if(k===null || k===undefined) return;
-      if(!groups[k]) groups[k] = [];
-      groups[k].push(t);
-    });
-    return groups;
-  }
-
-  function computeBestWorst(trades){
-    const withPnl = trades.filter(t=> t.date && t.pnl!==undefined && t.pnl!=='' && !isNaN(parseFloat(t.pnl)));
-    // Best/worst single day: sum P&L per calendar date
-    const byDay = groupTradesBy(withPnl, d=>d);
-    let bestDay=null, worstDay=null;
-    Object.keys(byDay).forEach(k=>{
-      const sum = byDay[k].reduce((s,t)=>s+parseFloat(t.pnl),0);
-      if(bestDay===null||sum>bestDay.sum) bestDay={key:k,sum};
-      if(worstDay===null||sum<worstDay.sum) worstDay={key:k,sum};
-    });
-    // Best/worst month
-    const byMonth = groupTradesBy(withPnl, d=>d.slice(0,7));
-    let bestMonth=null, worstMonth=null;
-    Object.keys(byMonth).forEach(k=>{
-      const sum = byMonth[k].reduce((s,t)=>s+parseFloat(t.pnl),0);
-      if(bestMonth===null||sum>bestMonth.sum) bestMonth={key:k,sum};
-      if(worstMonth===null||sum<worstMonth.sum) worstMonth={key:k,sum};
-    });
-    // Best/worst calendar year
-    const byYear = groupTradesBy(withPnl, d=>d.slice(0,4));
-    let bestYear=null, worstYear=null;
-    Object.keys(byYear).forEach(k=>{
-      const sum = byYear[k].reduce((s,t)=>s+parseFloat(t.pnl),0);
-      if(bestYear===null||sum>bestYear.sum) bestYear={key:k,sum};
-      if(worstYear===null||sum<worstYear.sum) worstYear={key:k,sum};
-    });
-    // Best/worst FY
-    const byFy = groupTradesBy(withPnl, d=>fyKeyForDate(d));
-    let bestFy=null, worstFy=null;
-    Object.keys(byFy).forEach(k=>{
-      const sum = byFy[k].reduce((s,t)=>s+parseFloat(t.pnl),0);
-      if(bestFy===null||sum>bestFy.sum) bestFy={key:k,sum};
-      if(worstFy===null||sum<worstFy.sum) worstFy={key:k,sum};
-    });
-    return {bestDay, worstDay, bestMonth, worstMonth, bestYear, worstYear, bestFy, worstFy};
-  }
-
-  function periodRowHtml(label, m, isCurrent){
-    return `<tr${isCurrent?' class="current-fy"':''}>
-      <td>${label}</td>
-      <td>${m.count}</td>
-      <td class="${m.net>=0?'pos':'neg'}" style="color:${m.net>=0?'var(--teal)':'var(--rose)'};">${fmtMoney(m.net)}</td>
-      <td>${m.winRate.toFixed(0)}%</td>
-      <td>${m.profitFactor===Infinity?'∞':m.profitFactor.toFixed(2)}</td>
-      <td>${m.avgR!==null?m.avgR.toFixed(2)+'R':'—'}</td>
-      <td>${fmtMoney(m.expectancy)}</td>
-    </tr>`;
-  }
-  const PERIOD_TABLE_HEAD = `<tr><th>Period</th><th>Trades</th><th>Net P&amp;L</th><th>Win%</th><th>PF</th><th>Avg R</th><th>Expectancy</th></tr>`;
-
-  function renderPeriodsPanel(){
-    const panel = document.getElementById('tpanel-periods');
-    if(!panel) return;
-    const trades = (db.trades||[]).filter(t=>t.date);
-    const bw = document.getElementById('fyBestWorstGrid');
-    if(trades.length===0){
-      if(bw) bw.innerHTML = '<div class="td-empty-note" style="grid-column:1/-1;">Log trades with dates to unlock FY and period analytics.</div>';
-      const fyTableEl = document.getElementById('fyTable'); if(fyTableEl) fyTableEl.innerHTML='';
-      const yearTableEl = document.getElementById('yearTable'); if(yearTableEl) yearTableEl.innerHTML='';
-      const monthTableEl = document.getElementById('monthTable'); if(monthTableEl) monthTableEl.innerHTML='';
-      const cmpEl = document.getElementById('cmpResultRow'); if(cmpEl) cmpEl.innerHTML='';
-      const fyCompareEl = document.getElementById('fyCompareRow'); if(fyCompareEl) fyCompareEl.innerHTML='';
-      const fyEqEl = document.getElementById('fyEquityChart'); if(fyEqEl) fyEqEl.innerHTML='';
-      return;
-    }
-
-    // ----- Best / Worst grid -----
-    const best = computeBestWorst(trades);
-    if(bw){
-      const bwCard = (lbl,item,fmt)=> item ? `<div class="fy-bw-card"><div class="lbl">${lbl}</div><div class="val" style="color:${item.sum>=0?'var(--teal)':'var(--rose)'};">${fmtMoney(item.sum)}</div><div class="sub">${fmt(item.key)}</div></div>` : `<div class="fy-bw-card"><div class="lbl">${lbl}</div><div class="val" style="color:var(--ink-faint);">—</div></div>`;
-      bw.innerHTML = [
-        bwCard('Best Day', best.bestDay, k=>k),
-        bwCard('Worst Day', best.worstDay, k=>k),
-        bwCard('Best Month', best.bestMonth, k=>k),
-        bwCard('Worst Month', best.worstMonth, k=>k),
-        bwCard('Best Year', best.bestYear, k=>k),
-        bwCard('Worst Year', best.worstYear, k=>k),
-        bwCard('Best FY', best.bestFy, k=>fyLabel(parseInt(k))),
-        bwCard('Worst FY', best.worstFy, k=>fyLabel(parseInt(k))),
-      ].join('');
-    }
-
-    // ----- FY breakdown table -----
-    const byFy = groupTradesBy(trades, d=>fyKeyForDate(d));
-    const fyKeys = Object.keys(byFy).map(Number).sort((a,b)=>b-a);
-    const curFy = currentFyKey();
-    const fyTableEl = document.getElementById('fyTable');
-    if(fyTableEl){
-      fyTableEl.innerHTML = PERIOD_TABLE_HEAD + fyKeys.map(k=> periodRowHtml(fyLabel(k), computeTradeMetrics(byFy[k]), k===curFy)).join('');
-    }
-
-    // ----- FY vs previous FY comparison -----
-    const fyCompareEl = document.getElementById('fyCompareRow');
-    if(fyCompareEl){
-      const curM = computeTradeMetrics(byFy[curFy]||[]);
-      const prevM = computeTradeMetrics(byFy[curFy-1]||[]);
-      const delta = curM.net - prevM.net;
-      const deltaPct = prevM.net!==0 ? (delta/Math.abs(prevM.net))*100 : (curM.net!==0 ? 100 : 0);
-      fyCompareEl.innerHTML = `
-        <div class="fy-compare-card">
-          <div class="lbl">${fyLabel(curFy)} (Current)</div>
-          <div class="val" style="color:${curM.net>=0?'var(--teal)':'var(--rose)'};">${fmtMoney(curM.net)}</div>
-          <div class="delta" style="color:var(--ink-faint);">${curM.count} trades · ${curM.winRate.toFixed(0)}% win rate</div>
-        </div>
-        <div class="fy-compare-card">
-          <div class="lbl">${fyLabel(curFy-1)} (Previous)</div>
-          <div class="val" style="color:${prevM.net>=0?'var(--teal)':'var(--rose)'};">${fmtMoney(prevM.net)}</div>
-          <div class="delta" style="color:${delta>=0?'var(--teal)':'var(--rose)'};">${delta>=0?'▲':'▼'} ${fmtMoney(Math.abs(delta))} (${Math.abs(deltaPct).toFixed(0)}% ${delta>=0?'more':'less'})</div>
-        </div>`;
-    }
-
-    // ----- Cumulative growth chart across FYs (equity curve with FY boundary markers) -----
-    const fyEqEl = document.getElementById('fyEquityChart');
-    if(fyEqEl){
-      const chrono = trades.filter(t=>t.pnl!==undefined && t.pnl!=='' && !isNaN(parseFloat(t.pnl))).slice().sort((a,b)=>(a.date||'').localeCompare(b.date||''));
-      if(chrono.length<1){
-        fyEqEl.innerHTML = '<div class="td-empty-note">No P&amp;L data yet.</div>';
-      } else {
-        let running=0;
-        const pts=[{x:0,y:0,fy:fyKeyForDate(chrono[0].date)}];
-        chrono.forEach((t,i)=>{ running+=parseFloat(t.pnl); pts.push({x:i+1,y:running,fy:fyKeyForDate(t.date)}); });
-        const w=640, h=170, padL=4, padR=4, padT=14, padB=4;
-        const ys = pts.map(p=>p.y);
-        const minY=Math.min(0,...ys), maxY=Math.max(0,...ys), spanY=(maxY-minY)||1;
-        const xFor = i => padL + (i/(pts.length-1))*(w-padL-padR);
-        const yFor = v => padT + (1-((v-minY)/spanY))*(h-padT-padB);
-        const linePts = pts.map((p,i)=> xFor(i).toFixed(1)+','+yFor(p.y).toFixed(1)).join(' ');
-        const zeroY = yFor(0).toFixed(1);
-        const areaPts = `${xFor(0)},${zeroY} ${linePts} ${xFor(pts.length-1)},${zeroY}`;
-        const lineColor = running>=0 ? 'var(--teal)' : 'var(--rose)';
-        // FY boundary markers: a vertical dashed line where the FY key changes
-        let markers = '';
-        for(let i=1;i<pts.length;i++){
-          if(pts[i].fy !== pts[i-1].fy){
-            const x = xFor(i).toFixed(1);
-            markers += `<line x1="${x}" y1="${padT}" x2="${x}" y2="${h-padB}" stroke="var(--ink-faint)" stroke-width="1" stroke-dasharray="2,3" opacity="0.5"/>`;
-          }
-        }
-        fyEqEl.innerHTML = `
-          <svg class="td-chart-svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
-            <line x1="${padL}" y1="${zeroY}" x2="${w-padR}" y2="${zeroY}" stroke="var(--line)" stroke-width="1" stroke-dasharray="3,3"/>
-            ${markers}
-            <polygon points="${areaPts}" fill="${lineColor}" opacity="0.10"/>
-            <polyline points="${linePts}" fill="none" stroke="${lineColor}" stroke-width="2"/>
-          </svg>
-          <div class="td-empty-note" style="padding:6px 0 0; text-align:left;">Dashed lines mark FY boundaries (Apr 1). Cumulative: ${fmtMoney(running)}</div>`;
-      }
-    }
-
-    // ----- Calendar year breakdown -----
-    const byYear = groupTradesBy(trades, d=>d.slice(0,4));
-    const yearKeys = Object.keys(byYear).sort((a,b)=>b.localeCompare(a));
-    const curYear = String(new Date().getFullYear());
-    const yearTableEl = document.getElementById('yearTable');
-    if(yearTableEl){
-      yearTableEl.innerHTML = PERIOD_TABLE_HEAD + yearKeys.map(k=> periodRowHtml(k, computeTradeMetrics(byYear[k]), k===curYear)).join('');
-    }
-
-    // ----- Monthly breakdown, filterable by FY -----
-    const fyFilterEl = document.getElementById('fyMonthFilter');
-    if(fyFilterEl){
-      const prevVal = fyFilterEl.value;
-      fyFilterEl.innerHTML = '<option value="all">All financial years</option>' + fyKeys.map(k=>`<option value="${k}">${fyLabel(k)}</option>`).join('');
-      fyFilterEl.value = fyKeys.map(String).includes(prevVal) || prevVal==='all' ? prevVal : 'all';
-      if(!fyFilterEl._bound){
-        fyFilterEl.addEventListener('change', renderMonthTable);
-        fyFilterEl._bound = true;
-      }
-    }
-    function renderMonthTable(){
-      const monthTableEl = document.getElementById('monthTable');
-      if(!monthTableEl) return;
-      const sel = fyFilterEl ? fyFilterEl.value : 'all';
-      let pool = trades;
-      if(sel!=='all') pool = trades.filter(t=> fyKeyForDate(t.date)===Number(sel));
-      const byMonth = groupTradesBy(pool, d=>d.slice(0,7));
-      const monthKeys = Object.keys(byMonth).sort((a,b)=>b.localeCompare(a));
-      const curMonth = todayKey().slice(0,7);
-      monthTableEl.innerHTML = monthKeys.length
-        ? PERIOD_TABLE_HEAD + monthKeys.map(k=> periodRowHtml(k, computeTradeMetrics(byMonth[k]), k===curMonth)).join('')
-        : `<tr><td colspan="7" class="td-empty-note">No trades in this financial year.</td></tr>`;
-    }
-    renderMonthTable();
-
-    // ----- Custom period comparison -----
-    const cmpBtn = document.getElementById('cmpRunBtn');
-    if(cmpBtn && !cmpBtn._bound){
-      cmpBtn._bound = true;
-      cmpBtn.addEventListener('click', ()=>{
-        const aFrom = document.getElementById('cmpAFrom').value, aTo = document.getElementById('cmpATo').value;
-        const bFrom = document.getElementById('cmpBFrom').value, bTo = document.getElementById('cmpBTo').value;
-        const cmpEl = document.getElementById('cmpResultRow');
-        if(!cmpEl) return;
-        if(!aFrom || !aTo || !bFrom || !bTo){
-          cmpEl.innerHTML = '<div class="td-empty-note" style="grid-column:1/-1;">Pick both start and end dates for each period.</div>';
-          return;
-        }
-        const inRange = (d,from,to)=> d>=from && d<=to;
-        const poolA = trades.filter(t=> inRange(t.date, aFrom, aTo));
-        const poolB = trades.filter(t=> inRange(t.date, bFrom, bTo));
-        const mA = computeTradeMetrics(poolA), mB = computeTradeMetrics(poolB);
-        const cardHtml = (lbl,range,m)=> `
-          <div class="fy-compare-card">
-            <div class="lbl">${lbl} · ${range}</div>
-            <div class="val" style="color:${m.net>=0?'var(--teal)':'var(--rose)'};">${fmtMoney(m.net)}</div>
-            <div class="delta" style="color:var(--ink-faint);">${m.count} trades · ${m.winRate.toFixed(0)}% win · PF ${m.profitFactor===Infinity?'∞':m.profitFactor.toFixed(2)}</div>
-          </div>`;
-        cmpEl.innerHTML = cardHtml('Period A', aFrom+' → '+aTo, mA) + cardHtml('Period B', bFrom+' → '+bTo, mB);
-      });
-    }
-  }
-
-
   function statCardHtml(lbl, val, cls, sub){
     return `<div class="td-stat-card"><div class="td-stat-lbl">${lbl}</div><div class="td-stat-val ${cls||''}">${val}</div>${sub?`<div class="td-stat-sub">${sub}</div>`:''}</div>`;
   }
@@ -5048,6 +5022,229 @@
     renderStrategyBreakdown();
     renderRiskPanel();
     try{ renderPeriodsPanel(); }catch(e){}
+  }
+
+  // ================= FY / Periods analytics (Indian Financial Year: Apr 1 – Mar 31) =================
+  function fyKeyForDate(dateStr){
+    if(!dateStr) return null;
+    const d = new Date(dateStr+'T00:00:00');
+    if(isNaN(d.getTime())) return null;
+    const y = d.getFullYear(), m = d.getMonth()+1;
+    return m>=4 ? y : y-1;
+  }
+  function fyLabel(fyKey){ return 'FY '+fyKey+'–'+String(fyKey+1).slice(-2); }
+  function currentFyKey(){ return fyKeyForDate(todayKey()); }
+
+  function groupTradesBy(trades, keyFn){
+    const groups = {};
+    trades.forEach(t=>{
+      if(!t.date) return;
+      const k = keyFn(t.date);
+      if(k===null || k===undefined) return;
+      if(!groups[k]) groups[k] = [];
+      groups[k].push(t);
+    });
+    return groups;
+  }
+
+  function computeBestWorst(trades){
+    const withPnl = trades.filter(t=> t.date && t.pnl!==undefined && t.pnl!=='' && !isNaN(parseFloat(t.pnl)));
+    const byDay = groupTradesBy(withPnl, d=>d);
+    let bestDay=null, worstDay=null;
+    Object.keys(byDay).forEach(k=>{
+      const sum = byDay[k].reduce((s,t)=>s+parseFloat(t.pnl),0);
+      if(bestDay===null||sum>bestDay.sum) bestDay={key:k,sum};
+      if(worstDay===null||sum<worstDay.sum) worstDay={key:k,sum};
+    });
+    const byMonth = groupTradesBy(withPnl, d=>d.slice(0,7));
+    let bestMonth=null, worstMonth=null;
+    Object.keys(byMonth).forEach(k=>{
+      const sum = byMonth[k].reduce((s,t)=>s+parseFloat(t.pnl),0);
+      if(bestMonth===null||sum>bestMonth.sum) bestMonth={key:k,sum};
+      if(worstMonth===null||sum<worstMonth.sum) worstMonth={key:k,sum};
+    });
+    const byYear = groupTradesBy(withPnl, d=>d.slice(0,4));
+    let bestYear=null, worstYear=null;
+    Object.keys(byYear).forEach(k=>{
+      const sum = byYear[k].reduce((s,t)=>s+parseFloat(t.pnl),0);
+      if(bestYear===null||sum>bestYear.sum) bestYear={key:k,sum};
+      if(worstYear===null||sum<worstYear.sum) worstYear={key:k,sum};
+    });
+    const byFy = groupTradesBy(withPnl, d=>fyKeyForDate(d));
+    let bestFy=null, worstFy=null;
+    Object.keys(byFy).forEach(k=>{
+      const sum = byFy[k].reduce((s,t)=>s+parseFloat(t.pnl),0);
+      if(bestFy===null||sum>bestFy.sum) bestFy={key:k,sum};
+      if(worstFy===null||sum<worstFy.sum) worstFy={key:k,sum};
+    });
+    return {bestDay, worstDay, bestMonth, worstMonth, bestYear, worstYear, bestFy, worstFy};
+  }
+
+  function periodRowHtml(label, m, isCurrent){
+    return `<tr${isCurrent?' class="current-fy"':''}>
+      <td>${label}</td>
+      <td>${m.count}</td>
+      <td class="${m.net>=0?'pos':'neg'}" style="color:${m.net>=0?'var(--teal)':'var(--rose)'};">${fmtMoney(m.net)}</td>
+      <td>${m.winRate.toFixed(0)}%</td>
+      <td>${m.profitFactor===Infinity?'∞':m.profitFactor.toFixed(2)}</td>
+      <td>${m.avgR!==null?m.avgR.toFixed(2)+'R':'—'}</td>
+      <td>${fmtMoney(m.expectancy)}</td>
+    </tr>`;
+  }
+  const PERIOD_TABLE_HEAD = `<tr><th>Period</th><th>Trades</th><th>Net P&amp;L</th><th>Win%</th><th>PF</th><th>Avg R</th><th>Expectancy</th></tr>`;
+
+  function renderPeriodsPanel(){
+    const panel = document.getElementById('tpanel-periods');
+    if(!panel) return;
+    const trades = (db.trades||[]).filter(t=>t.date);
+    const bw = document.getElementById('fyBestWorstGrid');
+    if(trades.length===0){
+      if(bw) bw.innerHTML = '<div class="td-empty-note" style="grid-column:1/-1;">Log trades with dates to unlock FY and period analytics.</div>';
+      const fyTableEl = document.getElementById('fyTable'); if(fyTableEl) fyTableEl.innerHTML='';
+      const yearTableEl = document.getElementById('yearTable'); if(yearTableEl) yearTableEl.innerHTML='';
+      const monthTableEl = document.getElementById('monthTable'); if(monthTableEl) monthTableEl.innerHTML='';
+      const cmpEl = document.getElementById('cmpResultRow'); if(cmpEl) cmpEl.innerHTML='';
+      const fyCompareEl = document.getElementById('fyCompareRow'); if(fyCompareEl) fyCompareEl.innerHTML='';
+      const fyEqEl = document.getElementById('fyEquityChart'); if(fyEqEl) fyEqEl.innerHTML='';
+      return;
+    }
+
+    const best = computeBestWorst(trades);
+    if(bw){
+      const bwCard = (lbl,item,fmt)=> item ? `<div class="fy-bw-card"><div class="lbl">${lbl}</div><div class="val" style="color:${item.sum>=0?'var(--teal)':'var(--rose)'};">${fmtMoney(item.sum)}</div><div class="sub">${fmt(item.key)}</div></div>` : `<div class="fy-bw-card"><div class="lbl">${lbl}</div><div class="val" style="color:var(--ink-faint);">—</div></div>`;
+      bw.innerHTML = [
+        bwCard('Best Day', best.bestDay, k=>k),
+        bwCard('Worst Day', best.worstDay, k=>k),
+        bwCard('Best Month', best.bestMonth, k=>k),
+        bwCard('Worst Month', best.worstMonth, k=>k),
+        bwCard('Best Year', best.bestYear, k=>k),
+        bwCard('Worst Year', best.worstYear, k=>k),
+        bwCard('Best FY', best.bestFy, k=>fyLabel(parseInt(k))),
+        bwCard('Worst FY', best.worstFy, k=>fyLabel(parseInt(k))),
+      ].join('');
+    }
+
+    const byFy = groupTradesBy(trades, d=>fyKeyForDate(d));
+    const fyKeys = Object.keys(byFy).map(Number).sort((a,b)=>b-a);
+    const curFy = currentFyKey();
+    const fyTableEl = document.getElementById('fyTable');
+    if(fyTableEl){
+      fyTableEl.innerHTML = PERIOD_TABLE_HEAD + fyKeys.map(k=> periodRowHtml(fyLabel(k), computeTradeMetrics(byFy[k]), k===curFy)).join('');
+    }
+
+    const fyCompareEl = document.getElementById('fyCompareRow');
+    if(fyCompareEl){
+      const curM = computeTradeMetrics(byFy[curFy]||[]);
+      const prevM = computeTradeMetrics(byFy[curFy-1]||[]);
+      const delta = curM.net - prevM.net;
+      const deltaPct = prevM.net!==0 ? (delta/Math.abs(prevM.net))*100 : (curM.net!==0 ? 100 : 0);
+      fyCompareEl.innerHTML = `
+        <div class="fy-compare-card">
+          <div class="lbl">${fyLabel(curFy)} (Current)</div>
+          <div class="val" style="color:${curM.net>=0?'var(--teal)':'var(--rose)'};">${fmtMoney(curM.net)}</div>
+          <div class="delta" style="color:var(--ink-faint);">${curM.count} trades · ${curM.winRate.toFixed(0)}% win rate</div>
+        </div>
+        <div class="fy-compare-card">
+          <div class="lbl">${fyLabel(curFy-1)} (Previous)</div>
+          <div class="val" style="color:${prevM.net>=0?'var(--teal)':'var(--rose)'};">${fmtMoney(prevM.net)}</div>
+          <div class="delta" style="color:${delta>=0?'var(--teal)':'var(--rose)'};">${delta>=0?'▲':'▼'} ${fmtMoney(Math.abs(delta))} (${Math.abs(deltaPct).toFixed(0)}% ${delta>=0?'more':'less'})</div>
+        </div>`;
+    }
+
+    const fyEqEl = document.getElementById('fyEquityChart');
+    if(fyEqEl){
+      const chrono = trades.filter(t=>t.pnl!==undefined && t.pnl!=='' && !isNaN(parseFloat(t.pnl))).slice().sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+      if(chrono.length<1){
+        fyEqEl.innerHTML = '<div class="td-empty-note">No P&amp;L data yet.</div>';
+      } else {
+        let running=0;
+        const pts=[{x:0,y:0,fy:fyKeyForDate(chrono[0].date)}];
+        chrono.forEach((t,i)=>{ running+=parseFloat(t.pnl); pts.push({x:i+1,y:running,fy:fyKeyForDate(t.date)}); });
+        const w=640, h=170, padL=4, padR=4, padT=14, padB=4;
+        const ys = pts.map(p=>p.y);
+        const minY=Math.min(0,...ys), maxY=Math.max(0,...ys), spanY=(maxY-minY)||1;
+        const xFor = i => padL + (i/(pts.length-1))*(w-padL-padR);
+        const yFor = v => padT + (1-((v-minY)/spanY))*(h-padT-padB);
+        const linePts = pts.map((p,i)=> xFor(i).toFixed(1)+','+yFor(p.y).toFixed(1)).join(' ');
+        const zeroY = yFor(0).toFixed(1);
+        const areaPts = `${xFor(0)},${zeroY} ${linePts} ${xFor(pts.length-1)},${zeroY}`;
+        const lineColor = running>=0 ? 'var(--teal)' : 'var(--rose)';
+        let markers = '';
+        for(let i=1;i<pts.length;i++){
+          if(pts[i].fy !== pts[i-1].fy){
+            const x = xFor(i).toFixed(1);
+            markers += `<line x1="${x}" y1="${padT}" x2="${x}" y2="${h-padB}" stroke="var(--ink-faint)" stroke-width="1" stroke-dasharray="2,3" opacity="0.5"/>`;
+          }
+        }
+        fyEqEl.innerHTML = `
+          <svg class="td-chart-svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+            <line x1="${padL}" y1="${zeroY}" x2="${w-padR}" y2="${zeroY}" stroke="var(--line)" stroke-width="1" stroke-dasharray="3,3"/>
+            ${markers}
+            <polygon points="${areaPts}" fill="${lineColor}" opacity="0.10"/>
+            <polyline points="${linePts}" fill="none" stroke="${lineColor}" stroke-width="2"/>
+          </svg>
+          <div class="td-empty-note" style="padding:6px 0 0; text-align:left;">Dashed lines mark FY boundaries (Apr 1). Cumulative: ${fmtMoney(running)}</div>`;
+      }
+    }
+
+    const byYear = groupTradesBy(trades, d=>d.slice(0,4));
+    const yearKeys = Object.keys(byYear).sort((a,b)=>b.localeCompare(a));
+    const curYear = String(new Date().getFullYear());
+    const yearTableEl = document.getElementById('yearTable');
+    if(yearTableEl){
+      yearTableEl.innerHTML = PERIOD_TABLE_HEAD + yearKeys.map(k=> periodRowHtml(k, computeTradeMetrics(byYear[k]), k===curYear)).join('');
+    }
+
+    const fyFilterEl = document.getElementById('fyMonthFilter');
+    if(fyFilterEl){
+      const prevVal = fyFilterEl.value;
+      fyFilterEl.innerHTML = '<option value="all">All financial years</option>' + fyKeys.map(k=>`<option value="${k}">${fyLabel(k)}</option>`).join('');
+      fyFilterEl.value = fyKeys.map(String).includes(prevVal) || prevVal==='all' ? prevVal : 'all';
+      if(!fyFilterEl._bound){
+        fyFilterEl.addEventListener('change', renderMonthTable);
+        fyFilterEl._bound = true;
+      }
+    }
+    function renderMonthTable(){
+      const monthTableEl = document.getElementById('monthTable');
+      if(!monthTableEl) return;
+      const sel = fyFilterEl ? fyFilterEl.value : 'all';
+      let pool = trades;
+      if(sel!=='all') pool = trades.filter(t=> fyKeyForDate(t.date)===Number(sel));
+      const byMonth = groupTradesBy(pool, d=>d.slice(0,7));
+      const monthKeys = Object.keys(byMonth).sort((a,b)=>b.localeCompare(a));
+      const curMonth = todayKey().slice(0,7);
+      monthTableEl.innerHTML = monthKeys.length
+        ? PERIOD_TABLE_HEAD + monthKeys.map(k=> periodRowHtml(k, computeTradeMetrics(byMonth[k]), k===curMonth)).join('')
+        : `<tr><td colspan="7" class="td-empty-note">No trades in this financial year.</td></tr>`;
+    }
+    renderMonthTable();
+
+    const cmpBtn = document.getElementById('cmpRunBtn');
+    if(cmpBtn && !cmpBtn._bound){
+      cmpBtn._bound = true;
+      cmpBtn.addEventListener('click', ()=>{
+        const aFrom = document.getElementById('cmpAFrom').value, aTo = document.getElementById('cmpATo').value;
+        const bFrom = document.getElementById('cmpBFrom').value, bTo = document.getElementById('cmpBTo').value;
+        const cmpEl = document.getElementById('cmpResultRow');
+        if(!cmpEl) return;
+        if(!aFrom || !aTo || !bFrom || !bTo){
+          cmpEl.innerHTML = '<div class="td-empty-note" style="grid-column:1/-1;">Pick both start and end dates for each period.</div>';
+          return;
+        }
+        const inRange = (d,from,to)=> d>=from && d<=to;
+        const poolA = trades.filter(t=> inRange(t.date, aFrom, aTo));
+        const poolB = trades.filter(t=> inRange(t.date, bFrom, bTo));
+        const mA = computeTradeMetrics(poolA), mB = computeTradeMetrics(poolB);
+        const cardHtml = (lbl,range,m)=> `
+          <div class="fy-compare-card">
+            <div class="lbl">${lbl} · ${range}</div>
+            <div class="val" style="color:${m.net>=0?'var(--teal)':'var(--rose)'};">${fmtMoney(m.net)}</div>
+            <div class="delta" style="color:var(--ink-faint);">${m.count} trades · ${m.winRate.toFixed(0)}% win · PF ${m.profitFactor===Infinity?'∞':m.profitFactor.toFixed(2)}</div>
+          </div>`;
+        cmpEl.innerHTML = cardHtml('Period A', aFrom+' → '+aTo, mA) + cardHtml('Period B', bFrom+' → '+bTo, mB);
+      });
+    }
   }
   // Activates one trade sub-panel (Overview/History/Calendar/Strategies/Risk/New Trade) and
   // keeps the subnav button state in sync. Shared by the subnav click handler and editTrade(),
@@ -6115,7 +6312,6 @@
       priorityText.classList.remove('cc-priority-empty');
       if(priorityStar) priorityStar.style.opacity = '1';
     } else {
-      // Fall back to the earliest overdue/due-today task so the card is never empty when work exists
       const fallback = todos.filter(t=>!t.done && t.due && t.due<=tKey).sort((a,b)=>(a.due||'').localeCompare(b.due||''))[0]
         || todos.find(t=>!t.done);
       if(fallback){
@@ -6144,6 +6340,277 @@
     }
     switchToView(jump.dataset.view);
   });
+
+  // ================= Weekly Planning & Review =================
+  // ISO-8601 week key, e.g. "2026-W34" — Monday-start weeks so the label lines up with how most people think about a work/study week.
+  function isoWeekKey(d){
+    const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    const dayNum = date.getUTCDay() || 7;
+    date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+    const weekNo = Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+    return date.getUTCFullYear() + '-W' + String(weekNo).padStart(2, '0');
+  }
+  function weekStartDate(offsetWeeks){
+    const now = new Date();
+    const day = now.getDay() || 7;
+    const monday = new Date(now);
+    monday.setDate(now.getDate() - day + 1 + (offsetWeeks*7));
+    monday.setHours(0,0,0,0);
+    return monday;
+  }
+  function fmtShortDate(d){ return d.toLocaleDateString('en-IN', {day:'numeric', month:'short'}); }
+  let wrWeekOffset = 0;
+  function getWeekRecord(weekKey){
+    if(!db.weeklyReviews) db.weeklyReviews = {};
+    if(!db.weeklyReviews[weekKey]) db.weeklyReviews[weekKey] = {targets:[], wins:'', weaknesses:'', nextActions:''};
+    return db.weeklyReviews[weekKey];
+  }
+  function renderWeeklyReview(){
+    const labelEl = document.getElementById('wrWeekLabel');
+    if(!labelEl) return;
+    const monday = weekStartDate(wrWeekOffset);
+    const sunday = new Date(monday); sunday.setDate(monday.getDate()+6);
+    const weekKey = isoWeekKey(monday);
+    labelEl.textContent = fmtShortDate(monday) + ' – ' + fmtShortDate(sunday) + (wrWeekOffset===0 ? ' (this week)' : '');
+    const rec = getWeekRecord(weekKey);
+    const targetsEl = document.getElementById('wrTargetsList');
+    if(targetsEl){
+      targetsEl.innerHTML = rec.targets.length ? rec.targets.map(t=>`
+        <div class="wr-target-row${t.done?' done':''}" data-id="${t.id}">
+          <button class="milestone-check${t.done?' checked':''}" data-action="wr-toggle">${t.done?'✓':''}</button>
+          <div class="wr-target-text">${escapeHtml(t.text)}</div>
+          <button class="milestone-del" data-action="wr-delete" title="Delete">✕</button>
+        </div>
+      `).join('') : '<div class="td-empty-note" style="text-align:left; padding:8px 0;">No targets set for this week yet.</div>';
+    }
+    document.getElementById('wrWins').value = rec.wins||'';
+    document.getElementById('wrWeaknesses').value = rec.weaknesses||'';
+    document.getElementById('wrNextActions').value = rec.nextActions||'';
+    document.getElementById('wrTargetsList').dataset.weekKey = weekKey;
+  }
+  const wrPrevBtnEl = document.getElementById('wrPrevWeekBtn');
+  if(wrPrevBtnEl) wrPrevBtnEl.addEventListener('click', ()=>{ wrWeekOffset--; renderWeeklyReview(); });
+  const wrNextBtnEl = document.getElementById('wrNextWeekBtn');
+  if(wrNextBtnEl) wrNextBtnEl.addEventListener('click', ()=>{ wrWeekOffset++; renderWeeklyReview(); });
+  const wrTargetAddBtnEl = document.getElementById('wrTargetAddBtn');
+  if(wrTargetAddBtnEl){
+    wrTargetAddBtnEl.addEventListener('click', ()=>{
+      const input = document.getElementById('wrTargetInput');
+      const text = input.value.trim();
+      if(!text) return;
+      const weekKey = isoWeekKey(weekStartDate(wrWeekOffset));
+      const rec = getWeekRecord(weekKey);
+      rec.targets.push({id:'wt_'+Date.now(), text, done:false});
+      input.value = '';
+      saveDB();
+      renderWeeklyReview();
+    });
+    document.getElementById('wrTargetInput').addEventListener('keydown', (e)=>{
+      if(e.key==='Enter'){ e.preventDefault(); wrTargetAddBtnEl.click(); }
+    });
+  }
+  const wrTargetsListEl = document.getElementById('wrTargetsList');
+  if(wrTargetsListEl){
+    wrTargetsListEl.addEventListener('click', (e)=>{
+      const row = e.target.closest('[data-id]');
+      const btn = e.target.closest('[data-action]');
+      if(!row || !btn) return;
+      const weekKey = isoWeekKey(weekStartDate(wrWeekOffset));
+      const rec = getWeekRecord(weekKey);
+      const target = rec.targets.find(t=>t.id===row.dataset.id);
+      if(!target) return;
+      if(btn.dataset.action==='wr-toggle'){ target.done = !target.done; }
+      else if(btn.dataset.action==='wr-delete'){ rec.targets = rec.targets.filter(t=>t.id!==row.dataset.id); }
+      saveDB();
+      renderWeeklyReview();
+    });
+  }
+  const wrSaveBtnEl = document.getElementById('wrSaveBtn');
+  if(wrSaveBtnEl){
+    wrSaveBtnEl.addEventListener('click', ()=>{
+      const weekKey = isoWeekKey(weekStartDate(wrWeekOffset));
+      const rec = getWeekRecord(weekKey);
+      rec.wins = document.getElementById('wrWins').value;
+      rec.weaknesses = document.getElementById('wrWeaknesses').value;
+      rec.nextActions = document.getElementById('wrNextActions').value;
+      saveDB();
+      showToast('Weekly review saved.', 'success');
+    });
+  }
+
+  // ================= Spaced Revision (1/3/7/14/30/60-day intervals) =================
+  const REVISION_INTERVALS = [1,3,7,14,30,60];
+  function addDaysToKey(key, days){
+    const d = new Date(key+'T00:00:00');
+    d.setDate(d.getDate()+days);
+    return todayKey(d);
+  }
+  function renderRevisionSubjectSelect(){
+    const sel = document.getElementById('revSubjectSelect');
+    if(!sel) return;
+    const subjects = db.subjects||[];
+    sel.innerHTML = subjects.map(s=>`<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
+  }
+  function renderRevisionQueue(){
+    const dueEl = document.getElementById('revDueList');
+    const upEl = document.getElementById('revUpcomingList');
+    if(!dueEl || !upEl) return;
+    const items = db.revisions||[];
+    const tKey = todayKey();
+    const due = items.filter(r=>r.nextDue<=tKey).sort((a,b)=>a.nextDue.localeCompare(b.nextDue));
+    const upcoming = items.filter(r=>r.nextDue>tKey).sort((a,b)=>a.nextDue.localeCompare(b.nextDue));
+    function rowHtml(r){
+      const overdue = r.nextDue<tKey;
+      const badgeCls = overdue ? 'overdue' : (r.nextDue===tKey ? 'today' : 'upcoming');
+      const badgeTxt = overdue ? 'Overdue' : (r.nextDue===tKey ? 'Today' : r.nextDue);
+      const dots = REVISION_INTERVALS.map((_,i)=> `<div class="rev-stage-dot${i<r.stage?' filled':''}"></div>`).join('');
+      return `
+        <div class="rev-item" data-id="${r.id}">
+          <div class="rev-item-body">
+            <div class="rev-item-topic">${escapeHtml(r.topic)}</div>
+            <div class="rev-item-meta">${escapeHtml(r.subject||'')} · Stage ${Math.min(r.stage+1, REVISION_INTERVALS.length)}/${REVISION_INTERVALS.length}</div>
+            <div class="rev-stage-dots">${dots}</div>
+          </div>
+          <span class="rev-due-badge ${badgeCls}">${badgeTxt}</span>
+          <button class="inbox-mini-btn" data-action="rev-done">Revised</button>
+          <button class="inbox-mini-btn" data-action="rev-delete">✕</button>
+        </div>`;
+    }
+    dueEl.innerHTML = due.length ? due.map(rowHtml).join('') : '<div class="td-empty-note" style="text-align:left; padding:8px 0;">Nothing due — you\'re caught up.</div>';
+    upEl.innerHTML = upcoming.length ? upcoming.map(rowHtml).join('') : '<div class="td-empty-note" style="text-align:left; padding:8px 0;">No upcoming revisions scheduled.</div>';
+  }
+  const revAddBtnEl = document.getElementById('revAddBtn');
+  if(revAddBtnEl){
+    revAddBtnEl.addEventListener('click', ()=>{
+      const topicInput = document.getElementById('revTopicInput');
+      const topic = topicInput.value.trim();
+      if(!topic){ showToast('Enter a topic.', 'error'); return; }
+      const subject = document.getElementById('revSubjectSelect').value;
+      if(!db.revisions) db.revisions = [];
+      const tKey = todayKey();
+      db.revisions.push({
+        id:'rev_'+Date.now(), topic, subject, stage:0,
+        lastDone: tKey, nextDue: addDaysToKey(tKey, REVISION_INTERVALS[0]),
+        createdAt: new Date().toISOString()
+      });
+      topicInput.value = '';
+      saveDB();
+      renderRevisionQueue();
+      showToast('Added to revision queue.', 'success');
+    });
+  }
+  ['revDueList','revUpcomingList'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.addEventListener('click', (e)=>{
+      const row = e.target.closest('[data-id]');
+      const btn = e.target.closest('[data-action]');
+      if(!row || !btn) return;
+      const rev = (db.revisions||[]).find(r=>r.id===row.dataset.id);
+      if(!rev) return;
+      if(btn.dataset.action==='rev-delete'){
+        db.revisions = (db.revisions||[]).filter(r=>r.id!==row.dataset.id);
+      } else if(btn.dataset.action==='rev-done'){
+        const tKey = todayKey();
+        rev.lastDone = tKey;
+        if(rev.stage < REVISION_INTERVALS.length-1){
+          rev.stage += 1;
+          rev.nextDue = addDaysToKey(tKey, REVISION_INTERVALS[rev.stage]);
+        } else {
+          // Final interval already completed — retire it from the active queue rather than looping forever.
+          db.revisions = (db.revisions||[]).filter(r=>r.id!==rev.id);
+          saveDB();
+          renderRevisionQueue();
+          showToast('Revision cycle complete — nice work.', 'success');
+          return;
+        }
+      }
+      saveDB();
+      renderRevisionQueue();
+    });
+  });
+
+  // ================= Morning Check-in / Night Review =================
+  function getTodayCheckin(){
+    const day = getDay(todayKey());
+    if(!day.checkin) day.checkin = {};
+    return day.checkin;
+  }
+  function renderCheckinPrompts(){
+    const ci = getTodayCheckin();
+    const mBtn = document.getElementById('morningCheckinBtn');
+    const nBtn = document.getElementById('nightCheckinBtn');
+    if(mBtn){
+      mBtn.classList.toggle('done', !!ci.morning);
+      document.getElementById('morningCheckinSub').textContent = ci.morning ? (ci.morning.intention || 'Intention set') : "Set today's intention";
+    }
+    if(nBtn){
+      nBtn.classList.toggle('done', !!ci.night);
+      document.getElementById('nightCheckinSub').textContent = ci.night ? 'Reflected on today' : 'Reflect on the day';
+    }
+  }
+  let checkinMode = 'morning';
+  const checkinBackdrop = document.getElementById('checkinModalBackdrop');
+  function openCheckin(mode){
+    checkinMode = mode;
+    const ci = getTodayCheckin();
+    document.getElementById('checkinModalTitle').textContent = mode==='morning' ? 'Morning Check-in' : 'Night Review';
+    document.getElementById('checkinMorningFields').style.display = mode==='morning' ? '' : 'none';
+    document.getElementById('checkinNightFields').style.display = mode==='night' ? '' : 'none';
+    if(mode==='morning'){
+      document.getElementById('ciIntention').value = (ci.morning&&ci.morning.intention)||'';
+      document.getElementById('ciPriority1').value = (ci.morning&&ci.morning.priorities&&ci.morning.priorities[0])||'';
+      document.getElementById('ciPriority2').value = (ci.morning&&ci.morning.priorities&&ci.morning.priorities[1])||'';
+      document.getElementById('ciPriority3').value = (ci.morning&&ci.morning.priorities&&ci.morning.priorities[2])||'';
+    } else {
+      document.getElementById('ciGoodThing').value = (ci.night&&ci.night.goodThing)||'';
+      document.getElementById('ciImprove').value = (ci.night&&ci.night.improve)||'';
+      const mood = ci.night ? ci.night.mood : null;
+      document.querySelectorAll('#ciMoodRow .mood-btn').forEach(b=> b.classList.toggle('on', String(mood)===b.dataset.val));
+    }
+    checkinBackdrop.classList.add('open');
+  }
+  const morningCheckinBtnEl = document.getElementById('morningCheckinBtn');
+  if(morningCheckinBtnEl) morningCheckinBtnEl.addEventListener('click', ()=>openCheckin('morning'));
+  const nightCheckinBtnEl = document.getElementById('nightCheckinBtn');
+  if(nightCheckinBtnEl) nightCheckinBtnEl.addEventListener('click', ()=>openCheckin('night'));
+  const checkinModalCloseEl = document.getElementById('checkinModalClose');
+  if(checkinModalCloseEl) checkinModalCloseEl.addEventListener('click', ()=>checkinBackdrop.classList.remove('open'));
+  if(checkinBackdrop) checkinBackdrop.addEventListener('click', (e)=>{ if(e.target===checkinBackdrop) checkinBackdrop.classList.remove('open'); });
+  const ciMoodRowEl = document.getElementById('ciMoodRow');
+  if(ciMoodRowEl){
+    ciMoodRowEl.addEventListener('click', (e)=>{
+      const btn = e.target.closest('.mood-btn');
+      if(!btn) return;
+      ciMoodRowEl.querySelectorAll('.mood-btn').forEach(b=>b.classList.toggle('on', b===btn));
+    });
+  }
+  const checkinSaveBtnEl = document.getElementById('checkinSaveBtn');
+  if(checkinSaveBtnEl){
+    checkinSaveBtnEl.addEventListener('click', ()=>{
+      const ci = getTodayCheckin();
+      if(checkinMode==='morning'){
+        ci.morning = {
+          intention: document.getElementById('ciIntention').value.trim(),
+          priorities: [document.getElementById('ciPriority1').value.trim(), document.getElementById('ciPriority2').value.trim(), document.getElementById('ciPriority3').value.trim()].filter(Boolean),
+          savedAt: new Date().toISOString()
+        };
+      } else {
+        const moodBtn = document.querySelector('#ciMoodRow .mood-btn.on');
+        ci.night = {
+          mood: moodBtn ? Number(moodBtn.dataset.val) : null,
+          goodThing: document.getElementById('ciGoodThing').value.trim(),
+          improve: document.getElementById('ciImprove').value.trim(),
+          savedAt: new Date().toISOString()
+        };
+      }
+      saveDB();
+      checkinBackdrop.classList.remove('open');
+      renderCheckinPrompts();
+      showToast('Saved.', 'success');
+    });
+  }
 
   function switchToView(viewName, scrollToId){
     document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
@@ -6224,6 +6691,7 @@
     try{ renderHomeGoalHero(); }catch(e){}
     try{ renderCommandCenter(); }catch(e){}
     try{ renderInbox(); }catch(e){}
+    try{ renderCheckinPrompts(); }catch(e){}
 
     const streakEl = document.getElementById('homeStreakNum');
     const pctEl = document.getElementById('homeTodayPct');
@@ -6352,6 +6820,8 @@
     renderTodos();
     renderHome();
     renderGymDashboard();
+    try{ renderWeeklyReview(); }catch(e){}
+    try{ renderRevisionSubjectSelect(); renderRevisionQueue(); }catch(e){}
   }
 
   renderPomo();
@@ -7260,14 +7730,11 @@
         reader.onload = (evt)=>{
           try{
             const parsed = JSON.parse(evt.target.result);
-            // Basic shape check — a real FocusVerge backup always has a `days` object.
             if(!parsed || typeof parsed !== 'object' || typeof parsed.days !== 'object'){
               throw new Error('This file does not look like a FocusVerge backup.');
             }
             const ok = confirm('This will replace all data currently on this device (tasks, notes, trades, goals, study log, and more) with the contents of this backup. This cannot be undone. Continue?');
             if(!ok){ restoreInput.value=''; return; }
-            // Split off the Firebase-payload extras (if this backup came from buildBackupPayload)
-            // before assigning the rest as the new db, so we don't stash them inside db itself.
             const {_appSettings, _theme, _pomoState, ...restOfDb} = parsed;
             db = restOfDb;
             if(_appSettings) appSettings = Object.assign({}, appSettings, _appSettings);

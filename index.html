@@ -1016,6 +1016,10 @@
 
   .trade-panel{ display:none; animation: fadeIn .2s var(--ease); }
   .trade-panel.active{ display:block; }
+  .analytics-subpanel{ display:none; animation: fadeIn .2s var(--ease); }
+  .analytics-subpanel.active{ display:block; }
+  .trade-subnav.secondary{ margin-bottom:16px; }
+  .trade-subnav.secondary .trade-subnav-btn{ font-size:12.5px; padding:8px 14px; }
 
   .td-stat-grid{ display:grid; grid-template-columns: repeat(2,1fr); gap:10px; margin-bottom:16px; }
   @media (min-width:640px){ .td-stat-grid{ grid-template-columns: repeat(3,1fr); } }
@@ -2406,9 +2410,7 @@
       <button class="trade-subnav-btn active" data-tpanel="overview">Overview</button>
       <button class="trade-subnav-btn" data-tpanel="history">History</button>
       <button class="trade-subnav-btn" data-tpanel="calendar">Calendar</button>
-      <button class="trade-subnav-btn" data-tpanel="strategy">Strategies</button>
-      <button class="trade-subnav-btn" data-tpanel="risk">Risk</button>
-      <button class="trade-subnav-btn" data-tpanel="periods">FY / Periods</button>
+      <button class="trade-subnav-btn" data-tpanel="analytics">Analytics</button>
       <button class="trade-subnav-btn entry-btn" data-tpanel="entry">+ New Trade</button>
     </div>
 
@@ -2483,80 +2485,89 @@
       </div>
     </div>
 
-    <!-- ---- STRATEGY / SETUP PANEL ---- -->
-    <div class="trade-panel" id="tpanel-strategy">
-      <div class="td-card">
-        <div class="td-list-head">
-          <div class="td-card-head" style="margin-bottom:0;"><span>Performance by Ticker</span></div>
-          <select id="tdTickerSort" class="td-list-sort">
-            <option value="pnl">Sort: Net P&amp;L</option>
-            <option value="winrate">Sort: Win Rate</option>
-            <option value="count">Sort: Trade Count</option>
-            <option value="alpha">Sort: A–Z</option>
-          </select>
+    <!-- ---- ANALYTICS PANEL (Performance / Risk / FY & Periods, clubbed together) ---- -->
+    <div class="trade-panel" id="tpanel-analytics">
+      <div class="trade-subnav secondary" id="analyticsSubnav">
+        <button class="trade-subnav-btn active" data-apanel="strategy">Performance</button>
+        <button class="trade-subnav-btn" data-apanel="risk">Risk</button>
+        <button class="trade-subnav-btn" data-apanel="periods">FY &amp; Periods</button>
+      </div>
+
+      <!-- ---- Performance (by ticker / catalyst / timeframe) ---- -->
+      <div class="analytics-subpanel active" id="apanel-strategy">
+        <div class="td-card">
+          <div class="td-list-head">
+            <div class="td-card-head" style="margin-bottom:0;"><span>Performance by Ticker</span></div>
+            <select id="tdTickerSort" class="td-list-sort">
+              <option value="pnl">Sort: Net P&amp;L</option>
+              <option value="winrate">Sort: Win Rate</option>
+              <option value="count">Sort: Trade Count</option>
+              <option value="alpha">Sort: A–Z</option>
+            </select>
+          </div>
+          <div id="tdByTicker"></div>
         </div>
-        <div id="tdByTicker"></div>
-      </div>
-      <div class="td-card">
-        <div class="td-card-head"><span>Performance by Catalyst / Setup</span></div>
-        <div id="tdByCatalyst"></div>
-      </div>
-      <div class="td-card">
-        <div class="td-card-head"><span>Performance by Timeframe</span></div>
-        <div id="tdByTimeframe"></div>
-      </div>
-    </div>
-
-    <!-- ---- RISK PANEL ---- -->
-    <div class="trade-panel" id="tpanel-risk">
-      <div class="td-stat-grid" id="tdRiskStats"></div>
-      <div class="td-card">
-        <div class="td-card-head"><span>R-Multiple Distribution</span></div>
-        <div id="tdRDist"></div>
-      </div>
-    </div>
-
-    <!-- ---- FY / PERIODS ANALYSIS PANEL ---- -->
-    <div class="trade-panel" id="tpanel-periods">
-      <div class="td-card">
-        <div class="td-card-head"><span>Best / Worst</span></div>
-        <div class="fy-bestworst-grid" id="fyBestWorstGrid"></div>
-      </div>
-
-      <div class="td-card">
-        <div class="td-card-head"><span>This FY vs Previous FY</span></div>
-        <div class="fy-compare-row" id="fyCompareRow"></div>
-        <div id="fyEquityChart"></div>
-      </div>
-
-      <div class="td-card">
-        <div class="td-card-head"><span>Financial Year Breakdown (Apr–Mar)</span></div>
-        <div style="overflow-x:auto;"><table class="fy-table" id="fyTable"></table></div>
-      </div>
-
-      <div class="td-card">
-        <div class="td-card-head"><span>Calendar Year Breakdown</span></div>
-        <div style="overflow-x:auto;"><table class="fy-table" id="yearTable"></table></div>
-      </div>
-
-      <div class="td-card">
-        <div class="td-card-head"><span>Monthly Breakdown</span></div>
-        <div class="fy-range-row">
-          <div class="fy-range-field"><label>Financial Year</label><select id="fyMonthFilter"></select></div>
+        <div class="td-card">
+          <div class="td-card-head"><span>Performance by Catalyst / Setup</span></div>
+          <div id="tdByCatalyst"></div>
         </div>
-        <div style="overflow-x:auto;"><table class="fy-table" id="monthTable"></table></div>
+        <div class="td-card">
+          <div class="td-card-head"><span>Performance by Timeframe</span></div>
+          <div id="tdByTimeframe"></div>
+        </div>
       </div>
 
-      <div class="td-card">
-        <div class="td-card-head"><span>Compare Two Custom Periods</span></div>
-        <div class="fy-range-row">
-          <div class="fy-range-field"><label>Period A – from</label><input type="date" id="cmpAFrom"></div>
-          <div class="fy-range-field"><label>Period A – to</label><input type="date" id="cmpATo"></div>
-          <div class="fy-range-field"><label>Period B – from</label><input type="date" id="cmpBFrom"></div>
-          <div class="fy-range-field"><label>Period B – to</label><input type="date" id="cmpBTo"></div>
-          <button class="btn primary" id="cmpRunBtn" style="padding:9px 16px;">Compare</button>
+      <!-- ---- Risk ---- -->
+      <div class="analytics-subpanel" id="apanel-risk">
+        <div class="td-stat-grid" id="tdRiskStats"></div>
+        <div class="td-card">
+          <div class="td-card-head"><span>R-Multiple Distribution</span></div>
+          <div id="tdRDist"></div>
         </div>
-        <div class="fy-compare-row" id="cmpResultRow"></div>
+      </div>
+
+      <!-- ---- FY / Periods ---- -->
+      <div class="analytics-subpanel" id="apanel-periods">
+        <div class="td-card">
+          <div class="td-card-head"><span>Best / Worst</span></div>
+          <div class="fy-bestworst-grid" id="fyBestWorstGrid"></div>
+        </div>
+
+        <div class="td-card">
+          <div class="td-card-head"><span>This FY vs Previous FY</span></div>
+          <div class="fy-compare-row" id="fyCompareRow"></div>
+          <div id="fyEquityChart"></div>
+        </div>
+
+        <div class="td-card">
+          <div class="td-card-head"><span>Financial Year Breakdown (Apr–Mar)</span></div>
+          <div style="overflow-x:auto;"><table class="fy-table" id="fyTable"></table></div>
+        </div>
+
+        <div class="td-card">
+          <div class="td-card-head"><span>Calendar Year Breakdown</span></div>
+          <div style="overflow-x:auto;"><table class="fy-table" id="yearTable"></table></div>
+        </div>
+
+        <div class="td-card">
+          <div class="td-card-head"><span>Monthly Breakdown</span></div>
+          <div class="fy-range-row">
+            <div class="fy-range-field"><label>Financial Year</label><select id="fyMonthFilter"></select></div>
+          </div>
+          <div style="overflow-x:auto;"><table class="fy-table" id="monthTable"></table></div>
+        </div>
+
+        <div class="td-card">
+          <div class="td-card-head"><span>Compare Two Custom Periods</span></div>
+          <div class="fy-range-row">
+            <div class="fy-range-field"><label>Period A – from</label><input type="date" id="cmpAFrom"></div>
+            <div class="fy-range-field"><label>Period A – to</label><input type="date" id="cmpATo"></div>
+            <div class="fy-range-field"><label>Period B – from</label><input type="date" id="cmpBFrom"></div>
+            <div class="fy-range-field"><label>Period B – to</label><input type="date" id="cmpBTo"></div>
+            <button class="btn primary" id="cmpRunBtn" style="padding:9px 16px;">Compare</button>
+          </div>
+          <div class="fy-compare-row" id="cmpResultRow"></div>
+        </div>
       </div>
     </div>
 
@@ -2597,8 +2608,16 @@
             <div class="modal-field"><label>Entry price</label><input type="number" id="trEntryPrice" step="0.01"></div>
           </div>
           <div class="modal-row">
+            <div class="modal-field">
+              <label>Direction</label>
+              <div class="picker-row" id="trDirection">
+                <div class="picker-btn on" data-val="long" style="width:auto; padding:0 14px;">Long</div><div class="picker-btn" data-val="short" style="width:auto; padding:0 14px;">Short</div>
+              </div>
+            </div>
             <div class="modal-field"><label>Qty</label><input type="number" id="trQty"></div>
-            <div class="modal-field"><label>Position size (₹)</label><input type="number" id="trPosSize"></div>
+          </div>
+          <div class="modal-row">
+            <div class="modal-field"><label>Position size (₹) <span style="font-weight:400; color:var(--ink-faint);">auto</span></label><input type="number" id="trPosSize"></div>
           </div>
           <div class="modal-row">
             <div class="modal-field"><label>Stop loss price</label><input type="number" id="trSLPrice" step="0.01"></div>
@@ -2647,8 +2666,8 @@
             <div class="modal-field"><label>Exit price</label><input type="number" id="trExitPrice" step="0.01"></div>
           </div>
           <div class="modal-row">
-            <div class="modal-field"><label>P&L (₹)</label><input type="number" id="trPnl" step="0.01"></div>
-            <div class="modal-field"><label>R-multiple</label><input type="number" id="trRMultiple" step="0.1"></div>
+            <div class="modal-field"><label>P&L (₹) <span style="font-weight:400; color:var(--ink-faint);">auto</span></label><input type="number" id="trPnl" step="0.01"></div>
+            <div class="modal-field"><label>R-multiple <span style="font-weight:400; color:var(--ink-faint);">auto</span></label><input type="number" id="trRMultiple" step="0.1"></div>
           </div>
           <div class="modal-field">
             <label>Exit reason</label>
@@ -4252,6 +4271,10 @@
 
   // ---------- Trade Journal ----------
   let editingTradeId = null;
+  // Auto-calculated fields stay auto until the user directly types into them —
+  // then we stop overwriting that one field so a manual brokerage/charges
+  // adjustment never gets silently clobbered by the next price edit.
+  let trPnlManuallyEdited = false, trRMultipleManuallyEdited = false, trPosSizeManuallyEdited = false;
 
   function setupChipGroup(containerId){
     const container = document.getElementById(containerId);
@@ -4287,7 +4310,7 @@
       b.classList.toggle('on', b.dataset.val===val);
     });
   }
-  ['trConviction','trGrade'].forEach(setupPicker);
+  ['trConviction','trGrade','trDirection'].forEach(setupPicker);
 
   function setupYesNo(yesId, noId){
     const yesEl = document.getElementById(yesId), noEl = document.getElementById(noId);
@@ -4329,12 +4352,13 @@
     document.getElementById('trScreenshotPreview').innerHTML = '';
     document.getElementById('trScreenshot').value = '';
     setChips('trPsychChips', []); setChips('trExitReasonChips', []); setChips('trVerdictChips', []);
-    setPickerValue('trConviction',''); setPickerValue('trGrade','');
+    setPickerValue('trConviction',''); setPickerValue('trGrade',''); setPickerValue('trDirection','long');
     document.getElementById('trSysYes').classList.remove('on');
     document.getElementById('trSysNo').classList.remove('on');
     document.getElementById('trPlanFollowed').classList.remove('on');
     document.getElementById('trPlanBroken').classList.remove('on');
     document.getElementById('trSysReason').style.display = 'none';
+    trPnlManuallyEdited = false; trRMultipleManuallyEdited = false; trPosSizeManuallyEdited = false;
   }
 
   function readTradeForm(){
@@ -4347,6 +4371,7 @@
       catalyst: document.getElementById('trCatalyst').value,
       entryDT: document.getElementById('trEntryDT').value,
       entryPrice: document.getElementById('trEntryPrice').value,
+      direction: getPickerValue('trDirection') || 'long',
       qty: document.getElementById('trQty').value,
       posSize: document.getElementById('trPosSize').value,
       slPrice: document.getElementById('trSLPrice').value,
@@ -4380,6 +4405,7 @@
     document.getElementById('trCatalyst').value = t.catalyst||'';
     document.getElementById('trEntryDT').value = t.entryDT||'';
     document.getElementById('trEntryPrice').value = t.entryPrice||'';
+    setPickerValue('trDirection', t.direction||'long');
     document.getElementById('trQty').value = t.qty||'';
     document.getElementById('trPosSize').value = t.posSize||'';
     document.getElementById('trSLPrice').value = t.slPrice||'';
@@ -4404,7 +4430,49 @@
     document.getElementById('trPlanBroken').classList.toggle('on', t.planTag==='plan-broken');
     trScreenshotData = t.screenshot || null;
     document.getElementById('trScreenshotPreview').innerHTML = trScreenshotData ? `<img src="${trScreenshotData}" style="max-width:100%; border-radius:6px; border:1px solid var(--line);">` : '';
+    // Existing values loaded as-is; auto-calc only overwrites them once the
+    // user touches a price/qty/direction field that feeds the calculation.
+    trPnlManuallyEdited = true; trRMultipleManuallyEdited = true; trPosSizeManuallyEdited = true;
   }
+
+  // ---- Automation: P&L, R-multiple, and position size all follow directly
+  // from entry price, exit price, qty, direction and stop-loss — no reason to
+  // hand-type them. Recomputes live as any of those fields change; stops
+  // touching a field the moment the user edits it directly in this session.
+  function autoCalcTradeFields(){
+    const entry = parseFloat(document.getElementById('trEntryPrice').value);
+    const exit = parseFloat(document.getElementById('trExitPrice').value);
+    const qty = parseFloat(document.getElementById('trQty').value);
+    const sl = parseFloat(document.getElementById('trSLPrice').value);
+    const dir = getPickerValue('trDirection') || 'long';
+    const sign = dir==='short' ? -1 : 1;
+
+    if(!trPosSizeManuallyEdited && !isNaN(entry) && !isNaN(qty)){
+      document.getElementById('trPosSize').value = Math.round(entry*qty*100)/100;
+    }
+    if(!trPnlManuallyEdited){
+      if(!isNaN(entry) && !isNaN(exit) && !isNaN(qty)){
+        document.getElementById('trPnl').value = Math.round((exit-entry)*qty*sign*100)/100;
+      } else {
+        document.getElementById('trPnl').value = '';
+      }
+    }
+    if(!trRMultipleManuallyEdited){
+      if(!isNaN(entry) && !isNaN(exit) && !isNaN(sl) && (entry-sl)*sign!==0){
+        const rMult = ((exit-entry)*sign) / Math.abs(entry-sl);
+        document.getElementById('trRMultiple').value = Math.round(rMult*100)/100;
+      } else {
+        document.getElementById('trRMultiple').value = '';
+      }
+    }
+  }
+  ['trEntryPrice','trExitPrice','trQty','trSLPrice'].forEach(id=>{
+    document.getElementById(id).addEventListener('input', autoCalcTradeFields);
+  });
+  document.getElementById('trDirection').addEventListener('click', ()=> setTimeout(autoCalcTradeFields, 0));
+  document.getElementById('trPnl').addEventListener('input', ()=>{ trPnlManuallyEdited = true; });
+  document.getElementById('trRMultiple').addEventListener('input', ()=>{ trRMultipleManuallyEdited = true; });
+  document.getElementById('trPosSize').addEventListener('input', ()=>{ trPosSizeManuallyEdited = true; });
 
   document.getElementById('trSaveBtn').addEventListener('click', ()=>{
     const data = readTradeForm();
@@ -4453,6 +4521,20 @@
     return pnlNum >= 0 ? 'win' : 'loss';
   }
 
+  // ---- Basis-of-calculation date -----------------------------------------
+  // Every P&L-driven stat (drawdown, equity curve, day/week/month/FY totals,
+  // the calendar heatmap) is now attributed to the day a trade was CLOSED,
+  // not the day it was opened — because that's the day the P&L was actually
+  // realized. A trade entered on the 28th and exited on the 3rd counts
+  // entirely toward the 3rd.
+  // Falls back to the entry/setup date for trades that are still open (no
+  // exit yet) or for older trades logged before Exit date & time was filled
+  // in, so nothing "disappears" from historical stats.
+  function tradeBasisDate(t){
+    if(t.exitDT) return t.exitDT.slice(0,10);
+    return t.date || '';
+  }
+
   const MONTH_LABELS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
   function monthLabelFromDateStr(dateStr){
     if(!dateStr) return 'No date';
@@ -4480,8 +4562,8 @@
 
     // ---- sort ----
     const sortFns = {
-      'date-desc': (a,b)=> (b.date||'').localeCompare(a.date||''),
-      'date-asc': (a,b)=> (a.date||'').localeCompare(b.date||''),
+      'date-desc': (a,b)=> tradeBasisDate(b).localeCompare(tradeBasisDate(a)),
+      'date-asc': (a,b)=> tradeBasisDate(a).localeCompare(tradeBasisDate(b)),
       'pnl-desc': (a,b)=> (parseFloat(b.pnl)||0) - (parseFloat(a.pnl)||0),
       'pnl-asc': (a,b)=> (parseFloat(a.pnl)||0) - (parseFloat(b.pnl)||0),
       'r-desc': (a,b)=> (parseFloat(b.rMultiple)||0) - (parseFloat(a.rMultiple)||0),
@@ -4515,10 +4597,10 @@
 
       let groupHeader = '';
       if(grouped){
-        const groupKey = monthLabelFromDateStr(t.date);
+        const groupKey = monthLabelFromDateStr(tradeBasisDate(t));
         if(groupKey!==lastGroupKey){
           lastGroupKey = groupKey;
-          const monthTrades = trades.filter(mt=>monthLabelFromDateStr(mt.date)===groupKey);
+          const monthTrades = trades.filter(mt=>monthLabelFromDateStr(tradeBasisDate(mt))===groupKey);
           const monthPnl = monthTrades.reduce((sum,mt)=>{ const n=parseFloat(mt.pnl); return sum+(isNaN(n)?0:n); }, 0);
           const monthPnlClass = monthPnl>=0 ? 'pos':'neg';
           groupHeader = `<div class="trade-group-label"><span>${groupKey}</span><span class="trade-group-pnl ${monthPnlClass}">${monthPnl>=0?'+':''}${Math.round(monthPnl)}</span></div>`;
@@ -4532,8 +4614,9 @@
               <div class="trade-ticker-row">
                 <span class="trade-ticker">${escapeHtml(t.ticker||'')}</span>
                 <span class="trade-outcome-badge ${outcome}">${badgeLabel}</span>
+                <span class="trade-outcome-badge" style="background:var(--surface-raised); color:var(--ink-dim);">${t.direction==='short'?'Short':'Long'}</span>
               </div>
-              <div class="trade-date">${t.date||''} · ${escapeHtml(t.timeframe||'')} ${t.grade?('· Grade '+escapeHtml(t.grade)):''}</div>
+              <div class="trade-date">${tradeBasisDate(t)||'—'}${t.exitDT?'':' · open'} · ${escapeHtml(t.timeframe||'')} ${t.grade?('· Grade '+escapeHtml(t.grade)):''}</div>
             </div>
             <div class="trade-card-right">
               <div class="trade-pnl ${pnlClass}">${isNaN(pnlNum)?'—':pnlNum}</div>
@@ -4623,8 +4706,9 @@
     const avgR = withR.length ? withR.reduce((s,t)=> s+parseFloat(t.rMultiple),0)/withR.length : null;
     const expectancy = withPnl.length ? net/withPnl.length : 0;
 
-    // Max drawdown off the running equity curve (peak-to-trough, chronological order)
-    const chrono = withPnl.slice().sort((a,b)=> (a.date||'').localeCompare(b.date||''));
+    // Max drawdown off the running equity curve (peak-to-trough, chronological
+    // order by EXIT day — see tradeBasisDate — since that's when each P&L landed)
+    const chrono = withPnl.slice().sort((a,b)=> tradeBasisDate(a).localeCompare(tradeBasisDate(b)));
     let running=0, peak=0, maxDD=0;
     chrono.forEach(t=>{ running += parseFloat(t.pnl); if(running>peak) peak=running; const dd=peak-running; if(dd>maxDD) maxDD=dd; });
 
@@ -4670,8 +4754,8 @@
       const weekAgo = new Date(now); weekAgo.setDate(now.getDate()-7);
       const weekKey = todayKey(weekAgo);
       const withPnl = trades.filter(t=> t.pnl!==undefined && t.pnl!=='' && !isNaN(parseFloat(t.pnl)));
-      const todayPnl = withPnl.filter(t=>t.date===tKey).reduce((s,t)=>s+parseFloat(t.pnl),0);
-      const weekPnl = withPnl.filter(t=> t.date && t.date>=weekKey).reduce((s,t)=>s+parseFloat(t.pnl),0);
+      const todayPnl = withPnl.filter(t=>tradeBasisDate(t)===tKey).reduce((s,t)=>s+parseFloat(t.pnl),0);
+      const weekPnl = withPnl.filter(t=> tradeBasisDate(t) && tradeBasisDate(t)>=weekKey).reduce((s,t)=>s+parseFloat(t.pnl),0);
       // "Right now" = capital actually tied up in currently-open positions, not a lifetime
       // sum of every position ever sized (which would double-count capital that was freed
       // up and redeployed into later trades).
@@ -4705,7 +4789,7 @@
       } else {
         let running=0;
         const pts=[{x:0,y:0,date:'Start'}];
-        m.chrono.forEach((t,i)=>{ running+=parseFloat(t.pnl); pts.push({x:i+1,y:running,date:t.date,ticker:t.ticker}); });
+        m.chrono.forEach((t,i)=>{ running+=parseFloat(t.pnl); pts.push({x:i+1,y:running,date:tradeBasisDate(t),ticker:t.ticker}); });
         const w=640, h=170, padL=4, padR=4, padT=14, padB=4;
         const ys = pts.map(p=>p.y);
         const minY = Math.min(0,...ys), maxY = Math.max(0,...ys);
@@ -4722,7 +4806,7 @@
             <polygon points="${areaPts}" fill="${lineColor}" opacity="0.10"/>
             <polyline points="${linePts}" fill="none" stroke="${lineColor}" stroke-width="2"/>
           </svg>`;
-        if(rangeEl) rangeEl.textContent = (m.chrono[0].date||'')+' → '+(m.chrono[m.chrono.length-1].date||'')+' · '+fmtPnl(running)+' cumulative';
+        if(rangeEl) rangeEl.textContent = (tradeBasisDate(m.chrono[0])||'')+' → '+(tradeBasisDate(m.chrono[m.chrono.length-1])||'')+' · '+fmtPnl(running)+' cumulative';
       }
     }
 
@@ -4731,8 +4815,8 @@
     if(monthlyEl){
       const byMonth = {};
       (trades||[]).forEach(t=>{
-        const n = parseFloat(t.pnl); if(isNaN(n) || !t.date) return;
-        const key = t.date.slice(0,7);
+        const n = parseFloat(t.pnl); const bd = tradeBasisDate(t); if(isNaN(n) || !bd) return;
+        const key = bd.slice(0,7);
         byMonth[key] = (byMonth[key]||0) + n;
       });
       const keys = Object.keys(byMonth).sort().slice(-9);
@@ -4789,8 +4873,11 @@
   let tcalViewDate = new Date();
   let tcalSelectedKey = null;
   function tradesByDayKey(){
+    // Closed trades sit on their EXIT day (that's when the P&L tag shown on
+    // the cell was realized); trades still open sit on their entry day since
+    // there's no exit day yet — see tradeBasisDate.
     const map = {};
-    (db.trades||[]).forEach(t=>{ if(!t.date) return; (map[t.date] = map[t.date]||[]).push(t); });
+    (db.trades||[]).forEach(t=>{ const k = tradeBasisDate(t); if(!k) return; (map[k] = map[k]||[]).push(t); });
     return map;
   }
   function renderTradeCalendar(){
@@ -4869,7 +4956,7 @@
       (groups[key] = groups[key]||[]).push(t);
     });
     let rows = Object.entries(groups).map(([name, list])=>{
-      const chrono = list.slice().sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+      const chrono = list.slice().sort((a,b)=>tradeBasisDate(a).localeCompare(tradeBasisDate(b)));
       const withPnl = chrono.filter(t=> t.pnl!==undefined && t.pnl!=='' && !isNaN(parseFloat(t.pnl)));
       const wins = withPnl.filter(t=>parseFloat(t.pnl)>=0).length;
       const net = withPnl.reduce((s,t)=>s+parseFloat(t.pnl),0);
@@ -4906,7 +4993,8 @@
       if(typeof XLSX === 'undefined'){ showToast('Excel library failed to load.', 'error'); return; }
       const wb = XLSX.utils.book_new();
       const tradeRows = (db.trades||[]).map(t=>({
-        Ticker:t.ticker||'', Date:t.date||'', Timeframe:t.timeframe||'', Conviction:t.conviction||'',
+        Ticker:t.ticker||'', 'Entry date':t.date||'', 'Exit date':t.exitDT?t.exitDT.slice(0,10):'',
+        Direction:t.direction==='short'?'Short':'Long', Timeframe:t.timeframe||'', Conviction:t.conviction||'',
         'Entry price':t.entryPrice||'', 'Exit price':t.exitPrice||'', Qty:t.qty||'',
         'P&L':t.pnl||'', 'R-multiple':t.rMultiple||'', 'Exit reason':(t.exitReasonTags||[]).join(', '),
         Verdict:(t.verdictTags||[]).join(', '), Grade:t.grade||'', Lesson:t.lesson||''
@@ -5015,7 +5103,7 @@
     }
   }
 
-  // ---- Sub-navigation (Overview / History / Calendar / Strategies / Risk / New Trade) ----
+  // ---- Sub-navigation (Overview / History / Calendar / Analytics / New Trade) ----
   function renderTradeDashboard(){
     renderTradeOverview();
     renderTradeCalendar();
@@ -5036,10 +5124,13 @@
   function currentFyKey(){ return fyKeyForDate(todayKey()); }
 
   function groupTradesBy(trades, keyFn){
+    // keyFn is applied to each trade's basis date (exit day if closed,
+    // entry day if still open) — not the raw entry date.
     const groups = {};
     trades.forEach(t=>{
-      if(!t.date) return;
-      const k = keyFn(t.date);
+      const bd = tradeBasisDate(t);
+      if(!bd) return;
+      const k = keyFn(bd);
       if(k===null || k===undefined) return;
       if(!groups[k]) groups[k] = [];
       groups[k].push(t);
@@ -5048,7 +5139,7 @@
   }
 
   function computeBestWorst(trades){
-    const withPnl = trades.filter(t=> t.date && t.pnl!==undefined && t.pnl!=='' && !isNaN(parseFloat(t.pnl)));
+    const withPnl = trades.filter(t=> tradeBasisDate(t) && t.pnl!==undefined && t.pnl!=='' && !isNaN(parseFloat(t.pnl)));
     const byDay = groupTradesBy(withPnl, d=>d);
     let bestDay=null, worstDay=null;
     Object.keys(byDay).forEach(k=>{
@@ -5094,9 +5185,9 @@
   const PERIOD_TABLE_HEAD = `<tr><th>Period</th><th>Trades</th><th>Net P&amp;L</th><th>Win%</th><th>PF</th><th>Avg R</th><th>Expectancy</th></tr>`;
 
   function renderPeriodsPanel(){
-    const panel = document.getElementById('tpanel-periods');
+    const panel = document.getElementById('apanel-periods');
     if(!panel) return;
-    const trades = (db.trades||[]).filter(t=>t.date);
+    const trades = (db.trades||[]).filter(t=>tradeBasisDate(t));
     const bw = document.getElementById('fyBestWorstGrid');
     if(trades.length===0){
       if(bw) bw.innerHTML = '<div class="td-empty-note" style="grid-column:1/-1;">Log trades with dates to unlock FY and period analytics.</div>';
@@ -5153,13 +5244,13 @@
 
     const fyEqEl = document.getElementById('fyEquityChart');
     if(fyEqEl){
-      const chrono = trades.filter(t=>t.pnl!==undefined && t.pnl!=='' && !isNaN(parseFloat(t.pnl))).slice().sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+      const chrono = trades.filter(t=>t.pnl!==undefined && t.pnl!=='' && !isNaN(parseFloat(t.pnl))).slice().sort((a,b)=>tradeBasisDate(a).localeCompare(tradeBasisDate(b)));
       if(chrono.length<1){
         fyEqEl.innerHTML = '<div class="td-empty-note">No P&amp;L data yet.</div>';
       } else {
         let running=0;
-        const pts=[{x:0,y:0,fy:fyKeyForDate(chrono[0].date)}];
-        chrono.forEach((t,i)=>{ running+=parseFloat(t.pnl); pts.push({x:i+1,y:running,fy:fyKeyForDate(t.date)}); });
+        const pts=[{x:0,y:0,fy:fyKeyForDate(tradeBasisDate(chrono[0]))}];
+        chrono.forEach((t,i)=>{ running+=parseFloat(t.pnl); pts.push({x:i+1,y:running,fy:fyKeyForDate(tradeBasisDate(t))}); });
         const w=640, h=170, padL=4, padR=4, padT=14, padB=4;
         const ys = pts.map(p=>p.y);
         const minY=Math.min(0,...ys), maxY=Math.max(0,...ys), spanY=(maxY-minY)||1;
@@ -5246,7 +5337,7 @@
       });
     }
   }
-  // Activates one trade sub-panel (Overview/History/Calendar/Strategies/Risk/New Trade) and
+  // Activates one trade sub-panel (Overview/History/Calendar/Analytics/New Trade) and
   // keeps the subnav button state in sync. Shared by the subnav click handler and editTrade(),
   // so opening the entry form for editing reliably shows the form instead of whatever panel
   // happened to be active.
@@ -5265,6 +5356,26 @@
       // Entering the entry form directly from the subnav (not via Edit) always starts fresh.
       if(btn.dataset.tpanel==='entry' && editingTradeId===null) resetTradeForm();
       activateTradePanel(btn.dataset.tpanel);
+    });
+  }
+
+  // Analytics tab clubs Performance (by ticker/catalyst/timeframe), Risk, and
+  // FY/Periods together behind a lightweight secondary subnav, so the top-level
+  // trade nav stays short (Overview/History/Calendar/Analytics) instead of
+  // scrolling through six separate pill buttons.
+  function activateAnalyticsPanel(name){
+    const nav = document.getElementById('analyticsSubnav');
+    if(nav) nav.querySelectorAll('.trade-subnav-btn').forEach(b=> b.classList.toggle('active', b.dataset.apanel===name));
+    document.querySelectorAll('#tpanel-analytics .analytics-subpanel').forEach(p=>p.classList.remove('active'));
+    const panel = document.getElementById('apanel-'+name);
+    if(panel) panel.classList.add('active');
+  }
+  const analyticsSubnavEl = document.getElementById('analyticsSubnav');
+  if(analyticsSubnavEl){
+    analyticsSubnavEl.addEventListener('click', (e)=>{
+      const btn = e.target.closest('.trade-subnav-btn');
+      if(!btn) return;
+      activateAnalyticsPanel(btn.dataset.apanel);
     });
   }
 
@@ -7787,7 +7898,8 @@
 
         // Sheet 3: Trades
         const tradeRows = (db.trades||[]).map(t=>({
-          Ticker:t.ticker||'', Date:t.date||'', Timeframe:t.timeframe||'', Conviction:t.conviction||'',
+          Ticker:t.ticker||'', 'Entry date':t.date||'', 'Exit date':t.exitDT?t.exitDT.slice(0,10):'',
+          Direction:t.direction==='short'?'Short':'Long', Timeframe:t.timeframe||'', Conviction:t.conviction||'',
           'Entry price':t.entryPrice||'', 'Exit price':t.exitPrice||'', Qty:t.qty||'',
           'P&L':t.pnl||'', 'R-multiple':t.rMultiple||'', 'Exit reason':(t.exitReasons||[]).join(', '),
           Verdict:(t.verdictTags||[]).join(', '), Lesson:t.lesson||''

@@ -907,7 +907,7 @@
   .chip.rose.on{ background: var(--rose-dim); border-color: var(--rose); color: #fff; }
 
   /* ---------- Conviction / grade pickers ---------- */
-  .picker-row{ display:flex; gap:6px; }
+  .picker-row{ display:flex; gap:6px; flex-wrap:wrap; }
   .picker-btn{
     flex:1; text-align:center; padding: 9px 0; border-radius: var(--radius-sm); border:1px solid var(--line);
     background: var(--surface); color: var(--ink-faint); cursor:pointer; font-family:'IBM Plex Mono'; font-size:13px;
@@ -1020,6 +1020,24 @@
   .analytics-subpanel.active{ display:block; }
   .trade-subnav.secondary{ margin-bottom:16px; }
   .trade-subnav.secondary .trade-subnav-btn{ font-size:12.5px; padding:8px 14px; }
+  .eq-range-toggle{ display:flex; gap:4px; }
+  .eq-range-btn{
+    font-family:'Inter'; font-size:11px; font-weight:700; padding:4px 10px; border-radius:999px;
+    background:var(--surface-raised); border:1px solid var(--line); color:var(--ink-dim); cursor:pointer;
+  }
+  .eq-range-btn.on{ background:var(--accent-bg); border-color:var(--accent); color:var(--accent-dim); }
+  .eq-dot{ cursor:pointer; transition: r .1s var(--ease); }
+  .eq-dot:hover{ r:6; }
+  .eq-tooltip{
+    display:none; position:absolute; z-index:400; transform:translate(-50%,-100%);
+    background:var(--ink); color:var(--surface); border-radius:8px; padding:7px 10px; font-size:11.5px;
+    box-shadow:0 6px 18px rgba(0,0,0,0.25); pointer-events:none; white-space:nowrap;
+  }
+  .eq-tip-tk{ font-weight:700; font-family:'Sora'; }
+  .eq-tip-date{ font-size:10px; opacity:0.7; margin-top:1px; }
+  .eq-tip-pnl{ font-family:'IBM Plex Mono'; font-size:11px; margin-top:3px; font-weight:700; }
+  .eq-tip-pnl.pos{ color:#7FD9A0; }
+  .eq-tip-pnl.neg{ color:#F0A088; }
 
   .td-stat-grid{ display:grid; grid-template-columns: repeat(2,1fr); gap:10px; margin-bottom:16px; }
   @media (min-width:640px){ .td-stat-grid{ grid-template-columns: repeat(3,1fr); } }
@@ -2419,7 +2437,16 @@
       <div class="td-hero-card" id="tdHeroCard"></div>
       <div class="td-stat-grid" id="tdOverviewStats"></div>
       <div class="td-card">
-        <div class="td-card-head"><span>Equity Curve</span><span class="td-card-sub" id="tdEquityRange"></span></div>
+        <div class="td-card-head" style="flex-wrap:wrap; gap:8px;">
+          <span>Equity Curve</span>
+          <div class="eq-range-toggle" id="tdEquityRangeToggle">
+            <button class="eq-range-btn" data-range="1m">1M</button>
+            <button class="eq-range-btn" data-range="3m">3M</button>
+            <button class="eq-range-btn" data-range="ytd">YTD</button>
+            <button class="eq-range-btn on" data-range="all">All</button>
+          </div>
+        </div>
+        <div class="td-card-sub" id="tdEquityRange" style="margin-bottom:8px; display:block;"></div>
         <div id="tdEquityChart"></div>
       </div>
       <div class="td-two-col">
@@ -2438,7 +2465,10 @@
     <div class="trade-panel" id="tpanel-history">
       <div class="td-list-head">
         <div class="td-card-head" style="margin-bottom:0;"><span>Trade History</span></div>
-        <button class="td-list-sort" id="tdExportTradesBtn">⬇ Trade analysis</button>
+        <div style="display:flex; gap:8px;">
+          <button class="td-list-sort" id="tdImportCsvBtn">⬆ Import CSV</button>
+          <button class="td-list-sort" id="tdExportTradesBtn">⬇ Trade analysis</button>
+        </div>
       </div>
       <div class="trades-toolbar">
         <div class="trades-search-wrap">
@@ -2536,7 +2566,12 @@
         <div class="td-card">
           <div class="td-card-head"><span>This FY vs Previous FY</span></div>
           <div class="fy-compare-row" id="fyCompareRow"></div>
+        </div>
+
+        <div class="td-card">
+          <div class="td-card-head"><span>All-Time Equity Curve</span><span class="td-card-sub" id="fyEquityRange"></span></div>
           <div id="fyEquityChart"></div>
+          <div class="td-empty-note" style="padding:6px 0 0; text-align:left;">Dashed vertical lines mark FY boundaries (Apr 1).</div>
         </div>
 
         <div class="td-card">
@@ -2596,7 +2631,20 @@
             </div>
           </div>
           <div class="modal-field"><label>Market context</label><input type="text" id="trContext" placeholder="Nifty/sector sentiment, one line"></div>
-          <div class="modal-field"><label>Catalyst</label><input type="text" id="trCatalyst" placeholder="Result / order win / volume spike / chart only"></div>
+          <div class="modal-field">
+            <label>Setup type</label>
+            <div class="picker-row" id="trSetupType">
+              <div class="picker-btn" data-val="Breakout" style="width:auto; padding:0 12px;">Breakout</div>
+              <div class="picker-btn" data-val="Pullback" style="width:auto; padding:0 12px;">Pullback</div>
+              <div class="picker-btn" data-val="Reversal" style="width:auto; padding:0 12px;">Reversal</div>
+              <div class="picker-btn" data-val="Range" style="width:auto; padding:0 12px;">Range</div>
+              <div class="picker-btn" data-val="Momentum" style="width:auto; padding:0 12px;">Momentum</div>
+              <div class="picker-btn" data-val="Earnings/Event" style="width:auto; padding:0 12px;">Earnings/Event</div>
+              <div class="picker-btn" data-val="Chart Pattern" style="width:auto; padding:0 12px;">Chart Pattern</div>
+              <div class="picker-btn" data-val="Other" style="width:auto; padding:0 12px;">Other</div>
+            </div>
+          </div>
+          <div class="modal-field"><label>Catalyst / detail <span style="font-weight:400; color:var(--ink-faint);">optional</span></label><input type="text" id="trCatalyst" placeholder="Result / order win / volume spike / chart only"></div>
         </div>
       </details>
 
@@ -2992,6 +3040,34 @@
       <div class="grc-label" id="grcLabel">Days Until</div>
       <div class="grc-title" id="grcTitle">Your Goal</div>
       <button class="btn primary" id="grcDismissBtn" style="margin-top:18px;">Let's go</button>
+    </div>
+  </div>
+
+  <!-- ---------- Trade CSV Import ---------- -->
+  <div class="modal-backdrop" id="csvImportModalBackdrop">
+    <div class="modal-sheet" style="max-width:560px;">
+      <button class="modal-close" id="csvImportModalClose">✕</button>
+      <div class="modal-title">Import Trades from CSV</div>
+      <div id="csvImportStep1">
+        <div class="modal-field">
+          <label>Broker tradebook or generic CSV</label>
+          <input type="file" id="csvImportFile" accept=".csv,text/csv">
+        </div>
+        <div class="td-empty-note" style="text-align:left; padding:8px 0 0;">
+          Zerodha Console equity tradebook exports are detected automatically — buy/sell legs get matched FIFO into round-trip trades. Any other broker: export/save as a CSV with columns <b>Ticker, Entry Date, Entry Price, Exit Date, Exit Price, Qty</b> (Direction optional).
+        </div>
+        <div id="csvImportError" class="td-empty-note" style="color:var(--rose); display:none; text-align:left; padding-top:8px;"></div>
+      </div>
+      <div id="csvImportStep2" style="display:none;">
+        <div class="td-empty-note" style="text-align:left; padding:0 0 8px;" id="csvImportSummary"></div>
+        <div style="max-height:320px; overflow-y:auto; border:1px solid var(--line); border-radius:var(--radius-md);">
+          <table class="fy-table" id="csvImportPreviewTable" style="margin:0;"></table>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn primary" id="csvImportConfirmBtn" style="display:none;">Import Trades</button>
+        <button class="btn ghost" id="csvImportCancelBtn">Cancel</button>
+      </div>
     </div>
   </div>
 
@@ -4310,7 +4386,7 @@
       b.classList.toggle('on', b.dataset.val===val);
     });
   }
-  ['trConviction','trGrade','trDirection'].forEach(setupPicker);
+  ['trConviction','trGrade','trDirection','trSetupType'].forEach(setupPicker);
 
   function setupYesNo(yesId, noId){
     const yesEl = document.getElementById(yesId), noEl = document.getElementById(noId);
@@ -4352,7 +4428,7 @@
     document.getElementById('trScreenshotPreview').innerHTML = '';
     document.getElementById('trScreenshot').value = '';
     setChips('trPsychChips', []); setChips('trExitReasonChips', []); setChips('trVerdictChips', []);
-    setPickerValue('trConviction',''); setPickerValue('trGrade',''); setPickerValue('trDirection','long');
+    setPickerValue('trConviction',''); setPickerValue('trGrade',''); setPickerValue('trDirection','long'); setPickerValue('trSetupType','');
     document.getElementById('trSysYes').classList.remove('on');
     document.getElementById('trSysNo').classList.remove('on');
     document.getElementById('trPlanFollowed').classList.remove('on');
@@ -4368,6 +4444,7 @@
       timeframe: document.getElementById('trTimeframe').value,
       conviction: getPickerValue('trConviction'),
       context: document.getElementById('trContext').value,
+      setupType: getPickerValue('trSetupType'),
       catalyst: document.getElementById('trCatalyst').value,
       entryDT: document.getElementById('trEntryDT').value,
       entryPrice: document.getElementById('trEntryPrice').value,
@@ -4402,6 +4479,7 @@
     document.getElementById('trDate').value = t.date||'';
     document.getElementById('trTimeframe').value = t.timeframe||'Intraday';
     document.getElementById('trContext').value = t.context||'';
+    setPickerValue('trSetupType', t.setupType||'');
     document.getElementById('trCatalyst').value = t.catalyst||'';
     document.getElementById('trEntryDT').value = t.entryDT||'';
     document.getElementById('trEntryPrice').value = t.entryPrice||'';
@@ -4510,6 +4588,201 @@
     renderAll();
   }
 
+  // ================= CSV Import (broker tradebook or generic) =================
+  // Two formats are understood:
+  //  1) Zerodha Console equity tradebook export — one row per BUY/SELL leg.
+  //     Legs are matched FIFO per symbol to reconstruct round-trip trades
+  //     (this is the same method brokers use for cost-basis P&L), so both
+  //     intraday and multi-day swings, long and short, come out correctly.
+  //  2) A generic CSV with one row per already-closed round trip:
+  //     Ticker, Entry Date, Entry Price, Exit Date, Exit Price, Qty, Direction(optional)
+  let csvImportParsedTrades = [];
+
+  function parseCSV(text){
+    // Minimal CSV parser: handles quoted fields and commas-in-quotes, which
+    // is all broker exports and simple spreadsheets ever use.
+    const rows = [];
+    let row = [], field = '', inQuotes = false;
+    for(let i=0; i<text.length; i++){
+      const c = text[i];
+      if(inQuotes){
+        if(c === '"'){
+          if(text[i+1] === '"'){ field += '"'; i++; } else { inQuotes = false; }
+        } else field += c;
+      } else {
+        if(c === '"') inQuotes = true;
+        else if(c === ','){ row.push(field); field = ''; }
+        else if(c === '\n' || c === '\r'){
+          if(c === '\r' && text[i+1] === '\n') i++;
+          row.push(field); field = '';
+          if(row.length>1 || row[0]!=='') rows.push(row);
+          row = [];
+        } else field += c;
+      }
+    }
+    if(field!=='' || row.length){ row.push(field); rows.push(row); }
+    if(!rows.length) return {headers:[], records:[]};
+    const headers = rows[0].map(h=>h.trim().toLowerCase());
+    const records = rows.slice(1).filter(r=>r.some(v=>v!=='')).map(r=>{
+      const obj = {};
+      headers.forEach((h,i)=> obj[h] = (r[i]||'').trim());
+      return obj;
+    });
+    return {headers, records};
+  }
+
+  function fifoReconstructFromLegs(records){
+    // records: [{symbol, trade_date, trade_type('buy'|'sell'), quantity, price, order_execution_time}]
+    const bySymbol = {};
+    records.forEach(r=>{
+      const sym = (r.symbol||'').toUpperCase();
+      if(!sym) return;
+      (bySymbol[sym] = bySymbol[sym]||[]).push(r);
+    });
+    const trades = [];
+    Object.keys(bySymbol).forEach(sym=>{
+      const legs = bySymbol[sym].slice().sort((a,b)=>{
+        const ta = Date.parse((a.trade_date||'')+' '+(a.order_execution_time||'00:00:00'));
+        const tb = Date.parse((b.trade_date||'')+' '+(b.order_execution_time||'00:00:00'));
+        return (isNaN(ta)?0:ta) - (isNaN(tb)?0:tb);
+      });
+      let longQ = [], shortQ = []; // each: {qty, price, time}
+      legs.forEach(leg=>{
+        const type = (leg.trade_type||'').toLowerCase();
+        let qty = parseFloat(leg.quantity);
+        const price = parseFloat(leg.price);
+        const timeStr = (leg.trade_date||'')+'T'+((leg.order_execution_time||'09:15:00').split(' ').pop());
+        if(isNaN(qty) || isNaN(price) || qty<=0) return;
+        if(type==='buy'){
+          // First cover any open shorts (FIFO), remainder opens/extends a long.
+          while(qty>0 && shortQ.length){
+            const lot = shortQ[0];
+            const matched = Math.min(qty, lot.qty);
+            trades.push({ ticker:sym, direction:'short', entryDT:lot.time, entryPrice:lot.price, exitDT:timeStr, exitPrice:price, qty:matched });
+            lot.qty -= matched; qty -= matched;
+            if(lot.qty<=0.0001) shortQ.shift();
+          }
+          if(qty>0) longQ.push({qty, price, time:timeStr});
+        } else if(type==='sell'){
+          while(qty>0 && longQ.length){
+            const lot = longQ[0];
+            const matched = Math.min(qty, lot.qty);
+            trades.push({ ticker:sym, direction:'long', entryDT:lot.time, entryPrice:lot.price, exitDT:timeStr, exitPrice:price, qty:matched });
+            lot.qty -= matched; qty -= matched;
+            if(lot.qty<=0.0001) longQ.shift();
+          }
+          if(qty>0) shortQ.push({qty, price, time:timeStr});
+        }
+      });
+    });
+    return trades.sort((a,b)=> Date.parse(a.exitDT) - Date.parse(b.exitDT));
+  }
+
+  function buildTradeObject(raw){
+    const entryPrice = parseFloat(raw.entryPrice), exitPrice = parseFloat(raw.exitPrice), qty = parseFloat(raw.qty);
+    const dir = (raw.direction||'long').toLowerCase()==='short' ? 'short' : 'long';
+    const sign = dir==='short' ? -1 : 1;
+    const posSize = (!isNaN(entryPrice)&&!isNaN(qty)) ? Math.round(entryPrice*qty*100)/100 : '';
+    const pnl = (!isNaN(entryPrice)&&!isNaN(exitPrice)&&!isNaN(qty)) ? Math.round((exitPrice-entryPrice)*qty*sign*100)/100 : '';
+    const entryDateOnly = (raw.entryDT||'').slice(0,10);
+    const exitDateOnly = (raw.exitDT||'').slice(0,10);
+    return {
+      id: 'trade_'+Date.now()+'_'+Math.random().toString(36).slice(2,7),
+      ticker: (raw.ticker||'').toUpperCase(), date: entryDateOnly,
+      timeframe: (entryDateOnly && exitDateOnly && entryDateOnly!==exitDateOnly) ? 'Swing' : 'Intraday',
+      direction: dir, entryDT: raw.entryDT||(entryDateOnly?entryDateOnly+'T09:15':''), entryPrice: isNaN(entryPrice)?'':entryPrice,
+      qty: isNaN(qty)?'':qty, posSize,
+      exitDT: raw.exitDT||(exitDateOnly?exitDateOnly+'T15:30':''), exitPrice: isNaN(exitPrice)?'':exitPrice,
+      pnl, source: 'csv-import'
+    };
+  }
+
+  function detectAndParseCsv(text){
+    const {headers, records} = parseCSV(text);
+    if(!records.length) throw new Error('No data rows found in that file.');
+    const has = (h)=> headers.includes(h);
+    if(has('symbol') && has('trade_type') && has('quantity') && has('price') && has('trade_date')){
+      // Zerodha Console tradebook format
+      const legTrades = fifoReconstructFromLegs(records);
+      if(!legTrades.length) throw new Error('Found broker rows but could not match any complete buy/sell round trips.');
+      return legTrades.map(buildTradeObject);
+    }
+    const hasGeneric = ['ticker','entry date','entry price','exit date','exit price','qty']
+      .every(h=> headers.includes(h));
+    if(hasGeneric){
+      return records.map(r=> buildTradeObject({
+        ticker: r['ticker'], entryDT: r['entry date'], entryPrice: r['entry price'],
+        exitDT: r['exit date'], exitPrice: r['exit price'], qty: r['qty'], direction: r['direction']
+      })).filter(t=>t.ticker);
+    }
+    throw new Error('Unrecognized CSV format. Expected a Zerodha tradebook export, or columns: Ticker, Entry Date, Entry Price, Exit Date, Exit Price, Qty.');
+  }
+
+  function isDuplicateTrade(t){
+    return (db.trades||[]).some(ex=> ex.ticker===t.ticker && ex.entryDT===t.entryDT && ex.exitDT===t.exitDT && Math.abs((parseFloat(ex.qty)||0)-(parseFloat(t.qty)||0))<0.001);
+  }
+
+  const csvImportBackdrop = document.getElementById('csvImportModalBackdrop');
+  const csvImportBtn = document.getElementById('tdImportCsvBtn');
+  if(csvImportBtn) csvImportBtn.addEventListener('click', ()=>{
+    csvImportParsedTrades = [];
+    document.getElementById('csvImportFile').value = '';
+    document.getElementById('csvImportStep1').style.display = 'block';
+    document.getElementById('csvImportStep2').style.display = 'none';
+    document.getElementById('csvImportError').style.display = 'none';
+    document.getElementById('csvImportConfirmBtn').style.display = 'none';
+    csvImportBackdrop.classList.add('open');
+  });
+  const closeCsvImport = ()=> csvImportBackdrop.classList.remove('open');
+  document.getElementById('csvImportModalClose').addEventListener('click', closeCsvImport);
+  document.getElementById('csvImportCancelBtn').addEventListener('click', closeCsvImport);
+  csvImportBackdrop.addEventListener('click', (e)=>{ if(e.target===csvImportBackdrop) closeCsvImport(); });
+
+  document.getElementById('csvImportFile').addEventListener('change', (e)=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    const errEl = document.getElementById('csvImportError');
+    errEl.style.display = 'none';
+    const reader = new FileReader();
+    reader.onload = ()=>{
+      try{
+        const parsed = detectAndParseCsv(reader.result);
+        const withDupFlag = parsed.map(t=> ({...t, _dup: isDuplicateTrade(t)}));
+        csvImportParsedTrades = withDupFlag;
+        const newCount = withDupFlag.filter(t=>!t._dup).length;
+        const dupCount = withDupFlag.length - newCount;
+        document.getElementById('csvImportSummary').textContent =
+          `Found ${withDupFlag.length} trade${withDupFlag.length===1?'':'s'} — ${newCount} new${dupCount?', '+dupCount+' look like duplicates already in your journal (skipped)':''}.`;
+        const rows = withDupFlag.map(t=>`<tr style="${t._dup?'opacity:0.4;':''}">
+          <td>${escapeHtml(t.ticker)}</td><td>${t.direction==='short'?'Short':'Long'}</td>
+          <td>${(t.entryDT||'').slice(0,10)} @ ${t.entryPrice}</td>
+          <td>${(t.exitDT||'').slice(0,10)} @ ${t.exitPrice}</td>
+          <td>${t.qty}</td>
+          <td style="color:${(parseFloat(t.pnl)||0)>=0?'var(--teal)':'var(--rose)'};">${t.pnl!==''?fmtPnl(t.pnl):'—'}</td>
+        </tr>`).join('');
+        document.getElementById('csvImportPreviewTable').innerHTML =
+          '<tr><th>Ticker</th><th>Dir</th><th>Entry</th><th>Exit</th><th>Qty</th><th>P&L</th></tr>'+rows;
+        document.getElementById('csvImportStep1').style.display = 'none';
+        document.getElementById('csvImportStep2').style.display = 'block';
+        document.getElementById('csvImportConfirmBtn').style.display = newCount ? 'block' : 'none';
+      } catch(err){
+        errEl.textContent = err.message || 'Could not parse that file.';
+        errEl.style.display = 'block';
+      }
+    };
+    reader.readAsText(file);
+  });
+
+  document.getElementById('csvImportConfirmBtn').addEventListener('click', ()=>{
+    const toImport = csvImportParsedTrades.filter(t=>!t._dup).map(({_dup, ...t})=>t);
+    if(!toImport.length){ closeCsvImport(); return; }
+    db.trades = (db.trades||[]).concat(toImport);
+    saveDB();
+    renderAll();
+    showToast(`Imported ${toImport.length} trade${toImport.length===1?'':'s'}.`, 'success');
+    closeCsvImport();
+  });
+
   // Trade History: search text, sort mode, and outcome filter — kept live in one place
   // so search/sort/filter controls and the render function all read from the same state.
   let tradesViewState = { search:'', sort:'date-desc', outcome:'all' };
@@ -4533,6 +4806,55 @@
   function tradeBasisDate(t){
     if(t.exitDT) return t.exitDT.slice(0,10);
     return t.date || '';
+  }
+
+  // ---- Capital deployed & return-on-capital ----------------------------
+  // There's nowhere in this app that stores your real account size (nobody
+  // wants to type their net worth into a phone app, and it drifts anyway).
+  // So "total capital" for a % return figure is approximated as the highest
+  // amount that was ever concurrently tied up in open positions during the
+  // period being looked at — the real capital base you were actually
+  // risking, derived straight from position sizes you already log.
+  function capitalEventsTimeline(trades){
+    const events = [];
+    (trades||[]).forEach(t=>{
+      const size = parseFloat(t.posSize);
+      if(isNaN(size) || size<=0) return;
+      const entryT = t.entryDT ? Date.parse(t.entryDT) : (t.date ? Date.parse(t.date+'T00:00:00') : NaN);
+      if(isNaN(entryT)) return;
+      events.push({time:entryT, delta:size});
+      if(t.exitDT){
+        const exitT = Date.parse(t.exitDT);
+        if(!isNaN(exitT)) events.push({time:exitT, delta:-size});
+      }
+      // no exitDT yet => still open, capital stays counted as deployed through "now"
+    });
+    events.sort((a,b)=>a.time-b.time);
+    return events;
+  }
+  function maxCapitalDeployed(trades, fromDate, toDate){
+    const fromT = fromDate ? Date.parse(fromDate+'T00:00:00') : -Infinity;
+    const toT = toDate ? Date.parse(toDate+'T23:59:59') : Infinity;
+    const events = capitalEventsTimeline(trades);
+    let running = 0;
+    events.forEach(e=>{ if(e.time < fromT) running += e.delta; });
+    let max = Math.max(0, running);
+    events.forEach(e=>{
+      if(e.time>=fromT && e.time<=toT){ running += e.delta; if(running>max) max = running; }
+    });
+    return Math.max(0, max);
+  }
+  function returnOnCapitalPct(allTrades, fromDate, toDate){
+    const periodNet = (allTrades||[]).filter(t=>{
+      const bd = tradeBasisDate(t);
+      if(!bd || t.pnl===undefined || t.pnl==='' || isNaN(parseFloat(t.pnl))) return false;
+      if(fromDate && bd<fromDate) return false;
+      if(toDate && bd>toDate) return false;
+      return true;
+    }).reduce((s,t)=>s+parseFloat(t.pnl),0);
+    const cap = maxCapitalDeployed(allTrades, fromDate, toDate);
+    if(!cap) return null;
+    return (periodNet/cap)*100;
   }
 
   const MONTH_LABELS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -4740,6 +5062,142 @@
     return `<div class="td-stat-card"><div class="td-stat-lbl">${lbl}</div><div class="td-stat-val ${cls||''}">${val}</div>${sub?`<div class="td-stat-sub">${sub}</div>`:''}</div>`;
   }
 
+  // ---- Shared equity-curve SVG renderer ----------------------------------
+  // Used by both the Overview equity curve and the FY/Periods all-time curve
+  // so both get: cumulative line + fill, a dashed running-peak line, a
+  // shaded drawdown band (peak vs actual), peak/trough markers, a win/loss
+  // colored dot per trade, and a tap/hover tooltip showing ticker + date + P&L.
+  let eqChronoAll = [];
+  let eqOverviewRange = 'all';
+
+  function ensureEquityTooltip(){
+    let tip = document.getElementById('eqTooltip');
+    if(!tip){ tip = document.createElement('div'); tip.id='eqTooltip'; tip.className='eq-tooltip'; document.body.appendChild(tip); }
+    return tip;
+  }
+  function hideEquityTooltip(){ const tip=document.getElementById('eqTooltip'); if(tip) tip.style.display='none'; }
+  document.addEventListener('click', hideEquityTooltip);
+
+  function renderEquityCurveSVG(containerEl, rangeEl, chronoTrades, opts){
+    opts = opts || {};
+    if(!containerEl) return;
+    if(!chronoTrades.length){
+      containerEl.innerHTML = '<div class="td-empty-note">No trades in this range.</div>';
+      if(rangeEl) rangeEl.textContent = '';
+      return;
+    }
+    let running=0, peak=0;
+    const pts = [{y:0, peak:0, pnl:0, label:'Start', ticker:'', fy:null}];
+    chronoTrades.forEach(t=>{
+      const pnl = parseFloat(t.pnl);
+      running += pnl;
+      if(running>peak) peak = running;
+      pts.push({ y:running, peak, pnl, label:tradeBasisDate(t), ticker:t.ticker||'', fy: opts.fyDividers ? fyKeyForDate(tradeBasisDate(t)) : null });
+    });
+
+    let peakIdx=0, troughIdx=0, maxDD=0;
+    pts.forEach((p,i)=>{ if(p.y>=pts[peakIdx].y) peakIdx=i; const dd=p.peak-p.y; if(dd>maxDD){ maxDD=dd; troughIdx=i; } });
+
+    const w=640, h=opts.height||190, padL=6, padR=6, padT=18, padB=6;
+    const ys = pts.map(p=>p.y);
+    const minY = Math.min(0,...ys), maxY = Math.max(0,...ys), spanY=(maxY-minY)||1;
+    const xFor = i => padL + (i/(pts.length-1))*(w-padL-padR);
+    const yFor = v => padT + (1-((v-minY)/spanY))*(h-padT-padB);
+    const zeroY = yFor(0).toFixed(1);
+
+    const linePts = pts.map((p,i)=> xFor(i).toFixed(1)+','+yFor(p.y).toFixed(1)).join(' ');
+    const peakLinePts = pts.map((p,i)=> xFor(i).toFixed(1)+','+yFor(p.peak).toFixed(1)).join(' ');
+    const areaPts = `${xFor(0)},${zeroY} ${linePts} ${xFor(pts.length-1)},${zeroY}`;
+    const ddBandPts = pts.map((p,i)=> xFor(i).toFixed(1)+','+yFor(p.y).toFixed(1)).join(' ') + ' ' +
+      pts.slice().reverse().map((p,i)=> xFor(pts.length-1-i).toFixed(1)+','+yFor(pts[pts.length-1-i].peak).toFixed(1)).join(' ');
+    const lineColor = running>=0 ? 'var(--teal)' : 'var(--rose)';
+
+    let fyDividerSvg = '';
+    if(opts.fyDividers){
+      for(let i=1;i<pts.length;i++){
+        if(pts[i].fy !== pts[i-1].fy){
+          const x = xFor(i).toFixed(1);
+          fyDividerSvg += `<line x1="${x}" y1="${padT}" x2="${x}" y2="${h-padB}" stroke="var(--ink-faint)" stroke-width="1" stroke-dasharray="2,3" opacity="0.5"/>`;
+        }
+      }
+    }
+
+    const dots = pts.map((p,i)=>{
+      if(i===0) return '';
+      const isWin = p.pnl>=0;
+      const isPeak = i===peakIdx, isTrough = (i===troughIdx && maxDD>0);
+      const r = isPeak||isTrough ? 4.5 : 2.6;
+      const fill = isPeak ? 'var(--teal)' : (isTrough ? 'var(--rose)' : (isWin?'var(--teal)':'var(--rose)'));
+      return `<circle class="eq-dot" data-i="${i}" cx="${xFor(i).toFixed(1)}" cy="${yFor(p.y).toFixed(1)}" r="${r}" fill="${fill}" opacity="${isPeak||isTrough?1:0.8}"/>`;
+    }).join('');
+
+    const markerLabels = `
+      ${peakIdx>0 ? `<text x="${xFor(peakIdx).toFixed(1)}" y="${Math.max(10,yFor(pts[peakIdx].y)-8).toFixed(1)}" font-size="9" fill="var(--teal)" text-anchor="middle" font-family="IBM Plex Mono">Peak</text>` : ''}
+      ${troughIdx>0 && maxDD>0 ? `<text x="${xFor(troughIdx).toFixed(1)}" y="${Math.min(h-2,yFor(pts[troughIdx].y)+13).toFixed(1)}" font-size="9" fill="var(--rose)" text-anchor="middle" font-family="IBM Plex Mono">-${Math.round(maxDD)}</text>` : ''}
+    `;
+
+    containerEl.innerHTML = `
+      <svg class="td-chart-svg eq-svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+        <line x1="${padL}" y1="${zeroY}" x2="${w-padR}" y2="${zeroY}" stroke="var(--line)" stroke-width="1" stroke-dasharray="3,3"/>
+        ${fyDividerSvg}
+        <polygon points="${areaPts}" fill="${lineColor}" opacity="0.08"/>
+        <polygon points="${ddBandPts}" fill="var(--rose)" opacity="0.13"/>
+        <polyline points="${peakLinePts}" fill="none" stroke="var(--ink-faint)" stroke-width="1" stroke-dasharray="2,3" opacity="0.5"/>
+        <polyline points="${linePts}" fill="none" stroke="${lineColor}" stroke-width="2"/>
+        ${markerLabels}
+        ${dots}
+      </svg>`;
+
+    const tip = ensureEquityTooltip();
+    containerEl.querySelectorAll('.eq-dot').forEach(dot=>{
+      const i = parseInt(dot.dataset.i,10);
+      const p = pts[i];
+      const show = ()=>{
+        tip.innerHTML = `<div class="eq-tip-tk">${escapeHtml(p.ticker||'Trade')}</div><div class="eq-tip-date">${escapeHtml(p.label||'')}</div><div class="eq-tip-pnl ${p.pnl>=0?'pos':'neg'}">${fmtPnl(Math.round(p.pnl))} · cum ${fmtPnl(Math.round(p.y))}</div>`;
+        tip.style.display = 'block';
+        const dotRect = dot.getBoundingClientRect();
+        tip.style.left = (dotRect.left + dotRect.width/2 + window.scrollX) + 'px';
+        tip.style.top = (dotRect.top + window.scrollY - 6) + 'px';
+      };
+      dot.addEventListener('mouseenter', show);
+      dot.addEventListener('mouseleave', hideEquityTooltip);
+      dot.addEventListener('click', (e)=>{ e.stopPropagation(); show(); });
+    });
+
+    if(rangeEl){
+      const ddText = maxDD>0 ? ' · max DD -'+Math.round(maxDD) : '';
+      rangeEl.textContent = (pts[1]?.label||'')+' → '+(pts[pts.length-1].label||'')+' · '+fmtPnl(Math.round(running))+' cumulative'+ddText;
+    }
+  }
+
+  // Handles the 1M/3M/YTD/All toggle above the Overview equity curve.
+  function renderEquityCurveRange(range){
+    eqOverviewRange = range;
+    const equityEl = document.getElementById('tdEquityChart');
+    const rangeEl = document.getElementById('tdEquityRange');
+    const toggle = document.getElementById('tdEquityRangeToggle');
+    if(toggle) toggle.querySelectorAll('.eq-range-btn').forEach(b=> b.classList.toggle('on', b.dataset.range===range));
+    let filtered = eqChronoAll;
+    if(range!=='all'){
+      const now = new Date();
+      let fromDate;
+      if(range==='1m'){ fromDate = new Date(now); fromDate.setMonth(now.getMonth()-1); }
+      else if(range==='3m'){ fromDate = new Date(now); fromDate.setMonth(now.getMonth()-3); }
+      else if(range==='ytd'){ fromDate = new Date(now.getFullYear(),0,1); }
+      const fromKey = todayKey(fromDate);
+      filtered = eqChronoAll.filter(t=> tradeBasisDate(t) >= fromKey);
+    }
+    renderEquityCurveSVG(equityEl, rangeEl, filtered, {});
+  }
+  const tdEquityRangeToggleEl = document.getElementById('tdEquityRangeToggle');
+  if(tdEquityRangeToggleEl){
+    tdEquityRangeToggleEl.addEventListener('click', (e)=>{
+      const btn = e.target.closest('.eq-range-btn');
+      if(!btn) return;
+      renderEquityCurveRange(btn.dataset.range);
+    });
+  }
+
   function renderTradeOverview(){
     const grid = document.getElementById('tdOverviewStats');
     if(!grid) return;
@@ -4760,6 +5218,7 @@
       // sum of every position ever sized (which would double-count capital that was freed
       // up and redeployed into later trades).
       const capitalDeployed = trades.filter(t=> tradeOutcome(t)==='open').reduce((s,t)=>{ const n=parseFloat(t.posSize); return s+(isNaN(n)?0:n); },0);
+      const allTimeCap = maxCapitalDeployed(trades, null, null);
       heroEl.innerHTML = `
         <div class="td-hero-lbl">Net P&amp;L · All Time</div>
         <div class="td-hero-value ${m.net>=0?'pos':'neg'}">${fmtPnl(Math.round(m.net))}</div>
@@ -4767,9 +5226,11 @@
           <div class="td-hero-stat"><div class="td-hero-stat-lbl">Today</div><div class="td-hero-stat-val ${todayPnl>=0?'pos':'neg'}">${fmtPnl(Math.round(todayPnl))}</div></div>
           <div class="td-hero-stat"><div class="td-hero-stat-lbl">Last 7 Days</div><div class="td-hero-stat-val ${weekPnl>=0?'pos':'neg'}">${fmtPnl(Math.round(weekPnl))}</div></div>
           <div class="td-hero-stat"><div class="td-hero-stat-lbl">Capital Deployed Right Now</div><div class="td-hero-stat-val">${capitalDeployed?fmtMoney(capitalDeployed):'—'}</div></div>
+          <div class="td-hero-stat"><div class="td-hero-stat-lbl">Peak Capital Deployed</div><div class="td-hero-stat-val">${allTimeCap?fmtMoney(allTimeCap):'—'}</div></div>
         </div>`;
     }
 
+    const allTimeReturnPct = returnOnCapitalPct(trades, null, null);
     grid.innerHTML = [
       statCardHtml('Win Rate', m.withPnlCount? Math.round(m.winRate)+'%' : '—', '', m.wins+'W / '+m.losses+'L'),
       statCardHtml('Profit Factor', m.profitFactor===Infinity ? '∞' : (m.grossLoss||m.grossProfit ? m.profitFactor.toFixed(2) : '—')),
@@ -4777,38 +5238,12 @@
       statCardHtml('Max Drawdown', m.maxDD? '-'+Math.round(m.maxDD) : '—', m.maxDD?'neg':''),
       statCardHtml(m.streakType==='loss'?'Losing Streak':'Winning Streak', m.streakCount||0, m.streakType==='loss'?'neg':(m.streakType==='win'?'pos':'')),
       statCardHtml('Total Trades', trades.length),
+      statCardHtml('Return on Capital', allTimeReturnPct!==null ? (allTimeReturnPct>=0?'+':'')+allTimeReturnPct.toFixed(1)+'%' : '—', allTimeReturnPct!==null?(allTimeReturnPct>=0?'pos':'neg'):'', 'vs peak capital deployed'),
     ].join('');
 
-    // ---- Equity curve (SVG line + area) ----
-    const equityEl = document.getElementById('tdEquityChart');
-    const rangeEl = document.getElementById('tdEquityRange');
-    if(equityEl){
-      if(m.chrono.length<1){
-        equityEl.innerHTML = '<div class="td-empty-note">Log trades with a P&amp;L to see your equity curve.</div>';
-        if(rangeEl) rangeEl.textContent='';
-      } else {
-        let running=0;
-        const pts=[{x:0,y:0,date:'Start'}];
-        m.chrono.forEach((t,i)=>{ running+=parseFloat(t.pnl); pts.push({x:i+1,y:running,date:tradeBasisDate(t),ticker:t.ticker}); });
-        const w=640, h=170, padL=4, padR=4, padT=14, padB=4;
-        const ys = pts.map(p=>p.y);
-        const minY = Math.min(0,...ys), maxY = Math.max(0,...ys);
-        const spanY = (maxY-minY)||1;
-        const xFor = i => padL + (i/(pts.length-1))*(w-padL-padR);
-        const yFor = v => padT + (1-((v-minY)/spanY))*(h-padT-padB);
-        const linePts = pts.map((p,i)=> xFor(i).toFixed(1)+','+yFor(p.y).toFixed(1)).join(' ');
-        const zeroY = yFor(0).toFixed(1);
-        const areaPts = `${xFor(0)},${zeroY} ${linePts} ${xFor(pts.length-1)},${zeroY}`;
-        const lineColor = running>=0 ? 'var(--teal)' : 'var(--rose)';
-        equityEl.innerHTML = `
-          <svg class="td-chart-svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
-            <line x1="${padL}" y1="${zeroY}" x2="${w-padR}" y2="${zeroY}" stroke="var(--line)" stroke-width="1" stroke-dasharray="3,3"/>
-            <polygon points="${areaPts}" fill="${lineColor}" opacity="0.10"/>
-            <polyline points="${linePts}" fill="none" stroke="${lineColor}" stroke-width="2"/>
-          </svg>`;
-        if(rangeEl) rangeEl.textContent = (tradeBasisDate(m.chrono[0])||'')+' → '+(tradeBasisDate(m.chrono[m.chrono.length-1])||'')+' · '+fmtPnl(running)+' cumulative';
-      }
-    }
+    // ---- Equity curve (SVG line + area, drawdown shading, peak/trough, tooltips) ----
+    eqChronoAll = m.chrono;
+    renderEquityCurveRange(eqOverviewRange);
 
     // ---- P&L by month (SVG bars) ----
     const monthlyEl = document.getElementById('tdMonthlyChart');
@@ -4995,6 +5430,7 @@
       const tradeRows = (db.trades||[]).map(t=>({
         Ticker:t.ticker||'', 'Entry date':t.date||'', 'Exit date':t.exitDT?t.exitDT.slice(0,10):'',
         Direction:t.direction==='short'?'Short':'Long', Timeframe:t.timeframe||'', Conviction:t.conviction||'',
+        'Setup type':t.setupType||'', Catalyst:t.catalyst||'',
         'Entry price':t.entryPrice||'', 'Exit price':t.exitPrice||'', Qty:t.qty||'',
         'P&L':t.pnl||'', 'R-multiple':t.rMultiple||'', 'Exit reason':(t.exitReasonTags||[]).join(', '),
         Verdict:(t.verdictTags||[]).join(', '), Grade:t.grade||'', Lesson:t.lesson||''
@@ -5054,7 +5490,10 @@
   function renderStrategyBreakdown(){
     const trades = db.trades||[];
     renderTickerBreakdown();
-    renderBreakdownGroups('tdByCatalyst', trades, t=>t.catalyst, 'Add a catalyst to your trades to see setup performance.');
+    // Groups by the structured Setup type; falls back to the old freeform
+    // Catalyst text for trades logged before Setup type existed, so nothing
+    // drops out of this breakdown for older data.
+    renderBreakdownGroups('tdByCatalyst', trades, t=>t.setupType||t.catalyst, 'Tag a setup type on your trades to see performance by strategy.');
     renderBreakdownGroups('tdByTimeframe', trades, t=>t.timeframe, 'No trades logged yet.');
   }
 
@@ -5171,7 +5610,7 @@
     return {bestDay, worstDay, bestMonth, worstMonth, bestYear, worstYear, bestFy, worstFy};
   }
 
-  function periodRowHtml(label, m, isCurrent){
+  function periodRowHtml(label, m, isCurrent, returnPct){
     return `<tr${isCurrent?' class="current-fy"':''}>
       <td>${label}</td>
       <td>${m.count}</td>
@@ -5180,9 +5619,10 @@
       <td>${m.profitFactor===Infinity?'∞':m.profitFactor.toFixed(2)}</td>
       <td>${m.avgR!==null?m.avgR.toFixed(2)+'R':'—'}</td>
       <td>${fmtMoney(m.expectancy)}</td>
+      <td style="color:${returnPct!==null&&returnPct!==undefined?(returnPct>=0?'var(--teal)':'var(--rose)'):'var(--ink-faint)'};">${returnPct!==null&&returnPct!==undefined?(returnPct>=0?'+':'')+returnPct.toFixed(1)+'%':'—'}</td>
     </tr>`;
   }
-  const PERIOD_TABLE_HEAD = `<tr><th>Period</th><th>Trades</th><th>Net P&amp;L</th><th>Win%</th><th>PF</th><th>Avg R</th><th>Expectancy</th></tr>`;
+  const PERIOD_TABLE_HEAD = `<tr><th>Period</th><th>Trades</th><th>Net P&amp;L</th><th>Win%</th><th>PF</th><th>Avg R</th><th>Expectancy</th><th>Return %</th></tr>`;
 
   function renderPeriodsPanel(){
     const panel = document.getElementById('apanel-periods');
@@ -5220,7 +5660,10 @@
     const curFy = currentFyKey();
     const fyTableEl = document.getElementById('fyTable');
     if(fyTableEl){
-      fyTableEl.innerHTML = PERIOD_TABLE_HEAD + fyKeys.map(k=> periodRowHtml(fyLabel(k), computeTradeMetrics(byFy[k]), k===curFy)).join('');
+      fyTableEl.innerHTML = PERIOD_TABLE_HEAD + fyKeys.map(k=>{
+        const from = k+'-04-01', to = (k+1)+'-03-31';
+        return periodRowHtml(fyLabel(k), computeTradeMetrics(byFy[k]), k===curFy, returnOnCapitalPct(trades, from, to));
+      }).join('');
     }
 
     const fyCompareEl = document.getElementById('fyCompareRow');
@@ -5243,39 +5686,10 @@
     }
 
     const fyEqEl = document.getElementById('fyEquityChart');
+    const fyEqRangeEl = document.getElementById('fyEquityRange');
     if(fyEqEl){
       const chrono = trades.filter(t=>t.pnl!==undefined && t.pnl!=='' && !isNaN(parseFloat(t.pnl))).slice().sort((a,b)=>tradeBasisDate(a).localeCompare(tradeBasisDate(b)));
-      if(chrono.length<1){
-        fyEqEl.innerHTML = '<div class="td-empty-note">No P&amp;L data yet.</div>';
-      } else {
-        let running=0;
-        const pts=[{x:0,y:0,fy:fyKeyForDate(tradeBasisDate(chrono[0]))}];
-        chrono.forEach((t,i)=>{ running+=parseFloat(t.pnl); pts.push({x:i+1,y:running,fy:fyKeyForDate(tradeBasisDate(t))}); });
-        const w=640, h=170, padL=4, padR=4, padT=14, padB=4;
-        const ys = pts.map(p=>p.y);
-        const minY=Math.min(0,...ys), maxY=Math.max(0,...ys), spanY=(maxY-minY)||1;
-        const xFor = i => padL + (i/(pts.length-1))*(w-padL-padR);
-        const yFor = v => padT + (1-((v-minY)/spanY))*(h-padT-padB);
-        const linePts = pts.map((p,i)=> xFor(i).toFixed(1)+','+yFor(p.y).toFixed(1)).join(' ');
-        const zeroY = yFor(0).toFixed(1);
-        const areaPts = `${xFor(0)},${zeroY} ${linePts} ${xFor(pts.length-1)},${zeroY}`;
-        const lineColor = running>=0 ? 'var(--teal)' : 'var(--rose)';
-        let markers = '';
-        for(let i=1;i<pts.length;i++){
-          if(pts[i].fy !== pts[i-1].fy){
-            const x = xFor(i).toFixed(1);
-            markers += `<line x1="${x}" y1="${padT}" x2="${x}" y2="${h-padB}" stroke="var(--ink-faint)" stroke-width="1" stroke-dasharray="2,3" opacity="0.5"/>`;
-          }
-        }
-        fyEqEl.innerHTML = `
-          <svg class="td-chart-svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
-            <line x1="${padL}" y1="${zeroY}" x2="${w-padR}" y2="${zeroY}" stroke="var(--line)" stroke-width="1" stroke-dasharray="3,3"/>
-            ${markers}
-            <polygon points="${areaPts}" fill="${lineColor}" opacity="0.10"/>
-            <polyline points="${linePts}" fill="none" stroke="${lineColor}" stroke-width="2"/>
-          </svg>
-          <div class="td-empty-note" style="padding:6px 0 0; text-align:left;">Dashed lines mark FY boundaries (Apr 1). Cumulative: ${fmtMoney(running)}</div>`;
-      }
+      renderEquityCurveSVG(fyEqEl, fyEqRangeEl, chrono, {fyDividers:true, height:170});
     }
 
     const byYear = groupTradesBy(trades, d=>d.slice(0,4));
@@ -5283,7 +5697,10 @@
     const curYear = String(new Date().getFullYear());
     const yearTableEl = document.getElementById('yearTable');
     if(yearTableEl){
-      yearTableEl.innerHTML = PERIOD_TABLE_HEAD + yearKeys.map(k=> periodRowHtml(k, computeTradeMetrics(byYear[k]), k===curYear)).join('');
+      yearTableEl.innerHTML = PERIOD_TABLE_HEAD + yearKeys.map(k=>{
+        const from = k+'-01-01', to = k+'-12-31';
+        return periodRowHtml(k, computeTradeMetrics(byYear[k]), k===curYear, returnOnCapitalPct(trades, from, to));
+      }).join('');
     }
 
     const fyFilterEl = document.getElementById('fyMonthFilter');
@@ -5306,8 +5723,13 @@
       const monthKeys = Object.keys(byMonth).sort((a,b)=>b.localeCompare(a));
       const curMonth = todayKey().slice(0,7);
       monthTableEl.innerHTML = monthKeys.length
-        ? PERIOD_TABLE_HEAD + monthKeys.map(k=> periodRowHtml(k, computeTradeMetrics(byMonth[k]), k===curMonth)).join('')
-        : `<tr><td colspan="7" class="td-empty-note">No trades in this financial year.</td></tr>`;
+        ? PERIOD_TABLE_HEAD + monthKeys.map(k=>{
+            const [y,mo] = k.split('-').map(Number);
+            const lastDay = new Date(y, mo, 0).getDate();
+            const from = k+'-01', to = k+'-'+String(lastDay).padStart(2,'0');
+            return periodRowHtml(k, computeTradeMetrics(byMonth[k]), k===curMonth, returnOnCapitalPct(trades, from, to));
+          }).join('')
+        : `<tr><td colspan="8" class="td-empty-note">No trades in this financial year.</td></tr>`;
     }
     renderMonthTable();
 
@@ -7900,6 +8322,7 @@
         const tradeRows = (db.trades||[]).map(t=>({
           Ticker:t.ticker||'', 'Entry date':t.date||'', 'Exit date':t.exitDT?t.exitDT.slice(0,10):'',
           Direction:t.direction==='short'?'Short':'Long', Timeframe:t.timeframe||'', Conviction:t.conviction||'',
+          'Setup type':t.setupType||'', Catalyst:t.catalyst||'',
           'Entry price':t.entryPrice||'', 'Exit price':t.exitPrice||'', Qty:t.qty||'',
           'P&L':t.pnl||'', 'R-multiple':t.rMultiple||'', 'Exit reason':(t.exitReasons||[]).join(', '),
           Verdict:(t.verdictTags||[]).join(', '), Lesson:t.lesson||''

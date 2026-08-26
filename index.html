@@ -1318,6 +1318,17 @@
     cursor:pointer; font-size:12px; line-height:1; display:flex; align-items:center; justify-content:center; flex-shrink:0;
   }
   .gym-chip-remove:hover{ background:var(--rose-bg); color:var(--rose); }
+  .gym-muscle-select{
+    border:none; background:transparent; color:var(--ink-faint); font-size:10px; font-weight:700; font-family:'Inter';
+    padding:0 2px; cursor:pointer; max-width:80px;
+  }
+  .gym-day-head-row{ display:flex; align-items:flex-end; gap:8px; }
+  .gym-day-head-row .modal-field{ flex:1; }
+  .gym-remove-day-btn{
+    padding:9px 12px; border-radius:999px; border:1px solid var(--rose-dim); background:transparent; color:var(--rose);
+    cursor:pointer; font-size:11.5px; font-weight:700; white-space:nowrap;
+  }
+  .gym-remove-day-btn:hover{ background:var(--rose-bg); }
   .gym-add-exercise-row{ display:flex; gap:8px; }
   .gym-add-exercise-input{
     flex:1; padding:9px 12px; border-radius:999px; border:1px solid var(--line); background:var(--surface);
@@ -2778,6 +2789,7 @@
       <button class="trade-subnav-btn active" data-gpanel="overview">Overview</button>
       <button class="trade-subnav-btn" data-gpanel="log">Log Workout</button>
       <button class="trade-subnav-btn" data-gpanel="history">History</button>
+      <button class="trade-subnav-btn" data-gpanel="calendar">Calendar</button>
       <button class="trade-subnav-btn" data-gpanel="plan">Plan</button>
     </div>
 
@@ -2786,15 +2798,28 @@
       <div class="td-hero-card" id="gymHeroCard"></div>
       <div class="td-stat-grid" id="gymOverviewStats"></div>
       <div class="td-card">
-        <div class="td-card-head"><span>This Week by Day</span></div>
+        <div class="td-card-head"><span>Bodyweight</span><span class="td-card-sub" id="gymBwTrend"></span></div>
+        <div class="modal-row" style="margin-bottom:10px;">
+          <div class="modal-field"><label>Date</label><input type="date" id="gymBwDate"></div>
+          <div class="modal-field"><label>Weight (kg)</label><input type="number" step="0.1" id="gymBwWeight" placeholder="e.g. 72.5"></div>
+          <div class="modal-field" style="flex:0; align-self:flex-end;"><button class="btn primary" id="gymBwSaveBtn" style="padding:11px 16px; white-space:nowrap;">Log</button></div>
+        </div>
+        <div id="gymBwChart"></div>
+      </div>
+      <div class="td-card">
+        <div class="td-card-head"><span>Weekly Volume Trend</span></div>
         <div id="gymWeeklyChart"></div>
+      </div>
+      <div class="td-card">
+        <div class="td-card-head"><span>This Week by Muscle Group</span></div>
+        <div id="gymMuscleGroupChart"></div>
       </div>
       <div class="td-card">
         <div class="td-list-head">
           <div class="td-card-head" style="margin-bottom:0;"><span>Exercise Progress</span></div>
           <select id="gymExerciseSort" class="td-list-sort">
             <option value="recent">Sort: Most Recent</option>
-            <option value="weight">Sort: Heaviest</option>
+            <option value="weight">Sort: Heaviest e1RM</option>
             <option value="count">Sort: Most Logged</option>
             <option value="alpha">Sort: A–Z</option>
           </select>
@@ -2824,10 +2849,29 @@
       <div id="gymHistoryList"></div>
     </div>
 
+    <!-- ---- CALENDAR PANEL ---- -->
+    <div class="trade-panel" id="gpanel-calendar">
+      <div class="td-card">
+        <div class="tcal-head">
+          <button class="tcal-nav-btn" id="gcalPrevBtn" aria-label="Previous month">‹</button>
+          <div class="tcal-month-label" id="gcalMonthLabel">—</div>
+          <button class="tcal-nav-btn" id="gcalNextBtn" aria-label="Next month">›</button>
+        </div>
+        <div class="tcal-weekday-row"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div>
+        <div class="tcal-grid" id="gcalGrid"></div>
+        <div class="tcal-legend">
+          <div class="tcal-legend-item"><span class="tcal-legend-dot" style="background:var(--teal-bg); border:1px solid var(--teal);"></span>Trained</div>
+          <div class="tcal-legend-item"><span class="tcal-legend-dot" style="background:var(--surface); border:1px solid var(--line);"></span>Rest day</div>
+        </div>
+        <div id="gcalSelectedLogs" style="margin-top:14px;"></div>
+      </div>
+    </div>
+
     <!-- ---- PLAN PANEL ---- -->
     <div class="trade-panel" id="gpanel-plan">
-      <p style="font-size:12.5px; color:var(--ink-dim); margin-bottom:16px;">Your 5-day split. Rename any day and add or remove exercises — the Log Workout tab always follows this plan.</p>
+      <p style="font-size:12.5px; color:var(--ink-dim); margin-bottom:16px;">Your split. Rename any day, add or remove exercises, tag muscle groups, or add/remove whole days — the Log Workout tab always follows this plan.</p>
       <div id="gymPlanCards"></div>
+      <button class="btn ghost" id="gymAddDayBtn" style="width:100%; margin-top:4px;">+ Add Day</button>
     </div>
 
   </section>
@@ -3438,6 +3482,8 @@
         if(!db.customHabits) db.customHabits = JSON.parse(JSON.stringify(DEFAULT_CUSTOM_HABITS));
         if(!db.gymPlan) db.gymPlan = JSON.parse(JSON.stringify(DEFAULT_GYM_PLAN));
         if(!db.gymLogs) db.gymLogs = [];
+        if(!db.gymBodyweight) db.gymBodyweight = [];
+        if(!db.gymMuscleGroups) db.gymMuscleGroups = {};
         if(db._appSettings){
           appSettings = Object.assign({focusMins:25, breakMins:5, longBreakMins:15, notifications:false, isTrader:true, displayName:'', desktopLayout:'full', dailyTargetPct:70, autoTheme:false}, db._appSettings);
           saveAppSettings();
@@ -3477,6 +3523,8 @@
   if(!db.customHabits) db.customHabits = JSON.parse(JSON.stringify(DEFAULT_CUSTOM_HABITS));
   if(!db.gymPlan) db.gymPlan = JSON.parse(JSON.stringify(DEFAULT_GYM_PLAN));
   if(!db.gymLogs) db.gymLogs = [];
+  if(!db.gymBodyweight) db.gymBodyweight = [];
+  if(!db.gymMuscleGroups) db.gymMuscleGroups = {};
 
   function todayKey(d){
     d = d || new Date();
@@ -5828,19 +5876,50 @@
   let gymEditingLogId = null;
   let gymCurrentExerciseNames = []; // exercise names for the currently-selected plan day, in order — used to read the form back
 
-  function gymSetRowHtml(exIdx, setIdx, reps, weight){
+  // Estimated 1-rep max (Epley formula) — the standard way to compare a
+  // 3x8 session against a 1x3 session on the same lift.
+  function epley1RM(weight, reps){
+    if(!weight || !reps) return 0;
+    return weight * (1 + reps/30);
+  }
+  function bestSetE1RM(sets){
+    return Math.max(0, ...(sets||[]).map(s=> epley1RM(s.weight||0, s.reps||0)));
+  }
+  // All-time best e1RM ever logged for an exercise, optionally excluding one log (for edits).
+  function exerciseAllTimeBestE1RM(name, excludeLogId){
+    let best = 0;
+    (db.gymLogs||[]).forEach(l=>{
+      if(excludeLogId && l.id===excludeLogId) return;
+      (l.exercises||[]).forEach(ex=>{ if(ex.name===name){ const b = bestSetE1RM(ex.sets); if(b>best) best=b; } });
+    });
+    return best;
+  }
+  // Most recent previously-logged sets for an exercise (used as auto-fill targets).
+  function lastLoggedSetsFor(name, beforeDate){
+    const logs = (db.gymLogs||[]).filter(l=> !beforeDate || l.date<beforeDate).slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+    for(const l of logs){
+      const ex = (l.exercises||[]).find(e=>e.name===name);
+      if(ex && ex.sets && ex.sets.length) return ex.sets;
+    }
+    return null;
+  }
+
+  function gymSetRowHtml(exIdx, setIdx, reps, weight, prevSet){
+    const repsPh = prevSet && prevSet.reps!=null ? ('last: '+prevSet.reps) : 'Reps';
+    const wtPh = prevSet && prevSet.weight!=null ? ('last: '+prevSet.weight) : 'Weight (kg)';
     return `<div class="gym-set-row" data-ex="${exIdx}" data-set="${setIdx}">
       <span class="gym-set-num">${setIdx+1}</span>
-      <input type="number" class="gym-set-reps" placeholder="Reps" value="${reps!==undefined && reps!==null ? reps : ''}">
-      <input type="number" class="gym-set-weight" placeholder="Weight (kg)" step="0.5" value="${weight!==undefined && weight!==null ? weight : ''}">
+      <input type="number" class="gym-set-reps" placeholder="${repsPh}" value="${reps!==undefined && reps!==null ? reps : ''}">
+      <input type="number" class="gym-set-weight" placeholder="${wtPh}" step="0.5" value="${weight!==undefined && weight!==null ? weight : ''}">
       <button type="button" class="gym-set-remove" data-ex="${exIdx}" title="Remove set">×</button>
     </div>`;
   }
-  function gymExerciseBlockHtml(exIdx, name, sets){
-    sets = (sets && sets.length) ? sets : [{}];
+  function gymExerciseBlockHtml(exIdx, name, sets, prevSets){
+    const useSets = (sets && sets.length) ? sets : [{}];
+    const bestPrev = prevSets ? Math.max(0, ...prevSets.map(s=>epley1RM(s.weight||0,s.reps||0))) : 0;
     return `<div class="gym-exercise-block" data-ex="${exIdx}">
-      <div class="gym-exercise-name">${escapeHtml(name)}</div>
-      <div class="gym-sets-wrap" data-ex="${exIdx}">${sets.map((s,i)=>gymSetRowHtml(exIdx,i,s.reps,s.weight)).join('')}</div>
+      <div class="gym-exercise-name">${escapeHtml(name)}${bestPrev>0?` <span class="td-card-sub" style="font-weight:600;">target: beat ${Math.round(bestPrev)}kg e1RM</span>`:''}</div>
+      <div class="gym-sets-wrap" data-ex="${exIdx}">${useSets.map((s,i)=>gymSetRowHtml(exIdx,i,s.reps,s.weight, prevSets?prevSets[i]:null)).join('')}</div>
       <button type="button" class="gym-add-set-btn" data-ex="${exIdx}">+ Add set</button>
     </div>`;
   }
@@ -5849,15 +5928,17 @@
     if(!sel) return;
     sel.innerHTML = (db.gymPlan||[]).map(d=>`<option value="${d.id}">${escapeHtml(d.label)} — ${escapeHtml(d.name)}</option>`).join('');
   }
-  function renderGymLogExercises(dayId, existingExercises){
+  function renderGymLogExercises(dayId, existingExercises, forDate){
     const wrap = document.getElementById('gymLogExercisesWrap');
     if(!wrap) return;
     const day = (db.gymPlan||[]).find(d=>d.id===dayId) || (db.gymPlan||[])[0];
-    if(!day){ wrap.innerHTML = '<div class="td-empty-note">Set up your 5-day plan first (Plan tab).</div>'; gymCurrentExerciseNames=[]; return; }
+    if(!day){ wrap.innerHTML = '<div class="td-empty-note">Set up your plan first (Plan tab).</div>'; gymCurrentExerciseNames=[]; return; }
     gymCurrentExerciseNames = day.exercises.slice();
     wrap.innerHTML = day.exercises.map((name,i)=>{
       const existing = existingExercises && existingExercises.find(e=>e.name===name);
-      return gymExerciseBlockHtml(i, name, existing ? existing.sets : null);
+      // Only suggest a target when logging fresh (not editing an existing entry for this exercise).
+      const prevSets = existing ? null : lastLoggedSetsFor(name, forDate);
+      return gymExerciseBlockHtml(i, name, existing ? existing.sets : null, prevSets);
     }).join('');
   }
   function resetGymLogForm(){
@@ -5873,7 +5954,7 @@
     renderGymLogDaySelect();
     const sel = document.getElementById('gymLogDaySelect');
     if(sel && sel.options.length) sel.value = sel.options[0].value;
-    renderGymLogExercises(sel ? sel.value : null, null);
+    renderGymLogExercises(sel ? sel.value : null, null, todayKey());
   }
   function readGymLogForm(){
     const date = document.getElementById('gymLogDate').value;
@@ -5893,7 +5974,13 @@
     return {date, dayId, exercises};
   }
   const gymLogDaySelectEl = document.getElementById('gymLogDaySelect');
-  if(gymLogDaySelectEl) gymLogDaySelectEl.addEventListener('change', (e)=> renderGymLogExercises(e.target.value, null));
+  if(gymLogDaySelectEl) gymLogDaySelectEl.addEventListener('change', (e)=> renderGymLogExercises(e.target.value, null, document.getElementById('gymLogDate').value||todayKey()));
+  const gymLogDateEl = document.getElementById('gymLogDate');
+  if(gymLogDateEl) gymLogDateEl.addEventListener('change', ()=>{
+    if(gymEditingLogId) return; // don't reshuffle targets while editing a specific past log
+    const sel = document.getElementById('gymLogDaySelect');
+    if(sel) renderGymLogExercises(sel.value, null, gymLogDateEl.value||todayKey());
+  });
 
   const gymLogExercisesWrapEl = document.getElementById('gymLogExercisesWrap');
   if(gymLogExercisesWrapEl){
@@ -5921,6 +6008,14 @@
       if(!data.date){ showToast('Pick a date.', 'error'); return; }
       if(!data.dayId){ showToast('Set up your plan first (Plan tab).', 'error'); return; }
       if(!data.exercises.length){ showToast('Log at least one set.', 'error'); return; }
+      // PR check — compare each exercise's best set this session against its
+      // all-time best e1RM logged so far (excluding this same log if editing).
+      const prNames = [];
+      data.exercises.forEach(ex=>{
+        const thisBest = bestSetE1RM(ex.sets);
+        const priorBest = exerciseAllTimeBestE1RM(ex.name, gymEditingLogId);
+        if(thisBest>0 && thisBest>priorBest) prNames.push(ex.name);
+      });
       if(gymEditingLogId){
         const idx = db.gymLogs.findIndex(l=>l.id===gymEditingLogId);
         if(idx>-1) db.gymLogs[idx] = Object.assign({id:gymEditingLogId}, data);
@@ -5930,7 +6025,11 @@
       saveDB();
       resetGymLogForm();
       renderGymDashboard();
-      showToast('Workout saved.', 'success');
+      if(prNames.length){
+        showToast('🏆 New PR on '+prNames.join(', ')+'!', 'success');
+      } else {
+        showToast('Workout saved.', 'success');
+      }
     });
   }
   const gymLogCancelBtnEl = document.getElementById('gymLogCancelBtn');
@@ -5946,7 +6045,7 @@
     document.getElementById('gymLogDate').value = log.date || todayKey();
     renderGymLogDaySelect();
     document.getElementById('gymLogDaySelect').value = log.dayId;
-    renderGymLogExercises(log.dayId, log.exercises);
+    renderGymLogExercises(log.dayId, log.exercises, log.date);
     document.querySelector('[data-view="gym"]').click();
     activateGymPanel('log');
     window.scrollTo({top:0, behavior:'smooth'});
@@ -6001,15 +6100,23 @@
     el.querySelectorAll('[data-del-gymlog]').forEach(btn=> btn.addEventListener('click', (e)=>{ e.stopPropagation(); deleteGymLog(btn.dataset.delGymlog); }));
   }
 
-  // ---- Plan (5-day split editor) ----
+  // ---- Plan (variable-length split editor) ----
+  const MUSCLE_GROUPS = ['Untagged','Chest','Back','Shoulders','Legs','Arms','Core','Cardio','Other'];
   function renderGymPlanCards(){
     const wrap = document.getElementById('gymPlanCards');
     if(!wrap) return;
     wrap.innerHTML = (db.gymPlan||[]).map((day,dIdx)=>`
       <div class="td-card gym-plan-day-card" data-day="${dIdx}">
-        <div class="modal-field"><label>${escapeHtml(day.label)}</label><input type="text" class="gym-plan-name-input" data-day="${dIdx}" value="${escapeHtml(day.name)}" placeholder="e.g. Push day"></div>
+        <div class="gym-day-head-row">
+          <div class="modal-field"><label>${escapeHtml(day.label)}</label><input type="text" class="gym-plan-name-input" data-day="${dIdx}" value="${escapeHtml(day.name)}" placeholder="e.g. Push day"></div>
+          ${(db.gymPlan||[]).length>1 ? `<button type="button" class="gym-remove-day-btn" data-day="${dIdx}">Remove day</button>` : ''}
+        </div>
         <div class="gym-exercise-chip-row" data-day="${dIdx}">
-          ${day.exercises.map((ex,eIdx)=>`<span class="gym-exercise-chip">${escapeHtml(ex)}<button type="button" class="gym-chip-remove" data-day="${dIdx}" data-ex="${eIdx}" title="Remove">×</button></span>`).join('') || '<span class="td-empty-note" style="padding:6px 0;">No exercises yet.</span>'}
+          ${day.exercises.map((ex,eIdx)=>`<span class="gym-exercise-chip">${escapeHtml(ex)}
+            <select class="gym-muscle-select" data-day="${dIdx}" data-exname="${escapeHtml(ex)}" title="Muscle group">
+              ${MUSCLE_GROUPS.map(g=>`<option value="${g}" ${((db.gymMuscleGroups||{})[ex]||'Untagged')===g?'selected':''}>${g}</option>`).join('')}
+            </select>
+            <button type="button" class="gym-chip-remove" data-day="${dIdx}" data-ex="${eIdx}" title="Remove">×</button></span>`).join('') || '<span class="td-empty-note" style="padding:6px 0;">No exercises yet.</span>'}
         </div>
         <div class="gym-add-exercise-row">
           <input type="text" class="gym-add-exercise-input" data-day="${dIdx}" placeholder="Add exercise…">
@@ -6017,6 +6124,15 @@
         </div>
       </div>
     `).join('');
+  }
+  const gymAddDayBtnEl = document.getElementById('gymAddDayBtn');
+  if(gymAddDayBtnEl){
+    gymAddDayBtnEl.addEventListener('click', ()=>{
+      const n = (db.gymPlan||[]).length + 1;
+      db.gymPlan.push({id:'gd'+Date.now(), label:'Day '+n, name:'New Day', exercises:[]});
+      saveDB();
+      renderGymPlanCards();
+    });
   }
   const gymPlanCardsEl = document.getElementById('gymPlanCards');
   if(gymPlanCardsEl){
@@ -6027,9 +6143,26 @@
         db.gymPlan[dIdx].name = nameInput.value.trim() || db.gymPlan[dIdx].name;
         saveDB();
         renderGymDashboard();
+        return;
+      }
+      const muscleSel = e.target.closest('.gym-muscle-select');
+      if(muscleSel){
+        db.gymMuscleGroups = db.gymMuscleGroups || {};
+        db.gymMuscleGroups[muscleSel.dataset.exname] = muscleSel.value;
+        saveDB();
+        renderGymOverview();
       }
     });
     gymPlanCardsEl.addEventListener('click', (e)=>{
+      const rmDayBtn = e.target.closest('.gym-remove-day-btn');
+      if(rmDayBtn){
+        if((db.gymPlan||[]).length<=1) return;
+        if(!confirm('Remove this day from your plan? Past workout logs for it are kept, but you won\'t be able to log new ones against it unless you re-add it.')) return;
+        db.gymPlan.splice(rmDayBtn.dataset.day,1);
+        saveDB();
+        renderGymPlanCards();
+        return;
+      }
       const rmBtn = e.target.closest('.gym-chip-remove');
       if(rmBtn){
         db.gymPlan[rmBtn.dataset.day].exercises.splice(rmBtn.dataset.ex,1);
@@ -6073,7 +6206,32 @@
     const avgVol = logs.length ? totalVol/logs.length : 0;
     const dayCounts = {};
     thisWeekLogs.forEach(l=>{ dayCounts[l.dayId] = (dayCounts[l.dayId]||0)+1; });
-    return {totalWorkouts:logs.length, thisWeekCount:thisWeekLogs.length, lastWeekCount:lastWeekLogs.length, thisWeekVol, lastWeekVol, totalVol, avgVol, dayCounts};
+
+    // Last 4 calendar weeks vs the 4 before that — a steadier read on progress
+    // than a single volatile week-over-week %.
+    const l4wStartKey = todayKey(new Date(now.getTime()-27*86400000));
+    const prior4wStartKey = todayKey(new Date(now.getTime()-55*86400000));
+    const last4wVol = logs.filter(l=>l.date>=l4wStartKey).reduce((s,l)=>s+gymWorkoutVolume(l),0);
+    const prior4wVol = logs.filter(l=>l.date>=prior4wStartKey && l.date<l4wStartKey).reduce((s,l)=>s+gymWorkoutVolume(l),0);
+
+    // Weekly streak: consecutive calendar weeks (Sun–Sat) with at least one
+    // workout, counting back from the current week. More meaningful for a
+    // gym habit than a daily streak, since rest days are expected.
+    let weekStreak = 0;
+    {
+      const cursor = new Date(now);
+      cursor.setDate(cursor.getDate() - cursor.getDay()); // back to this week's Sunday
+      for(let i=0;i<520;i++){
+        const wkStart = todayKey(cursor);
+        const wkEndDate = new Date(cursor); wkEndDate.setDate(wkEndDate.getDate()+6);
+        const wkEnd = todayKey(wkEndDate);
+        const hasWorkout = logs.some(l=> l.date>=wkStart && l.date<=wkEnd);
+        if(hasWorkout){ weekStreak++; cursor.setDate(cursor.getDate()-7); }
+        else if(i===0){ cursor.setDate(cursor.getDate()-7); } // this week not done yet — check last week before breaking
+        else break;
+      }
+    }
+    return {totalWorkouts:logs.length, thisWeekCount:thisWeekLogs.length, lastWeekCount:lastWeekLogs.length, thisWeekVol, lastWeekVol, totalVol, avgVol, dayCounts, last4wVol, prior4wVol, weekStreak};
   }
   function renderGymOverview(){
     const gm = computeGymMetrics();
@@ -6084,40 +6242,127 @@
         <div class="td-hero-lbl">This Week's Volume</div>
         <div class="td-hero-value pos">${Math.round(gm.thisWeekVol).toLocaleString('en-IN')} kg</div>
         <div class="td-hero-stats-row">
-          <div class="td-hero-stat"><div class="td-hero-stat-lbl">Sessions This Week</div><div class="td-hero-stat-val">${gm.thisWeekCount}</div></div>
+          <div class="td-hero-stat"><div class="td-hero-stat-lbl">Week Streak</div><div class="td-hero-stat-val ${gm.weekStreak>0?'pos':''}">${gm.weekStreak? '🔥 '+gm.weekStreak : '0'}</div></div>
           <div class="td-hero-stat"><div class="td-hero-stat-lbl">Vs Last Week</div><div class="td-hero-stat-val ${delta===null?'':(delta>=0?'pos':'neg')}">${delta===null?'—':(delta>=0?'+':'')+delta+'%'}</div></div>
           <div class="td-hero-stat"><div class="td-hero-stat-lbl">Total Workouts</div><div class="td-hero-stat-val">${gm.totalWorkouts}</div></div>
         </div>`;
     }
     const statGrid = document.getElementById('gymOverviewStats');
     if(statGrid){
+      const trend4w = gm.prior4wVol>0 ? Math.round(((gm.last4wVol-gm.prior4wVol)/gm.prior4wVol)*100) : null;
       statGrid.innerHTML = [
         statCardHtml('Avg Volume / Session', gm.totalWorkouts? Math.round(gm.avgVol).toLocaleString('en-IN')+' kg' : '—'),
-        statCardHtml('Total Volume Lifted', gm.totalVol? Math.round(gm.totalVol).toLocaleString('en-IN')+' kg' : '—'),
+        statCardHtml('Last 4 Weeks Volume', gm.last4wVol? Math.round(gm.last4wVol).toLocaleString('en-IN')+' kg' : '—', '', trend4w===null?'':(trend4w>=0?'+':'')+trend4w+'% vs 4 weeks before'),
         statCardHtml('Workouts This Week', gm.thisWeekCount),
         statCardHtml('Workouts Last Week', gm.lastWeekCount),
       ].join('');
     }
-    const chartEl = document.getElementById('gymWeeklyChart');
-    if(chartEl){
-      const days = db.gymPlan||[];
-      if(days.length===0 || gm.totalWorkouts===0){
-        chartEl.innerHTML = '<div class="td-empty-note">Log a workout to see your weekly split.</div>';
-      } else {
-        const counts = days.map(d=> gm.dayCounts[d.id]||0);
-        const maxCount = Math.max(1, ...counts);
-        const w=340, h=120, barW=(w/days.length)*0.5, gap=(w/days.length);
-        const bars = days.map((d,i)=>{
-          const barH = (counts[i]/maxCount)*(h-24);
-          const x = i*gap+(gap-barW)/2, y = h-20-barH;
-          return `<rect class="td-bar" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${Math.max(barH,1).toFixed(1)}" rx="2" fill="var(--accent)"><title>${escapeHtml(d.label)}: ${counts[i]}</title></rect>
-            <text x="${(x+barW/2).toFixed(1)}" y="${h-6}" text-anchor="middle" class="td-chart-axis-label" style="font-size:8px;">${escapeHtml(d.label.replace('Day ','D'))}</text>`;
-        }).join('');
-        chartEl.innerHTML = `<svg class="td-chart-svg" viewBox="0 0 ${w} ${h}">${bars}</svg>`;
-      }
-    }
+    renderGymVolumeTrendChart();
+    renderGymMuscleGroupChart(gm);
+    renderGymBodyweight();
     renderGymExerciseList();
   }
+
+  // Replaces the old "sessions per plan day" bar chart — a per-week volume
+  // trend is useful regardless of whether you follow the plan in strict order.
+  function renderGymVolumeTrendChart(){
+    const chartEl = document.getElementById('gymWeeklyChart');
+    if(!chartEl) return;
+    const logs = db.gymLogs||[];
+    if(!logs.length){ chartEl.innerHTML = '<div class="td-empty-note">Log a workout to see your volume trend.</div>'; return; }
+    const now = new Date();
+    const weeks = [];
+    for(let i=7;i>=0;i--){
+      const wkStart = new Date(now); wkStart.setDate(wkStart.getDate() - wkStart.getDay() - i*7);
+      const wkStartKey = todayKey(wkStart);
+      const wkEndDate = new Date(wkStart); wkEndDate.setDate(wkEndDate.getDate()+6);
+      const wkEndKey = todayKey(wkEndDate);
+      const vol = logs.filter(l=>l.date>=wkStartKey && l.date<=wkEndKey).reduce((s,l)=>s+gymWorkoutVolume(l),0);
+      weeks.push({label: wkStartKey.slice(5), vol});
+    }
+    const maxVol = Math.max(1, ...weeks.map(w=>w.vol));
+    const w=340, h=120, barW=(w/weeks.length)*0.55, gap=(w/weeks.length);
+    const bars = weeks.map((wk,i)=>{
+      const barH = (wk.vol/maxVol)*(h-24);
+      const x = i*gap+(gap-barW)/2, y = h-20-barH;
+      return `<rect class="td-bar" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${Math.max(barH,1).toFixed(1)}" rx="2" fill="var(--accent)"><title>Week of ${wk.label}: ${Math.round(wk.vol)}kg</title></rect>
+        <text x="${(x+barW/2).toFixed(1)}" y="${h-6}" text-anchor="middle" class="td-chart-axis-label" style="font-size:7.5px;">${wk.label}</text>`;
+    }).join('');
+    chartEl.innerHTML = `<svg class="td-chart-svg" viewBox="0 0 ${w} ${h}">${bars}</svg>`;
+  }
+
+  // Volume by tagged muscle group, this week — untagged exercises fall into "Other".
+  function renderGymMuscleGroupChart(gm){
+    const el = document.getElementById('gymMuscleGroupChart');
+    if(!el) return;
+    const now = new Date();
+    const weekAgoKey = todayKey(new Date(now.getTime()-6*86400000));
+    const thisWeekLogs = (db.gymLogs||[]).filter(l=>l.date>=weekAgoKey);
+    if(!thisWeekLogs.length){ el.innerHTML = '<div class="td-empty-note">No workouts logged this week yet.</div>'; return; }
+    const byGroup = {};
+    thisWeekLogs.forEach(log=>{
+      (log.exercises||[]).forEach(ex=>{
+        const grp = (db.gymMuscleGroups||{})[ex.name] || 'Untagged';
+        const vol = (ex.sets||[]).reduce((s,st)=>s+((st.reps||0)*(st.weight||0)),0);
+        byGroup[grp] = (byGroup[grp]||0) + vol;
+      });
+    });
+    const total = Object.values(byGroup).reduce((a,b)=>a+b,0) || 1;
+    const rows = Object.entries(byGroup).sort((a,b)=>b[1]-a[1]).map(([grp,vol])=>{
+      const pct = Math.round((vol/total)*100);
+      return `<div class="td-bd-row">
+        <div class="td-bd-top">
+          <span class="td-bd-name">${escapeHtml(grp)}</span>
+          <span class="td-bd-meta">${pct}%</span>
+          <span class="td-bd-pnl">${Math.round(vol).toLocaleString('en-IN')} kg</span>
+        </div>
+        <div class="td-bd-bar-track"><div class="td-bd-bar-fill" style="width:${pct}%; background:var(--accent);"></div></div>
+      </div>`;
+    }).join('');
+    el.innerHTML = rows;
+  }
+
+  // ---- Bodyweight tracking ----
+  function renderGymBodyweight(){
+    const chartEl = document.getElementById('gymBwChart');
+    const trendEl = document.getElementById('gymBwTrend');
+    const dateEl = document.getElementById('gymBwDate');
+    if(dateEl && !dateEl.value) dateEl.value = todayKey();
+    const entries = (db.gymBodyweight||[]).slice().sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+    if(!chartEl) return;
+    if(!entries.length){
+      chartEl.innerHTML = '<div class="td-empty-note">Log your weight to start tracking trend.</div>';
+      if(trendEl) trendEl.textContent = '';
+      return;
+    }
+    const vals = entries.map(e=>e.weight);
+    const latest = entries[entries.length-1], first = entries[0];
+    const delta = Math.round((latest.weight-first.weight)*10)/10;
+    if(trendEl) trendEl.textContent = `${latest.weight} kg latest · ${delta===0?'steady':(delta>0?'+':'')+delta+' kg'} since ${first.date}`;
+    const color = delta>0?'var(--rose)':(delta<0?'var(--teal)':'var(--ink-faint)');
+    chartEl.innerHTML = `<svg class="td-chart-svg" viewBox="0 0 340 90" preserveAspectRatio="none">${(()=>{
+      const min=Math.min(...vals), max=Math.max(...vals), span=(max-min)||1;
+      const pts = vals.map((v,i)=> (i/(vals.length-1||1)*336+2).toFixed(1)+','+(85-((v-min)/span)*76).toFixed(1)).join(' ');
+      return `<polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2"/>`;
+    })()}</svg>`;
+  }
+  function saveBodyweightEntry(){
+    const dateEl = document.getElementById('gymBwDate');
+    const wtEl = document.getElementById('gymBwWeight');
+    const date = dateEl.value, weight = parseFloat(wtEl.value);
+    if(!date || isNaN(weight) || weight<=0){ showToast('Enter a date and weight.', 'error'); return; }
+    db.gymBodyweight = db.gymBodyweight || [];
+    const idx = db.gymBodyweight.findIndex(e=>e.date===date);
+    if(idx>-1) db.gymBodyweight[idx].weight = weight;
+    else db.gymBodyweight.push({date, weight});
+    saveDB();
+    wtEl.value = '';
+    renderGymBodyweight();
+    showToast('Bodyweight logged.', 'success');
+  }
+  const gymBwSaveBtnEl = document.getElementById('gymBwSaveBtn');
+  if(gymBwSaveBtnEl) gymBwSaveBtnEl.addEventListener('click', saveBodyweightEntry);
+
   let gymExerciseSortMode = 'recent';
   function renderGymExerciseList(){
     const el = document.getElementById('gymExerciseList');
@@ -6126,19 +6371,21 @@
     const byExercise = {};
     logs.forEach(log=>{
       (log.exercises||[]).forEach(ex=>{
-        const maxW = Math.max(0, ...(ex.sets||[]).map(s=>s.weight||0));
-        (byExercise[ex.name] = byExercise[ex.name]||[]).push({date:log.date, maxW});
+        const bestE1RM = bestSetE1RM(ex.sets);
+        (byExercise[ex.name] = byExercise[ex.name]||[]).push({date:log.date, e1rm:bestE1RM});
       });
     });
     let rows = Object.entries(byExercise).map(([name, points])=>{
-      const sparkVals = points.map(p=>p.maxW);
+      const sparkVals = points.map(p=>p.e1rm);
       const latest = points[points.length-1], first = points[0];
-      const trend = latest.maxW - first.maxW;
-      return {name, count:points.length, latestWeight:latest.maxW, trend, sparkVals, lastDate:latest.date};
+      const trend = Math.round(latest.e1rm - first.e1rm);
+      const allTimeBest = Math.max(...points.map(p=>p.e1rm));
+      const isPR = points.length>1 && latest.e1rm>=allTimeBest && latest.e1rm>points[points.length-2].e1rm;
+      return {name, count:points.length, latestE1RM:Math.round(latest.e1rm), trend, sparkVals, lastDate:latest.date, isPR};
     });
     const sortFns = {
       recent: (a,b)=> (b.lastDate||'').localeCompare(a.lastDate||''),
-      weight: (a,b)=> b.latestWeight-a.latestWeight,
+      weight: (a,b)=> b.latestE1RM-a.latestE1RM,
       count: (a,b)=> b.count-a.count,
       alpha: (a,b)=> a.name.localeCompare(b.name),
     };
@@ -6149,12 +6396,12 @@
       const color = r.trend>0?'var(--teal)':(r.trend<0?'var(--rose)':'var(--ink-faint)');
       return `<div class="td-list-row">
         <div class="td-list-name-wrap">
-          <div class="td-list-name">${escapeHtml(r.name)}</div>
-          <div class="td-list-sub">${r.count} session${r.count===1?'':'s'} logged</div>
+          <div class="td-list-name">${escapeHtml(r.name)}${r.isPR?' 🏆':''}</div>
+          <div class="td-list-sub">${r.count} session${r.count===1?'':'s'} logged · est. 1RM</div>
         </div>
         ${miniSparkSvg(r.sparkVals, color)}
         <div class="td-list-right">
-          <div class="td-list-val ${cls}">${r.latestWeight||'—'} kg</div>
+          <div class="td-list-val ${cls}">${r.latestE1RM||'—'} kg</div>
           <div class="td-list-subval">${r.trend===0?'steady':(r.trend>0?'+':'')+r.trend+' kg'}</div>
         </div>
       </div>`;
@@ -6163,10 +6410,70 @@
   const gymExerciseSortEl = document.getElementById('gymExerciseSort');
   if(gymExerciseSortEl) gymExerciseSortEl.addEventListener('change', ()=>{ gymExerciseSortMode = gymExerciseSortEl.value; renderGymExerciseList(); });
 
+  // ---- Calendar ----
+  let gcalViewDate = new Date();
+  let gcalSelectedKey = null;
+  function gymLogsByDayKey(){
+    const map = {};
+    (db.gymLogs||[]).forEach(l=>{ if(!l.date) return; (map[l.date]=map[l.date]||[]).push(l); });
+    return map;
+  }
+  function renderGymCalendar(){
+    const gridEl = document.getElementById('gcalGrid');
+    const labelEl = document.getElementById('gcalMonthLabel');
+    if(!gridEl) return;
+    const y = gcalViewDate.getFullYear(), mo = gcalViewDate.getMonth();
+    labelEl.textContent = MONTH_LABELS[mo]+' '+y;
+    const firstDow = new Date(y,mo,1).getDay();
+    const daysInMonth = new Date(y,mo+1,0).getDate();
+    const byDay = gymLogsByDayKey();
+    const todayKeyStr = todayKey();
+    let html = '';
+    for(let i=0;i<firstDow;i++) html += '<div class="tcal-cell empty"></div>';
+    for(let d=1; d<=daysInMonth; d++){
+      const key = y+'-'+String(mo+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+      const dayLogs = byDay[key]||[];
+      const vol = dayLogs.reduce((s,l)=>s+gymWorkoutVolume(l),0);
+      let cls = 'tcal-cell';
+      if(dayLogs.length){ cls += ' has-trades win'; }
+      if(key===todayKeyStr) cls += ' is-today';
+      if(key===gcalSelectedKey) cls += ' is-selected';
+      html += `<div class="${cls}" data-daykey="${key}">
+        <div class="tcal-day-num">${d}</div>
+        ${dayLogs.length?`<div class="tcal-pnl-tag">${Math.round(vol)}kg</div>`:''}
+      </div>`;
+    }
+    gridEl.innerHTML = html;
+    gridEl.querySelectorAll('.tcal-cell.has-trades').forEach(cell=>{
+      cell.addEventListener('click', ()=>{
+        const key = cell.dataset.daykey;
+        gcalSelectedKey = (gcalSelectedKey===key) ? null : key;
+        renderGymCalendar();
+      });
+    });
+    renderGcalSelectedLogs();
+  }
+  function renderGcalSelectedLogs(){
+    const el = document.getElementById('gcalSelectedLogs');
+    if(!el) return;
+    if(!gcalSelectedKey){ el.innerHTML=''; return; }
+    const dayLogs = (gymLogsByDayKey()[gcalSelectedKey])||[];
+    el.innerHTML = `<div class="tcal-selected-label">Workouts on ${gcalSelectedKey}</div>` + dayLogs.map(log=>{
+      const day = (db.gymPlan||[]).find(d=>d.id===log.dayId);
+      const vol = gymWorkoutVolume(log);
+      return `<div class="td-bd-row"><div class="td-bd-top"><span class="td-bd-name">${escapeHtml(day?day.name:'Workout')}</span><span class="trade-pnl">${Math.round(vol)}kg</span></div><div class="td-bd-meta">${(log.exercises||[]).length} exercises</div></div>`;
+    }).join('');
+  }
+  const gcalPrevBtnEl = document.getElementById('gcalPrevBtn');
+  const gcalNextBtnEl = document.getElementById('gcalNextBtn');
+  if(gcalPrevBtnEl) gcalPrevBtnEl.addEventListener('click', ()=>{ gcalViewDate = new Date(gcalViewDate.getFullYear(), gcalViewDate.getMonth()-1, 1); gcalSelectedKey=null; renderGymCalendar(); });
+  if(gcalNextBtnEl) gcalNextBtnEl.addEventListener('click', ()=>{ gcalViewDate = new Date(gcalViewDate.getFullYear(), gcalViewDate.getMonth()+1, 1); gcalSelectedKey=null; renderGymCalendar(); });
+
   function renderGymDashboard(){
     renderGymOverview();
     renderGymHistory();
     renderGymPlanCards();
+    renderGymCalendar();
   }
 
   // ---------- Analysis tab: Pomodoro + Trading overview, and AI-generated insights ----------

@@ -1253,6 +1253,22 @@
   .td-rdist-count{ font-family:'IBM Plex Mono'; font-size:10px; color:var(--ink-faint); }
   .td-rdist-label{ font-size:8.5px; color:var(--ink-faint); margin-top:4px; text-align:center; white-space:nowrap; }
 
+  /* ---- Risk guardrails: daily-loss-limit banner (Overview) and live
+     risk-per-trade indicator (New Trade form) ---- */
+  .risk-limit-banner{
+    display:flex; align-items:center; gap:10px;
+    background: var(--rose-bg); border:1px solid var(--rose-dim); color: var(--rose-dim);
+    border-radius: var(--radius-md); padding:12px 16px; margin-bottom:14px;
+    font-size:13px; font-weight:600;
+  }
+  .risk-limit-banner .risk-limit-sub{ font-weight:400; font-size:12px; color: var(--rose); display:block; margin-top:2px; }
+  .tr-risk-indicator{
+    font-size:12px; border-radius: var(--radius-sm); padding:9px 12px; margin-top:6px;
+    border:1px solid var(--line); background: var(--surface-raised); color: var(--ink-dim);
+  }
+  .tr-risk-indicator.ok{ border-color: var(--teal-dim); background: var(--teal-bg); color: var(--teal-dim); }
+  .tr-risk-indicator.over{ border-color: var(--rose-dim); background: var(--rose-bg); color: var(--rose-dim); font-weight:600; }
+
   /* ---- Groww-inspired hero summary card (Overview / Gym) ---- */
   .td-hero-card{
     background: linear-gradient(160deg, var(--surface) 0%, var(--surface-raised) 100%);
@@ -2445,6 +2461,7 @@
 
     <!-- ---- OVERVIEW PANEL ---- -->
     <div class="trade-panel active" id="tpanel-overview">
+      <div id="tdDailyLimitBanner"></div>
       <div class="td-hero-card" id="tdHeroCard"></div>
       <div class="td-stat-grid" id="tdOverviewStats"></div>
       <div class="td-card">
@@ -2531,6 +2548,7 @@
       <div class="trade-subnav secondary" id="analyticsSubnav">
         <button class="trade-subnav-btn active" data-apanel="strategy">Performance</button>
         <button class="trade-subnav-btn" data-apanel="risk">Risk</button>
+        <button class="trade-subnav-btn" data-apanel="discipline">Discipline</button>
         <button class="trade-subnav-btn" data-apanel="periods">FY &amp; Periods</button>
       </div>
 
@@ -2564,6 +2582,23 @@
         <div class="td-card">
           <div class="td-card-head"><span>R-Multiple Distribution</span></div>
           <div id="tdRDist"></div>
+        </div>
+      </div>
+
+      <!-- ---- Discipline (turns the psychology/plan tags you log on every trade
+           into P&L numbers, instead of leaving them sitting unused in trade detail) ---- -->
+      <div class="analytics-subpanel" id="apanel-discipline">
+        <div class="td-card">
+          <div class="td-card-head"><span>Plan Followed vs Plan Broken</span></div>
+          <div id="tdPlanAdherence"></div>
+        </div>
+        <div class="td-card">
+          <div class="td-card-head"><span>Following Your System?</span></div>
+          <div id="tdSystemAdherence"></div>
+        </div>
+        <div class="td-card">
+          <div class="td-card-head"><span>Psychology at Entry — cost per state</span></div>
+          <div id="tdPsychBreakdown"></div>
         </div>
       </div>
 
@@ -2656,6 +2691,7 @@
             </div>
           </div>
           <div class="modal-field"><label>Catalyst / detail <span style="font-weight:400; color:var(--ink-faint);">optional</span></label><input type="text" id="trCatalyst" placeholder="Result / order win / volume spike / chart only"></div>
+          <div class="modal-field"><label>Planned entry price <span style="font-weight:400; color:var(--ink-faint);">optional — the price in your plan, before you pulled the trigger</span></label><input type="number" id="trPlannedEntry" step="0.01"></div>
         </div>
       </details>
 
@@ -2666,6 +2702,7 @@
             <div class="modal-field"><label>Entry date & time</label><input type="datetime-local" id="trEntryDT"></div>
             <div class="modal-field"><label>Entry price</label><input type="number" id="trEntryPrice" step="0.01"></div>
           </div>
+          <div class="tr-risk-indicator" id="trSlippageIndicator" style="display:none;"></div>
           <div class="modal-row">
             <div class="modal-field">
               <label>Direction</label>
@@ -2682,6 +2719,7 @@
             <div class="modal-field"><label>Stop loss price</label><input type="number" id="trSLPrice" step="0.01"></div>
             <div class="modal-field"><label>Risk %</label><input type="number" id="trSLPct" step="0.1"></div>
           </div>
+          <div class="tr-risk-indicator" id="trRiskIndicator" style="display:none;"></div>
           <div class="modal-field"><label>Why this trade, why now</label><textarea id="trThesisWhy"></textarea></div>
           <div class="modal-field"><label>What invalidates it</label><textarea id="trThesisInvalidate"></textarea></div>
         </div>
@@ -2923,6 +2961,21 @@
         <div class="completion-note">Set a target date, track the countdown, and tap the star to pin one to Home.</div>
       </div>
       <div class="goals-list" id="goalsList"></div>
+    </div>
+
+    <div class="section-label" id="tradingRiskSectionLabel">Trading Risk</div>
+    <div class="dashboard-grid" id="tradingRiskSection">
+      <div class="card">
+        <div class="card-title">📊 Capital &amp; Risk Limits</div>
+        <p style="font-size:12.5px; color:var(--ink-dim); margin-bottom:14px;">Used to flag oversized position risk while you're logging a trade, and to warn you when you hit your daily loss limit.</p>
+        <div class="modal-row">
+          <div class="modal-field"><label>Account capital (₹)</label><input type="number" id="settAccountCapital" step="1" placeholder="e.g. 500000"></div>
+          <div class="modal-field"><label>Max risk per trade (%)</label><input type="number" id="settMaxRiskPct" step="0.1" placeholder="e.g. 1"></div>
+        </div>
+        <div class="modal-row">
+          <div class="modal-field"><label>Daily loss limit (₹)</label><input type="number" id="settDailyLossLimit" step="1" placeholder="e.g. 5000"></div>
+        </div>
+      </div>
     </div>
 
     <div class="section-label">Preferences</div>
@@ -3291,9 +3344,9 @@
   function loadAppSettings(){
     try{
       const raw = localStorage.getItem(APP_SETTINGS_KEY);
-      if(raw) return Object.assign({focusMins:25, breakMins:5, longBreakMins:15, notifications:false, isTrader:true, displayName:'', desktopLayout:'full', dailyTargetPct:70, autoTheme:false}, JSON.parse(raw));
+      if(raw) return Object.assign({focusMins:25, breakMins:5, longBreakMins:15, notifications:false, isTrader:true, displayName:'', desktopLayout:'full', dailyTargetPct:70, autoTheme:false, accountCapital:'', maxRiskPct:'', dailyLossLimit:''}, JSON.parse(raw));
     }catch(e){}
-    return {focusMins:25, breakMins:5, longBreakMins:15, notifications:false, isTrader:true, displayName:'', desktopLayout:'full', dailyTargetPct:70, autoTheme:false};
+    return {focusMins:25, breakMins:5, longBreakMins:15, notifications:false, isTrader:true, displayName:'', desktopLayout:'full', dailyTargetPct:70, autoTheme:false, accountCapital:'', maxRiskPct:'', dailyLossLimit:''};
   }
   let appSettings = loadAppSettings();
   applyGrowwMode();
@@ -3313,6 +3366,10 @@
     if(tradesBtn) tradesBtn.style.display = isTrader ? '' : 'none';
     const traderToggleEl = document.getElementById('traderToggle');
     if(traderToggleEl) traderToggleEl.checked = isTrader;
+    const riskSection = document.getElementById('tradingRiskSection');
+    const riskLabel = document.getElementById('tradingRiskSectionLabel');
+    if(riskSection) riskSection.style.display = isTrader ? '' : 'none';
+    if(riskLabel) riskLabel.style.display = isTrader ? '' : 'none';
     // If Trades is currently open but just got hidden, bounce back to Home.
     if(!isTrader && tradesBtn && tradesBtn.classList.contains('active')){
       goHome();
@@ -4466,7 +4523,7 @@
     document.getElementById('tradeFormTitle').textContent = 'New Trade Entry';
     document.getElementById('trCancelBtn').style.display = 'none';
     document.getElementById('trSaveBtn').textContent = 'Save Trade';
-    ['trTicker','trDate','trContext','trCatalyst','trEntryDT','trEntryPrice','trQty','trPosSize',
+    ['trTicker','trDate','trContext','trCatalyst','trPlannedEntry','trEntryDT','trEntryPrice','trQty','trPosSize',
      'trSLPrice','trSLPct','trThesisWhy','trThesisInvalidate','trSysReason','trAdds','trSLMoved',
      'trMgmtNotes','trExitDT','trExitPrice','trPnl','trRMultiple','trLesson'].forEach(id=>{
       document.getElementById(id).value = '';
@@ -4483,6 +4540,8 @@
     document.getElementById('trPlanBroken').classList.remove('on');
     document.getElementById('trSysReason').style.display = 'none';
     trPnlManuallyEdited = false; trRMultipleManuallyEdited = false; trPosSizeManuallyEdited = false;
+    const riskInd = document.getElementById('trRiskIndicator'); if(riskInd){ riskInd.style.display='none'; riskInd.innerHTML=''; }
+    const slipInd = document.getElementById('trSlippageIndicator'); if(slipInd){ slipInd.style.display='none'; slipInd.innerHTML=''; }
   }
 
   function readTradeForm(){
@@ -4494,6 +4553,7 @@
       context: document.getElementById('trContext').value,
       setupType: getPickerValue('trSetupType'),
       catalyst: document.getElementById('trCatalyst').value,
+      plannedEntry: document.getElementById('trPlannedEntry').value,
       entryDT: document.getElementById('trEntryDT').value,
       entryPrice: document.getElementById('trEntryPrice').value,
       direction: getPickerValue('trDirection') || 'long',
@@ -4529,6 +4589,7 @@
     document.getElementById('trContext').value = t.context||'';
     setPickerValue('trSetupType', t.setupType||'');
     document.getElementById('trCatalyst').value = t.catalyst||'';
+    document.getElementById('trPlannedEntry').value = t.plannedEntry||'';
     document.getElementById('trEntryDT').value = t.entryDT||'';
     document.getElementById('trEntryPrice').value = t.entryPrice||'';
     setPickerValue('trDirection', t.direction||'long');
@@ -4556,43 +4617,126 @@
     document.getElementById('trPlanBroken').classList.toggle('on', t.planTag==='plan-broken');
     trScreenshotData = t.screenshot || null;
     document.getElementById('trScreenshotPreview').innerHTML = trScreenshotData ? `<img src="${trScreenshotData}" style="max-width:100%; border-radius:6px; border:1px solid var(--line);">` : '';
-    // Existing values loaded as-is; auto-calc only overwrites them once the
-    // user touches a price/qty/direction field that feeds the calculation.
-    trPnlManuallyEdited = true; trRMultipleManuallyEdited = true; trPosSizeManuallyEdited = true;
+    // Existing values loaded as-is. A field only gets frozen (excluded from
+    // live recalculation) if its saved value actually diverges from what the
+    // formula would produce right now — i.e. it looks like a real manual
+    // override (e.g. brokerage/charges baked into P&L). Otherwise it stays
+    // "auto" so changing entry/exit/qty/SL while editing keeps recalculating
+    // it live, matching what happens on a brand-new trade.
+    const autoVals = computeAutoTradeValues(t.entryPrice, t.exitPrice, t.qty, t.slPrice, t.direction||'long');
+    trPosSizeManuallyEdited = valueDivergesFromAuto(t.posSize, autoVals.posSize);
+    trPnlManuallyEdited = valueDivergesFromAuto(t.pnl, autoVals.pnl);
+    trRMultipleManuallyEdited = valueDivergesFromAuto(t.rMultiple, autoVals.rMultiple);
+    try{ updateRiskIndicator(t.entryPrice, t.slPrice, t.qty); updateSlippageIndicator(); }catch(e){}
   }
 
   // ---- Automation: P&L, R-multiple, and position size all follow directly
   // from entry price, exit price, qty, direction and stop-loss — no reason to
   // hand-type them. Recomputes live as any of those fields change; stops
   // touching a field the moment the user edits it directly in this session.
-  function autoCalcTradeFields(){
-    const entry = parseFloat(document.getElementById('trEntryPrice').value);
-    const exit = parseFloat(document.getElementById('trExitPrice').value);
-    const qty = parseFloat(document.getElementById('trQty').value);
-    const sl = parseFloat(document.getElementById('trSLPrice').value);
-    const dir = getPickerValue('trDirection') || 'long';
+  // Single source of truth for the P&L / R-multiple / position-size formula,
+  // shared by the live "while typing" calculator and the edit-load check that
+  // decides whether a saved value still looks auto-generated. Takes raw
+  // (possibly string/blank) inputs so it can be called with either live DOM
+  // values or a saved trade record.
+  function computeAutoTradeValues(entryRaw, exitRaw, qtyRaw, slRaw, dir){
+    const entry = parseFloat(entryRaw);
+    const exit = parseFloat(exitRaw);
+    const qty = parseFloat(qtyRaw);
+    const sl = parseFloat(slRaw);
     const sign = dir==='short' ? -1 : 1;
 
-    if(!trPosSizeManuallyEdited && !isNaN(entry) && !isNaN(qty)){
-      document.getElementById('trPosSize').value = Math.round(entry*qty*100)/100;
+    const posSize = (!isNaN(entry) && !isNaN(qty)) ? Math.round(entry*qty*100)/100 : '';
+    const pnl = (!isNaN(entry) && !isNaN(exit) && !isNaN(qty)) ? Math.round((exit-entry)*qty*sign*100)/100 : '';
+    let rMultiple = '';
+    if(!isNaN(entry) && !isNaN(exit) && !isNaN(sl) && (entry-sl)*sign!==0){
+      rMultiple = Math.round((((exit-entry)*sign) / Math.abs(entry-sl))*100)/100;
     }
-    if(!trPnlManuallyEdited){
-      if(!isNaN(entry) && !isNaN(exit) && !isNaN(qty)){
-        document.getElementById('trPnl').value = Math.round((exit-entry)*qty*sign*100)/100;
-      } else {
-        document.getElementById('trPnl').value = '';
-      }
-    }
-    if(!trRMultipleManuallyEdited){
-      if(!isNaN(entry) && !isNaN(exit) && !isNaN(sl) && (entry-sl)*sign!==0){
-        const rMult = ((exit-entry)*sign) / Math.abs(entry-sl);
-        document.getElementById('trRMultiple').value = Math.round(rMult*100)/100;
-      } else {
-        document.getElementById('trRMultiple').value = '';
-      }
-    }
+    return {posSize, pnl, rMultiple};
   }
-  ['trEntryPrice','trExitPrice','trQty','trSLPrice'].forEach(id=>{
+
+  // True if a saved field value doesn't match what the formula produces —
+  // i.e. it looks like a genuine manual override, not just a stale auto value.
+  function valueDivergesFromAuto(savedRaw, autoVal){
+    const saved = (savedRaw===undefined || savedRaw===null || savedRaw==='') ? '' : parseFloat(savedRaw);
+    if(saved==='' && autoVal==='') return false;
+    if(saved==='' || autoVal==='') return true;
+    return Math.abs(saved-autoVal) > 0.01;
+  }
+
+  function autoCalcTradeFields(){
+    const dir = getPickerValue('trDirection') || 'long';
+    const entryVal = document.getElementById('trEntryPrice').value;
+    const slVal = document.getElementById('trSLPrice').value;
+    const qtyVal = document.getElementById('trQty').value;
+    const {posSize, pnl, rMultiple} = computeAutoTradeValues(
+      entryVal,
+      document.getElementById('trExitPrice').value,
+      qtyVal,
+      slVal,
+      dir
+    );
+    if(!trPosSizeManuallyEdited) document.getElementById('trPosSize').value = posSize;
+    if(!trPnlManuallyEdited) document.getElementById('trPnl').value = pnl;
+    if(!trRMultipleManuallyEdited) document.getElementById('trRMultiple').value = rMultiple;
+    updateRiskIndicator(entryVal, slVal, qtyVal);
+    updateSlippageIndicator();
+  }
+
+  // ---- Live risk-per-trade guardrail: as soon as entry, SL and qty are
+  // known, shows what % of your account capital this trade risks and flags
+  // it if it's over the max-risk-per-trade you set in Settings → Trading Risk.
+  function updateRiskIndicator(entryVal, slVal, qtyVal){
+    const el = document.getElementById('trRiskIndicator');
+    if(!el) return;
+    const entry = parseFloat(entryVal), sl = parseFloat(slVal), qty = parseFloat(qtyVal);
+    const capital = parseFloat(appSettings.accountCapital);
+    const maxRiskPct = parseFloat(appSettings.maxRiskPct);
+    if(isNaN(entry) || isNaN(sl) || isNaN(qty) || Math.abs(entry-sl)===0){
+      el.style.display = 'none'; el.innerHTML = ''; return;
+    }
+    const riskAmount = Math.abs(entry-sl) * qty;
+    el.style.display = '';
+    if(isNaN(capital) || capital<=0){
+      el.className = 'tr-risk-indicator';
+      el.innerHTML = `Risking ${fmtMoney(Math.round(riskAmount))} if SL hits. Set your account capital in Settings → Trading Risk to see this as a % of capital.`;
+      return;
+    }
+    const riskPctOfCapital = (riskAmount/capital)*100;
+    const over = !isNaN(maxRiskPct) && maxRiskPct>0 && riskPctOfCapital>maxRiskPct;
+    el.className = 'tr-risk-indicator ' + (over ? 'over' : 'ok');
+    el.innerHTML = over
+      ? `⚠ Risking ${fmtMoney(Math.round(riskAmount))} (${riskPctOfCapital.toFixed(2)}% of capital) — over your ${maxRiskPct}% max per trade.`
+      : `Risking ${fmtMoney(Math.round(riskAmount))} (${riskPctOfCapital.toFixed(2)}% of capital) if SL hits.`;
+  }
+
+  // ---- Entry slippage: compares the price you planned (Setup section) against
+  // the price you actually got filled at, so hesitation/FOMO on entries shows
+  // up as a number instead of only a feeling.
+  function updateSlippageIndicator(){
+    const el = document.getElementById('trSlippageIndicator');
+    if(!el) return;
+    const planned = parseFloat(document.getElementById('trPlannedEntry').value);
+    const actual = parseFloat(document.getElementById('trEntryPrice').value);
+    const dir = getPickerValue('trDirection') || 'long';
+    if(isNaN(planned) || isNaN(actual) || planned===0){
+      el.style.display = 'none'; el.innerHTML = ''; return;
+    }
+    // For a long, filling above plan is worse (chased); for a short, filling below plan is worse.
+    const sign = dir==='short' ? -1 : 1;
+    const slipAmt = (actual-planned) * sign;
+    const slipPct = (slipAmt/Math.abs(planned))*100;
+    el.style.display = '';
+    const worse = slipAmt > 0;
+    el.className = 'tr-risk-indicator ' + (worse ? 'over' : 'ok');
+    el.innerHTML = Math.abs(slipAmt) < 0.005
+      ? `Filled right at your planned entry.`
+      : (worse
+          ? `⚠ Chased ${Math.abs(slipPct).toFixed(2)}% worse than your planned entry (${fmtMoney(Math.abs(slipAmt))}/share).`
+          : `Filled ${Math.abs(slipPct).toFixed(2)}% better than planned (${fmtMoney(Math.abs(slipAmt))}/share).`);
+  }
+
+  ['trEntryPrice','trExitPrice','trQty','trSLPrice','trPlannedEntry'].forEach(id=>{
     document.getElementById(id).addEventListener('input', autoCalcTradeFields);
   });
   document.getElementById('trDirection').addEventListener('click', ()=> setTimeout(autoCalcTradeFields, 0));
@@ -5279,6 +5423,22 @@
     }
 
     const allTimeReturnPct = returnOnCapitalPct(trades, null, null);
+
+    // ---- Daily loss limit banner: warns once today's realized loss crosses
+    // the limit set in Settings → Trading Risk. Purely a heads-up; nothing is blocked.
+    const limitBannerEl = document.getElementById('tdDailyLimitBanner');
+    if(limitBannerEl){
+      const limit = parseFloat(appSettings.dailyLossLimit);
+      const withPnlToday = trades.filter(t=> t.pnl!==undefined && t.pnl!=='' && !isNaN(parseFloat(t.pnl)) && tradeBasisDate(t)===todayKey());
+      const todayPnlForLimit = withPnlToday.reduce((s,t)=>s+parseFloat(t.pnl),0);
+      if(!isNaN(limit) && limit>0 && todayPnlForLimit < -limit){
+        limitBannerEl.innerHTML = `<div class="risk-limit-banner">⛔ Daily loss limit hit
+          <span class="risk-limit-sub">You're down ${fmtMoney(Math.abs(todayPnlForLimit))} today, past your ${fmtMoney(limit)} limit. Consider stopping for the day.</span>
+        </div>`;
+      } else {
+        limitBannerEl.innerHTML = '';
+      }
+    }
     grid.innerHTML = [
       statCardHtml('Win Rate', m.withPnlCount? Math.round(m.winRate)+'%' : '—', '', m.wins+'W / '+m.losses+'L'),
       statCardHtml('Profit Factor', m.profitFactor===Infinity ? '∞' : (m.grossLoss||m.grossProfit ? m.profitFactor.toFixed(2) : '—')),
@@ -5545,6 +5705,94 @@
     renderBreakdownGroups('tdByTimeframe', trades, t=>t.timeframe, 'No trades logged yet.');
   }
 
+  // ---- Discipline analytics ----------------------------------------------
+  // The Entry-form already asks "following your system?", "plan followed or
+  // broken?", and psychology-at-entry tags on every trade — this is the only
+  // place that data ever gets turned into a number. It's deliberately kept
+  // separate from Performance/Risk since the point isn't "which setup works"
+  // but "does sticking to my own rules actually pay".
+
+  // Two-way comparison card (e.g. Plan Followed vs Plan Broken). `groups` is
+  // an array of {label, trades}. Renders side by side so the gap is obvious
+  // at a glance.
+  function renderAdherenceCompare(containerId, groups, emptyMsg){
+    const el = document.getElementById(containerId);
+    if(!el) return;
+    const withAny = groups.some(g=>g.trades.length>0);
+    if(!withAny){ el.innerHTML = `<div class="td-empty-note">${emptyMsg}</div>`; return; }
+    el.innerHTML = `<div class="fy-compare-row">${groups.map(g=>{
+      const withPnl = g.trades.filter(t=> t.pnl!==undefined && t.pnl!=='' && !isNaN(parseFloat(t.pnl)));
+      const wins = withPnl.filter(t=>parseFloat(t.pnl)>=0).length;
+      const net = withPnl.reduce((s,t)=>s+parseFloat(t.pnl),0);
+      const winRate = withPnl.length ? Math.round((wins/withPnl.length)*100) : null;
+      const cls = net>=0?'pos':'neg';
+      return `<div class="td-stat-card">
+        <div class="td-stat-lbl">${escapeHtml(g.label)}</div>
+        <div class="td-stat-val ${cls}">${withPnl.length? fmtPnl(Math.round(net)) : '—'}</div>
+        <div class="td-stat-sub">${g.trades.length} trade${g.trades.length===1?'':'s'}${winRate!==null?(' · '+winRate+'% win'):''}</div>
+      </div>`;
+    }).join('')}</div>`;
+  }
+
+  function renderPlanAdherence(){
+    const trades = db.trades||[];
+    renderAdherenceCompare('tdPlanAdherence', [
+      {label:'✅ Plan Followed', trades: trades.filter(t=>t.planTag==='plan-followed')},
+      {label:'❌ Plan Broken', trades: trades.filter(t=>t.planTag==='plan-broken')},
+    ], 'Tag trades "Plan followed" / "Plan broken" at exit to see whether sticking to your plan actually pays.');
+  }
+
+  function renderSystemAdherence(){
+    const trades = db.trades||[];
+    renderAdherenceCompare('tdSystemAdherence', [
+      {label:'✅ Following System', trades: trades.filter(t=>t.followingSystem==='yes')},
+      {label:'❌ Off System', trades: trades.filter(t=>t.followingSystem==='no')},
+    ], 'Answer "Following my system?" at entry to see this comparison.');
+  }
+
+  // Psychology tags are multi-select, so one trade can count toward several
+  // states (e.g. both "fomo" and "overconfident") — each tag is judged on its
+  // own net P&L across every trade it was on, sorted worst-cost-first so the
+  // most expensive habit is the first thing you see.
+  function renderPsychBreakdown(){
+    const el = document.getElementById('tdPsychBreakdown');
+    if(!el) return;
+    const trades = db.trades||[];
+    const groups = {};
+    trades.forEach(t=>{
+      (t.psychTags||[]).forEach(tag=>{
+        (groups[tag] = groups[tag]||[]).push(t);
+      });
+    });
+    const rows = Object.entries(groups).map(([name, list])=>{
+      const withPnl = list.filter(t=> t.pnl!==undefined && t.pnl!=='' && !isNaN(parseFloat(t.pnl)));
+      const wins = withPnl.filter(t=>parseFloat(t.pnl)>=0).length;
+      const net = withPnl.reduce((s,t)=>s+parseFloat(t.pnl),0);
+      const winRate = withPnl.length ? Math.round((wins/withPnl.length)*100) : null;
+      return {name, count:list.length, net, winRate};
+    }).sort((a,b)=> a.net - b.net); // most costly first
+    if(rows.length===0){ el.innerHTML = '<div class="td-empty-note">Tag your state of mind at entry (calm/fomo/revenge/etc.) to see which ones actually cost you money.</div>'; return; }
+    const maxAbs = Math.max(1, ...rows.map(r=>Math.abs(r.net)));
+    el.innerHTML = rows.map(r=>{
+      const pct = Math.min(100, (Math.abs(r.net)/maxAbs)*100);
+      const cls = r.net>=0?'pos':'neg';
+      return `<div class="td-bd-row">
+        <div class="td-bd-top">
+          <span class="td-bd-name">${escapeHtml(r.name)}</span>
+          <span class="td-bd-meta">${r.count} trade${r.count===1?'':'s'}${r.winRate!==null?(' · '+r.winRate+'% win'):''}</span>
+          <span class="td-bd-pnl ${cls}">${fmtPnl(Math.round(r.net))}</span>
+        </div>
+        <div class="td-bd-bar-track"><div class="td-bd-bar-fill ${cls}" style="width:${pct}%;"></div></div>
+      </div>`;
+    }).join('');
+  }
+
+  function renderDisciplinePanel(){
+    renderPlanAdherence();
+    renderSystemAdherence();
+    renderPsychBreakdown();
+  }
+
   // ---- Risk panel ----
   function renderRiskPanel(){
     const grid = document.getElementById('tdRiskStats');
@@ -5596,6 +5844,7 @@
     renderTradeCalendar();
     renderStrategyBreakdown();
     renderRiskPanel();
+    try{ renderDisciplinePanel(); }catch(e){}
     try{ renderPeriodsPanel(); }catch(e){}
   }
 
@@ -8512,6 +8761,20 @@
       saveAppSettings();
       applyTraderVisibility();
       showToast(appSettings.isTrader ? 'Trades menu enabled.' : 'Trades menu hidden.', 'success');
+    });
+
+    // ---- Trading Risk settings: account capital, max risk per trade, daily loss limit.
+    // Feeds the live risk warning + daily-loss banner in the trade form and Overview.
+    [['settAccountCapital','accountCapital'], ['settMaxRiskPct','maxRiskPct'], ['settDailyLossLimit','dailyLossLimit']].forEach(([elId, key])=>{
+      const el = document.getElementById(elId);
+      if(!el) return;
+      el.value = appSettings[key] || '';
+      el.addEventListener('change', ()=>{
+        appSettings[key] = el.value ? parseFloat(el.value) : '';
+        saveAppSettings();
+        try{ autoCalcTradeFields(); }catch(e){}
+        try{ renderTradeOverview(); }catch(e){}
+      });
     });
 
     const nameInputEl = document.getElementById('profileNameInput');

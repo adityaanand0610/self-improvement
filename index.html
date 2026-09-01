@@ -1016,10 +1016,14 @@
 
   .trade-panel{ display:none; animation: fadeIn .2s var(--ease); }
   .trade-panel.active{ display:block; }
+  .history-view{ display:none; animation: fadeIn .2s var(--ease); }
+  .history-view.active{ display:block; }
   .analytics-subpanel{ display:none; animation: fadeIn .2s var(--ease); }
   .analytics-subpanel.active{ display:block; }
   .trade-subnav.secondary{ margin-bottom:16px; }
   .trade-subnav.secondary .trade-subnav-btn{ font-size:12.5px; padding:8px 14px; }
+  .eq-fy-toggle{ display:flex; align-items:center; gap:5px; font-size:11.5px; color:var(--ink-dim); cursor:pointer; user-select:none; }
+  .eq-fy-toggle input{ accent-color:var(--accent); width:13px; height:13px; cursor:pointer; }
   .eq-range-toggle{ display:flex; gap:4px; }
   .eq-range-btn{
     font-family:'Inter'; font-size:11px; font-weight:700; padding:4px 10px; border-radius:999px;
@@ -1066,6 +1070,10 @@
   .td-empty-note{ font-size:12px; color:var(--ink-faint); text-align:center; padding:30px 0; }
 
   .td-chart-svg{ width:100%; height:auto; display:block; overflow:visible; }
+  .td-chart-callout-row{ display:flex; gap:10px; margin-top:8px; flex-wrap:wrap; }
+  .td-chart-callout{ font-size:11px; font-family:'IBM Plex Mono',monospace; padding:4px 9px; border-radius:999px; }
+  .td-chart-callout.pos{ background:var(--teal-bg); color:var(--teal-dim); }
+  .td-chart-callout.neg{ background:var(--rose-bg); color:var(--rose-dim); }
   .td-bar{ transition: opacity .15s; }
   .td-bar:hover{ opacity:0.72; }
 
@@ -2454,7 +2462,6 @@
     <div class="trade-subnav" id="tradeSubnav">
       <button class="trade-subnav-btn active" data-tpanel="overview">Overview</button>
       <button class="trade-subnav-btn" data-tpanel="history">History</button>
-      <button class="trade-subnav-btn" data-tpanel="calendar">Calendar</button>
       <button class="trade-subnav-btn" data-tpanel="analytics">Analytics</button>
       <button class="trade-subnav-btn entry-btn" data-tpanel="entry">+ New Trade</button>
     </div>
@@ -2467,11 +2474,16 @@
       <div class="td-card">
         <div class="td-card-head" style="flex-wrap:wrap; gap:8px;">
           <span>Equity Curve</span>
-          <div class="eq-range-toggle" id="tdEquityRangeToggle">
-            <button class="eq-range-btn" data-range="1m">1M</button>
-            <button class="eq-range-btn" data-range="3m">3M</button>
-            <button class="eq-range-btn" data-range="ytd">YTD</button>
-            <button class="eq-range-btn on" data-range="all">All</button>
+          <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+            <label class="eq-fy-toggle" id="tdEquityFyToggleWrap" style="display:none;">
+              <input type="checkbox" id="tdEquityFyToggle"> FY markers
+            </label>
+            <div class="eq-range-toggle" id="tdEquityRangeToggle">
+              <button class="eq-range-btn" data-range="1m">1M</button>
+              <button class="eq-range-btn" data-range="3m">3M</button>
+              <button class="eq-range-btn" data-range="ytd">YTD</button>
+              <button class="eq-range-btn on" data-range="all">All</button>
+            </div>
           </div>
         </div>
         <div class="td-card-sub" id="tdEquityRange" style="margin-bottom:8px; display:block;"></div>
@@ -2489,57 +2501,65 @@
       </div>
     </div>
 
-    <!-- ---- HISTORY PANEL ---- -->
+    <!-- ---- HISTORY PANEL (List + Calendar, merged into one browsing view) ---- -->
     <div class="trade-panel" id="tpanel-history">
       <div class="td-list-head">
         <div class="td-card-head" style="margin-bottom:0;"><span>Trade History</span></div>
-        <div style="display:flex; gap:8px;">
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+          <div class="eq-range-toggle" id="historyViewToggle">
+            <button class="eq-range-btn on" data-hview="list">List</button>
+            <button class="eq-range-btn" data-hview="calendar">Calendar</button>
+          </div>
           <button class="td-list-sort" id="tdImportCsvBtn">⬆ Import CSV</button>
           <button class="td-list-sort" id="tdExportTradesBtn">⬇ Trade analysis</button>
         </div>
       </div>
-      <div class="trades-toolbar">
-        <div class="trades-search-wrap">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-          <input type="text" id="tradeSearchInput" class="trades-search" placeholder="Search by ticker, tag, or lesson…">
-        </div>
-        <select id="tradeSortSelect" class="trades-sort-select">
-          <option value="date-desc">Newest first</option>
-          <option value="date-asc">Oldest first</option>
-          <option value="pnl-desc">P&amp;L: high to low</option>
-          <option value="pnl-asc">P&amp;L: low to high</option>
-          <option value="r-desc">R-multiple: high to low</option>
-          <option value="ticker-asc">Ticker: A–Z</option>
-        </select>
-      </div>
-      <div class="trades-filter-row">
-        <div class="trades-filter-chips" id="tradesFilterChips">
-          <div class="trade-filter-chip on" data-outcome="all">All</div>
-          <div class="trade-filter-chip" data-outcome="win">Wins</div>
-          <div class="trade-filter-chip" data-outcome="loss">Losses</div>
-          <div class="trade-filter-chip" data-outcome="open">Open</div>
-        </div>
-        <div class="trades-result-count" id="tradesResultCount"></div>
-      </div>
-      <div id="tradesList"></div>
-    </div>
 
-    <!-- ---- CALENDAR PANEL ---- -->
-    <div class="trade-panel" id="tpanel-calendar">
-      <div class="td-card">
-        <div class="tcal-head">
-          <button class="tcal-nav-btn" id="tcalPrevBtn" aria-label="Previous month">‹</button>
-          <div class="tcal-month-label" id="tcalMonthLabel">—</div>
-          <button class="tcal-nav-btn" id="tcalNextBtn" aria-label="Next month">›</button>
+      <!-- List view -->
+      <div class="history-view active" id="historyListView">
+        <div class="trades-toolbar">
+          <div class="trades-search-wrap">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <input type="text" id="tradeSearchInput" class="trades-search" placeholder="Search by ticker, tag, or lesson…">
+          </div>
+          <select id="tradeSortSelect" class="trades-sort-select">
+            <option value="date-desc">Newest first</option>
+            <option value="date-asc">Oldest first</option>
+            <option value="pnl-desc">P&amp;L: high to low</option>
+            <option value="pnl-asc">P&amp;L: low to high</option>
+            <option value="r-desc">R-multiple: high to low</option>
+            <option value="ticker-asc">Ticker: A–Z</option>
+          </select>
         </div>
-        <div class="tcal-weekday-row"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div>
-        <div class="tcal-grid" id="tcalGrid"></div>
-        <div class="tcal-legend">
-          <div class="tcal-legend-item"><span class="tcal-legend-dot" style="background:var(--teal-bg); border:1px solid var(--teal);"></span>Profitable day</div>
-          <div class="tcal-legend-item"><span class="tcal-legend-dot" style="background:var(--rose-bg); border:1px solid var(--rose);"></span>Loss day</div>
-          <div class="tcal-legend-item"><span class="tcal-legend-dot" style="background:var(--surface); border:1px solid var(--line);"></span>No trades</div>
+        <div class="trades-filter-row">
+          <div class="trades-filter-chips" id="tradesFilterChips">
+            <div class="trade-filter-chip on" data-outcome="all">All</div>
+            <div class="trade-filter-chip" data-outcome="win">Wins</div>
+            <div class="trade-filter-chip" data-outcome="loss">Losses</div>
+            <div class="trade-filter-chip" data-outcome="open">Open</div>
+          </div>
+          <div class="trades-result-count" id="tradesResultCount"></div>
         </div>
-        <div class="tcal-selected-trades" id="tcalSelectedTrades"></div>
+        <div id="tradesList"></div>
+      </div>
+
+      <!-- Calendar view -->
+      <div class="history-view" id="historyCalendarView">
+        <div class="td-card">
+          <div class="tcal-head">
+            <button class="tcal-nav-btn" id="tcalPrevBtn" aria-label="Previous month">‹</button>
+            <div class="tcal-month-label" id="tcalMonthLabel">—</div>
+            <button class="tcal-nav-btn" id="tcalNextBtn" aria-label="Next month">›</button>
+          </div>
+          <div class="tcal-weekday-row"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div>
+          <div class="tcal-grid" id="tcalGrid"></div>
+          <div class="tcal-legend">
+            <div class="tcal-legend-item"><span class="tcal-legend-dot" style="background:var(--teal-bg); border:1px solid var(--teal);"></span>Profitable day</div>
+            <div class="tcal-legend-item"><span class="tcal-legend-dot" style="background:var(--rose-bg); border:1px solid var(--rose);"></span>Loss day</div>
+            <div class="tcal-legend-item"><span class="tcal-legend-dot" style="background:var(--surface); border:1px solid var(--line);"></span>No trades</div>
+          </div>
+          <div class="tcal-selected-trades" id="tcalSelectedTrades"></div>
+        </div>
       </div>
     </div>
 
@@ -2614,11 +2634,7 @@
           <div class="fy-compare-row" id="fyCompareRow"></div>
         </div>
 
-        <div class="td-card">
-          <div class="td-card-head"><span>All-Time Equity Curve</span><span class="td-card-sub" id="fyEquityRange"></span></div>
-          <div id="fyEquityChart"></div>
-          <div class="td-empty-note" style="padding:6px 0 0; text-align:left;">Dashed vertical lines mark FY boundaries (Apr 1).</div>
-        </div>
+        <div class="td-empty-note" style="text-align:left; padding:0 2px 4px;">Want the equity curve with FY boundaries marked? Head to Overview → Equity Curve → All → tick "FY markers".</div>
 
         <div class="td-card">
           <div class="td-card-head"><span>Financial Year Breakdown (Apr–Mar)</span></div>
@@ -5362,7 +5378,12 @@
     }
   }
 
-  // Handles the 1M/3M/YTD/All toggle above the Overview equity curve.
+  // Handles the 1M/3M/YTD/All toggle above the Overview equity curve. This is now the
+  // single equity curve in the app — it used to be duplicated as a separate "All-Time
+  // Equity Curve" card under Analytics → FY & Periods; that card is gone, and its one
+  // extra feature (dashed lines marking each financial-year boundary) is available here
+  // as an "FY markers" checkbox instead, so there's one equity chart to look at, not two.
+  let eqShowFyMarkers = false;
   function renderEquityCurveRange(range){
     eqOverviewRange = range;
     const equityEl = document.getElementById('tdEquityChart');
@@ -5379,7 +5400,11 @@
       const fromKey = todayKey(fromDate);
       filtered = eqChronoAll.filter(t=> tradeBasisDate(t) >= fromKey);
     }
-    renderEquityCurveSVG(equityEl, rangeEl, filtered, {});
+    // FY markers only make sense with enough history in view, so the checkbox itself
+    // only shows up on the "All" range and gets hidden (and switched off) otherwise.
+    const fyWrap = document.getElementById('tdEquityFyToggleWrap');
+    if(fyWrap) fyWrap.style.display = (range==='all') ? 'flex' : 'none';
+    renderEquityCurveSVG(equityEl, rangeEl, filtered, {fyDividers: range==='all' && eqShowFyMarkers});
   }
   const tdEquityRangeToggleEl = document.getElementById('tdEquityRangeToggle');
   if(tdEquityRangeToggleEl){
@@ -5387,6 +5412,13 @@
       const btn = e.target.closest('.eq-range-btn');
       if(!btn) return;
       renderEquityCurveRange(btn.dataset.range);
+    });
+  }
+  const tdEquityFyToggleEl = document.getElementById('tdEquityFyToggle');
+  if(tdEquityFyToggleEl){
+    tdEquityFyToggleEl.addEventListener('change', ()=>{
+      eqShowFyMarkers = tdEquityFyToggleEl.checked;
+      renderEquityCurveRange(eqOverviewRange);
     });
   }
 
@@ -5454,6 +5486,10 @@
     renderEquityCurveRange(eqOverviewRange);
 
     // ---- P&L by month (SVG bars) ----
+    // Value labels are drawn directly on the chart rather than relying on the SVG
+    // <title> hover tooltip, which never appears on a touch tap — so on mobile the
+    // old version of this chart showed bars with no readable numbers at all. Best/worst
+    // month are also called out below so the takeaway is legible without any interaction.
     const monthlyEl = document.getElementById('tdMonthlyChart');
     if(monthlyEl){
       const byMonth = {};
@@ -5466,21 +5502,34 @@
       if(keys.length===0){
         monthlyEl.innerHTML = '<div class="td-empty-note">No monthly data yet.</div>';
       } else {
+        const fmtCompact = v=>{
+          const abs = Math.abs(v);
+          const num = abs>=100000 ? (abs/100000).toFixed(1)+'L' : abs>=1000 ? (abs/1000).toFixed(1)+'k' : Math.round(abs).toString();
+          return (v>=0?'+':'-')+num;
+        };
         const vals = keys.map(k=>byMonth[k]);
         const maxAbs = Math.max(1, ...vals.map(v=>Math.abs(v)));
-        const w=340, h=140, barW = (w/keys.length)*0.6, gap=(w/keys.length);
-        const midY = h/2;
+        let bestK = keys[0], worstK = keys[0];
+        keys.forEach(k=>{ if(byMonth[k]>byMonth[bestK]) bestK=k; if(byMonth[k]<byMonth[worstK]) worstK=k; });
+        const w=340, h=160, barW = (w/keys.length)*0.6, gap=(w/keys.length);
+        const midY = h/2 - 4;
         const bars = keys.map((k,i)=>{
           const v = byMonth[k];
-          const barH = (Math.abs(v)/maxAbs) * (h/2 - 14);
+          const barH = (Math.abs(v)/maxAbs) * (h/2 - 30);
           const x = i*gap + (gap-barW)/2;
           const y = v>=0 ? midY-barH : midY;
-          const cls = v>=0?'pos':'neg';
           const label = k.slice(5,7)+'/'+k.slice(2,4);
-          return `<rect class="td-bar" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${Math.max(barH,1).toFixed(1)}" rx="2" fill="${v>=0?'var(--teal)':'var(--rose)'}"><title>${label}: ${fmtPnl(v)}</title></rect>
+          const isStandout = (k===bestK && v>0) || (k===worstK && v<0);
+          const valLabelY = v>=0 ? y-4 : y+barH+11;
+          return `<rect class="td-bar" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${Math.max(barH,1).toFixed(1)}" rx="2" fill="${v>=0?'var(--teal)':'var(--rose)'}" opacity="${isStandout?1:0.85}"><title>${label}: ${fmtPnl(v)}</title></rect>
+            <text x="${(x+barW/2).toFixed(1)}" y="${valLabelY.toFixed(1)}" text-anchor="middle" class="td-chart-axis-label" style="font-size:8.5px; font-weight:${isStandout?700:500}; fill:${v>=0?'var(--teal)':'var(--rose)'};">${fmtCompact(v)}</text>
             <text x="${(x+barW/2).toFixed(1)}" y="${h-2}" text-anchor="middle" class="td-chart-axis-label" style="font-size:8px;">${label}</text>`;
         }).join('');
-        monthlyEl.innerHTML = `<svg class="td-chart-svg" viewBox="0 0 ${w} ${h}"><line x1="0" y1="${midY}" x2="${w}" y2="${midY}" stroke="var(--line)" stroke-width="1"/>${bars}</svg>`;
+        monthlyEl.innerHTML = `<svg class="td-chart-svg" viewBox="0 0 ${w} ${h}"><line x1="0" y1="${midY}" x2="${w}" y2="${midY}" stroke="var(--line)" stroke-width="1"/>${bars}</svg>
+          <div class="td-chart-callout-row">
+            <span class="td-chart-callout pos">Best: ${bestK.slice(5,7)}/${bestK.slice(2,4)} ${fmtPnl(Math.round(byMonth[bestK]))}</span>
+            <span class="td-chart-callout neg">Worst: ${worstK.slice(5,7)}/${worstK.slice(2,4)} ${fmtPnl(Math.round(byMonth[worstK]))}</span>
+          </div>`;
       }
     }
 
@@ -5569,6 +5618,21 @@
       const cls = isNaN(n)?'':(n>=0?'pos':'neg');
       return `<div class="td-bd-row"><div class="td-bd-top"><span class="td-bd-name">${escapeHtml(t.ticker||'')}</span><span class="trade-pnl ${cls}">${isNaN(n)?'—':n}</span></div><div class="td-bd-meta">${escapeHtml(t.timeframe||'')}${t.grade?(' · Grade '+t.grade):''}</div></div>`;
     }).join('');
+  }
+  // History panel: List / Calendar toggle (replaces the old standalone Calendar tab —
+  // both are just different ways of browsing the same trade log, so they now live
+  // together and share the panel's search/sort/filter context).
+  const historyViewToggleEl = document.getElementById('historyViewToggle');
+  if(historyViewToggleEl){
+    historyViewToggleEl.addEventListener('click', (e)=>{
+      const btn = e.target.closest('.eq-range-btn');
+      if(!btn) return;
+      const view = btn.dataset.hview;
+      historyViewToggleEl.querySelectorAll('.eq-range-btn').forEach(b=> b.classList.toggle('on', b===btn));
+      document.getElementById('historyListView').classList.toggle('active', view==='list');
+      document.getElementById('historyCalendarView').classList.toggle('active', view==='calendar');
+      if(view==='calendar'){ try{ renderTradeCalendar(); }catch(e){} }
+    });
   }
   const tcalPrevBtn = document.getElementById('tcalPrevBtn');
   const tcalNextBtn = document.getElementById('tcalNextBtn');
@@ -5933,7 +5997,6 @@
       const monthTableEl = document.getElementById('monthTable'); if(monthTableEl) monthTableEl.innerHTML='';
       const cmpEl = document.getElementById('cmpResultRow'); if(cmpEl) cmpEl.innerHTML='';
       const fyCompareEl = document.getElementById('fyCompareRow'); if(fyCompareEl) fyCompareEl.innerHTML='';
-      const fyEqEl = document.getElementById('fyEquityChart'); if(fyEqEl) fyEqEl.innerHTML='';
       return;
     }
 
@@ -5980,13 +6043,6 @@
           <div class="val" style="color:${prevM.net>=0?'var(--teal)':'var(--rose)'};">${fmtMoney(prevM.net)}</div>
           <div class="delta" style="color:${delta>=0?'var(--teal)':'var(--rose)'};">${delta>=0?'▲':'▼'} ${fmtMoney(Math.abs(delta))} (${Math.abs(deltaPct).toFixed(0)}% ${delta>=0?'more':'less'})</div>
         </div>`;
-    }
-
-    const fyEqEl = document.getElementById('fyEquityChart');
-    const fyEqRangeEl = document.getElementById('fyEquityRange');
-    if(fyEqEl){
-      const chrono = trades.filter(t=>t.pnl!==undefined && t.pnl!=='' && !isNaN(parseFloat(t.pnl))).slice().sort((a,b)=>tradeBasisDate(a).localeCompare(tradeBasisDate(b)));
-      renderEquityCurveSVG(fyEqEl, fyEqRangeEl, chrono, {fyDividers:true, height:170});
     }
 
     const byYear = groupTradesBy(trades, d=>d.slice(0,4));

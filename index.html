@@ -933,13 +933,18 @@
 
   /* ---------- Trade journal ---------- */
   .trade-card{
-    background: var(--surface); border:1px solid var(--line); border-radius: var(--radius-lg); padding:18px 20px; margin-bottom:12px;
-    cursor:pointer; box-shadow: var(--shadow-sm); transition: box-shadow 0.2s var(--ease), transform .2s var(--ease);
+    background: var(--surface); border:1px solid var(--line); border-radius: var(--radius-lg); padding:18px 20px 18px 22px; margin-bottom:12px;
+    cursor:pointer; box-shadow: var(--shadow-sm); transition: box-shadow 0.2s var(--ease), transform .2s var(--ease), border-color .2s var(--ease);
+    position:relative; overflow:hidden;
   }
-  .trade-card:hover{ box-shadow: var(--shadow-md); transform: translateY(-2px); }
+  .trade-card::before{ content:''; position:absolute; left:0; top:0; bottom:0; width:4px; background:var(--line); }
+  .trade-card.win::before{ background: linear-gradient(180deg, var(--teal), var(--teal-dim)); }
+  .trade-card.loss::before{ background: linear-gradient(180deg, var(--rose), var(--rose-dim)); }
+  .trade-card.open::before{ background: repeating-linear-gradient(45deg, var(--accent), var(--accent) 4px, var(--accent-dim) 4px, var(--accent-dim) 8px); }
+  .trade-card:hover{ box-shadow: var(--shadow-md); transform: translateY(-2px); border-color: var(--ink-faint); }
   .trade-card-top{ display:flex; justify-content:space-between; align-items:center; }
-  .trade-ticker{ font-family:'Sora'; font-size:17px; font-weight:800; }
-  .trade-date{ font-size:11px; color:var(--ink-faint); margin-top:3px; }
+  .trade-ticker{ font-family:'Sora'; font-size:17px; font-weight:800; letter-spacing:-0.01em; }
+  .trade-date{ font-size:11px; color:var(--ink-faint); margin-top:3px; font-family:'IBM Plex Mono'; }
   .trade-pnl{ font-family:'IBM Plex Mono'; font-size:15px; font-weight:600; }
   .trade-pnl.pos{ color: var(--teal); }
   .trade-pnl.neg{ color: var(--rose); }
@@ -998,10 +1003,32 @@
   .trade-outcome-badge.win{ background: var(--teal-bg); color: var(--teal-dim); }
   .trade-outcome-badge.loss{ background: var(--rose-bg); color: var(--rose-dim); }
   .trade-outcome-badge.open{ background: var(--surface-raised); color: var(--ink-faint); }
+  .trade-dir-badge{
+    font-size:9px; font-weight:800; text-transform:uppercase; letter-spacing:0.05em; padding:3px 8px 3px 6px;
+    border-radius:6px; display:inline-flex; align-items:center; gap:3px; background:var(--accent-bg); color:var(--accent-dim);
+  }
+  .trade-dir-badge.short{ background: var(--surface-raised); color: var(--ink-dim); }
+  .trade-dir-badge .dir-arrow{ font-size:9px; line-height:1; }
   .trade-card-right{ text-align:right; flex-shrink:0; }
-  .trade-r{ font-family:'IBM Plex Mono'; font-size:11px; color:var(--ink-faint); margin-top:3px; }
+  .trade-r{
+    font-family:'IBM Plex Mono'; font-size:10.5px; font-weight:700; color:var(--ink-dim); margin-top:5px;
+    display:inline-block; background:var(--surface-raised); border:1px solid var(--line); border-radius:999px; padding:2px 8px;
+  }
 
   /* ================= Trading Dashboard (Overview / History / Calendar / Strategy / Risk) ================= */
+  /* Trader-terminal touches scoped to the Trade Log view only, so Study/Habits/Gym keep their own feel */
+  #view-trades input[type=number]{ font-family:'IBM Plex Mono'; font-weight:600; }
+  #view-trades .trade-subnav-btn{ font-family:'IBM Plex Mono'; letter-spacing:0.03em; }
+  .trade-subnav-row{ display:flex; align-items:center; gap:8px; margin-bottom:20px; }
+  .trade-subnav-row .trade-subnav{ flex:1; min-width:0; margin-bottom:0; }
+  .amount-visibility-toggle{
+    flex-shrink:0; width:38px; height:38px; border-radius:50%; border:1px solid var(--line); background:var(--surface);
+    color:var(--ink-dim); display:flex; align-items:center; justify-content:center; cursor:pointer;
+    transition: all .15s var(--ease);
+  }
+  .amount-visibility-toggle:hover{ border-color:var(--ink-faint); color:var(--ink); }
+  .amount-visibility-toggle.is-hidden{ background:var(--accent-bg); border-color:var(--accent); color:var(--accent-dim); }
+  .amount-visibility-toggle svg{ width:17px; height:17px; }
   .trade-subnav{ display:flex; gap:6px; overflow-x:auto; margin-bottom:20px; padding-bottom:2px; scrollbar-width:none; }
   .trade-subnav::-webkit-scrollbar{ display:none; }
   .trade-subnav-btn{
@@ -1048,8 +1075,13 @@
   @media (min-width:960px){ .td-stat-grid{ grid-template-columns: repeat(6,1fr); } }
   .td-stat-card{
     background:var(--surface); border:1px solid var(--line); border-radius: var(--radius-md);
-    padding:14px 15px; box-shadow: var(--shadow-sm);
+    padding:14px 15px; box-shadow: var(--shadow-sm); position:relative; overflow:hidden;
+    transition: transform .15s var(--ease), box-shadow .15s var(--ease);
   }
+  .td-stat-card::before{ content:''; position:absolute; top:0; left:0; right:0; height:3px; background:var(--line); }
+  .td-stat-card.pos::before{ background:var(--teal); }
+  .td-stat-card.neg::before{ background:var(--rose); }
+  .td-stat-card:hover{ transform:translateY(-2px); box-shadow:var(--shadow-md); }
   .td-stat-lbl{ font-size:9.5px; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-faint); font-weight:700; }
   .td-stat-val{ font-family:'Sora'; font-size:19px; font-weight:800; margin-top:6px; }
   .td-stat-val.pos{ color: var(--teal); }
@@ -1328,12 +1360,17 @@
   .td-hero-card{
     background: linear-gradient(160deg, var(--surface) 0%, var(--surface-raised) 100%);
     border:1px solid var(--line); border-radius: var(--radius-lg); padding:20px 22px; margin-bottom:16px; box-shadow: var(--shadow-sm);
+    position:relative; overflow:hidden;
   }
+  .td-hero-card::before{ content:''; position:absolute; left:0; top:0; right:0; height:3px; background:var(--line); }
+  .td-hero-card.pos::before{ background: linear-gradient(90deg, var(--teal-dim), var(--teal)); }
+  .td-hero-card.neg::before{ background: linear-gradient(90deg, var(--rose-dim), var(--rose)); }
   .td-hero-lbl{ font-size:11px; color:var(--ink-faint); font-weight:600; text-transform:uppercase; letter-spacing:0.05em; }
   .td-hero-value{ font-family:'Sora'; font-size:32px; font-weight:800; margin-top:6px; letter-spacing:-0.01em; }
   .td-hero-value.pos{ color: var(--teal); }
   .td-hero-value.neg{ color: var(--rose); }
-  .td-hero-stats-row{ display:flex; gap:22px; margin-top:16px; padding-top:16px; border-top:1px dashed var(--line); flex-wrap:wrap; }
+  .td-hero-stats-row{ display:flex; gap:10px; margin-top:16px; padding-top:16px; border-top:1px dashed var(--line); flex-wrap:wrap; }
+  .td-hero-stat{ flex:1; min-width:126px; background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-sm); padding:9px 12px; }
   .td-hero-stat-lbl{ font-size:10px; color:var(--ink-faint); font-weight:600; }
   .td-hero-stat-val{ font-family:'IBM Plex Mono'; font-size:14px; font-weight:700; margin-top:3px; }
   .td-hero-stat-val.pos{ color: var(--teal); }
@@ -2506,11 +2543,14 @@
   <!-- ===================== TRADE LOG VIEW ===================== -->
   <section class="view" id="view-trades">
 
-    <div class="trade-subnav" id="tradeSubnav">
-      <button class="trade-subnav-btn active" data-tpanel="overview">Overview</button>
-      <button class="trade-subnav-btn" data-tpanel="history">History</button>
-      <button class="trade-subnav-btn" data-tpanel="analytics">Analytics</button>
-      <button class="trade-subnav-btn entry-btn" data-tpanel="entry">+ New Trade</button>
+    <div class="trade-subnav-row">
+      <div class="trade-subnav" id="tradeSubnav">
+        <button class="trade-subnav-btn active" data-tpanel="overview">Overview</button>
+        <button class="trade-subnav-btn" data-tpanel="history">History</button>
+        <button class="trade-subnav-btn" data-tpanel="analytics">Analytics</button>
+        <button class="trade-subnav-btn entry-btn" data-tpanel="entry">+ New Trade</button>
+      </div>
+      <button class="amount-visibility-toggle" id="tradeAmountToggleBtn" title="Showing ₹ amounts — tap to hide" aria-label="Toggle amount visibility"></button>
     </div>
 
     <!-- ---- OVERVIEW PANEL ---- -->
@@ -3047,6 +3087,13 @@
         <div class="modal-row">
           <div class="modal-field"><label>Daily loss limit (₹)</label><input type="number" id="settDailyLossLimit" step="1" placeholder="e.g. 5000"></div>
         </div>
+        <div class="toggle-row" style="padding-top:14px;">
+          <div>
+            <div class="toggle-label">🙈 Hide ₹ amounts</div>
+            <div class="toggle-sub">Show every P&amp;L figure in the trade journal as a % of your capital instead of the rupee amount — handy over someone's shoulder. Same as the eye icon on the Trade Log tabs.</div>
+          </div>
+          <label class="switch"><input type="checkbox" id="hideAmountsToggle"><span class="switch-track"></span></label>
+        </div>
       </div>
     </div>
 
@@ -3416,9 +3463,9 @@
   function loadAppSettings(){
     try{
       const raw = localStorage.getItem(APP_SETTINGS_KEY);
-      if(raw) return Object.assign({focusMins:25, breakMins:5, longBreakMins:15, notifications:false, isTrader:true, displayName:'', desktopLayout:'full', dailyTargetPct:70, autoTheme:false, accountCapital:'', maxRiskPct:'', dailyLossLimit:''}, JSON.parse(raw));
+      if(raw) return Object.assign({focusMins:25, breakMins:5, longBreakMins:15, notifications:false, isTrader:true, displayName:'', desktopLayout:'full', dailyTargetPct:70, autoTheme:false, accountCapital:'', maxRiskPct:'', dailyLossLimit:'', hideAmounts:false}, JSON.parse(raw));
     }catch(e){}
-    return {focusMins:25, breakMins:5, longBreakMins:15, notifications:false, isTrader:true, displayName:'', desktopLayout:'full', dailyTargetPct:70, autoTheme:false, accountCapital:'', maxRiskPct:'', dailyLossLimit:''};
+    return {focusMins:25, breakMins:5, longBreakMins:15, notifications:false, isTrader:true, displayName:'', desktopLayout:'full', dailyTargetPct:70, autoTheme:false, accountCapital:'', maxRiskPct:'', dailyLossLimit:'', hideAmounts:false};
   }
   let appSettings = loadAppSettings();
   applyGrowwMode();
@@ -5096,6 +5143,62 @@
     events.sort((a,b)=>a.time-b.time);
     return events;
   }
+  // ---- Privacy mode: "hide amounts, show % instead" ----------------------
+  // When on, every ₹ P&L / money figure across the trade journal (hero card,
+  // stat grid, trade list, calendar, analytics, FY tables) is shown as a
+  // percentage of a capital base instead of the raw rupee amount. Base is
+  // the account capital set in Settings → Trading Risk; if that isn't set,
+  // we fall back to the highest capital ever deployed so there's still a
+  // meaningful denominator. fmtPnl/fmtMoney are the single formatting
+  // choke point used everywhere numbers are rendered, so flipping the
+  // toggle here is enough to cascade through the whole journal.
+  function capitalBaseForPct(){
+    const cap = parseFloat(appSettings.accountCapital);
+    if(!isNaN(cap) && cap>0) return cap;
+    const allCap = maxCapitalDeployed(db.trades||[], null, null);
+    return (allCap && allCap>0) ? allCap : null;
+  }
+  function fmtPnl(n){
+    if(appSettings.hideAmounts){
+      const base = capitalBaseForPct();
+      if(!base || isNaN(n)) return '••%';
+      const pct = (n/base)*100;
+      return (pct>=0?'+':'')+pct.toFixed(2)+'%';
+    }
+    return (n>=0?'+':'')+Math.round(n);
+  }
+  function fmtMoney(n){
+    if(appSettings.hideAmounts){
+      const base = capitalBaseForPct();
+      if(!base || isNaN(n)) return '••%';
+      const pct = (n/base)*100;
+      return (n<0?'-':'')+Math.abs(pct).toFixed(2)+'%';
+    }
+    return (n<0?'-':'')+'₹'+Math.round(Math.abs(n)).toLocaleString('en-IN');
+  }
+  const EYE_OPEN_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg>';
+  const EYE_OFF_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a21.4 21.4 0 0 1 5.06-6.06M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a21.4 21.4 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><path d="M1 1l22 22"/></svg>';
+  function refreshAmountVisibilityUI(){
+    document.querySelectorAll('.amount-visibility-toggle').forEach(btn=>{
+      const hidden = !!appSettings.hideAmounts;
+      btn.classList.toggle('is-hidden', hidden);
+      btn.innerHTML = hidden ? EYE_OFF_SVG : EYE_OPEN_SVG;
+      btn.title = hidden ? 'Showing % — tap to show ₹ amounts' : 'Showing ₹ amounts — tap to hide';
+      btn.setAttribute('aria-label', btn.title);
+    });
+    const settingsToggleEl = document.getElementById('hideAmountsToggle');
+    if(settingsToggleEl) settingsToggleEl.checked = !!appSettings.hideAmounts;
+  }
+  function toggleAmountVisibility(){
+    appSettings.hideAmounts = !appSettings.hideAmounts;
+    saveAppSettings();
+    refreshAmountVisibilityUI();
+    try{ renderTradeDashboard(); }catch(e){}
+    try{ renderTradesList(); }catch(e){}
+    showToast(appSettings.hideAmounts ? 'Amounts hidden — showing % of capital.' : 'Amounts visible again.', 'success');
+  }
+  document.querySelectorAll('.amount-visibility-toggle').forEach(btn=> btn.addEventListener('click', toggleAmountVisibility));
+
   function maxCapitalDeployed(trades, fromDate, toDate){
     const fromT = fromDate ? Date.parse(fromDate+'T00:00:00') : -Infinity;
     const toT = toDate ? Date.parse(toDate+'T23:59:59') : Infinity;
@@ -5194,18 +5297,18 @@
       }
 
       return groupHeader + `
-        <div class="trade-card" data-trade-id="${t.id}">
+        <div class="trade-card ${outcome}" data-trade-id="${t.id}">
           <div class="trade-card-top">
             <div>
               <div class="trade-ticker-row">
                 <span class="trade-ticker">${escapeHtml(t.ticker||'')}</span>
                 <span class="trade-outcome-badge ${outcome}">${badgeLabel}</span>
-                <span class="trade-outcome-badge" style="background:var(--surface-raised); color:var(--ink-dim);">${t.direction==='short'?'Short':'Long'}</span>
+                <span class="trade-dir-badge ${t.direction==='short'?'short':'long'}"><span class="dir-arrow">${t.direction==='short'?'▼':'▲'}</span>${t.direction==='short'?'Short':'Long'}</span>
               </div>
               <div class="trade-date">${tradeBasisDate(t)||'—'}${t.exitDT?'':' · open'} · ${escapeHtml(t.timeframe||'')} ${t.grade?('· Grade '+escapeHtml(t.grade)):''}</div>
             </div>
             <div class="trade-card-right">
-              <div class="trade-pnl ${pnlClass}">${isNaN(pnlNum)?'—':pnlNum}</div>
+              <div class="trade-pnl ${pnlClass}">${isNaN(pnlNum)?'—':fmtPnl(Math.round(pnlNum))}</div>
               ${t.rMultiple?`<div class="trade-r">${t.rMultiple}R</div>`:''}
             </div>
           </div>
@@ -5319,11 +5422,8 @@
     };
   }
 
-  function fmtPnl(n){ return (n>=0?'+':'')+Math.round(n); }
-  function fmtMoney(n){ return (n<0?'-':'')+'₹'+Math.round(Math.abs(n)).toLocaleString('en-IN'); }
-
   function statCardHtml(lbl, val, cls, sub){
-    return `<div class="td-stat-card"><div class="td-stat-lbl">${lbl}</div><div class="td-stat-val ${cls||''}">${val}</div>${sub?`<div class="td-stat-sub">${sub}</div>`:''}</div>`;
+    return `<div class="td-stat-card ${cls||''}"><div class="td-stat-lbl">${lbl}</div><div class="td-stat-val ${cls||''}">${val}</div>${sub?`<div class="td-stat-sub">${sub}</div>`:''}</div>`;
   }
 
   // ---- Shared equity-curve SVG renderer ----------------------------------
@@ -5499,6 +5599,7 @@
       // up and redeployed into later trades).
       const capitalDeployed = trades.filter(t=> tradeOutcome(t)==='open').reduce((s,t)=>{ const n=parseFloat(t.posSize); return s+(isNaN(n)?0:n); },0);
       const allTimeCap = maxCapitalDeployed(trades, null, null);
+      heroEl.className = 'td-hero-card' + (trades.length ? (m.net>=0?' pos':' neg') : '');
       heroEl.innerHTML = `
         <div class="td-hero-lbl">Net P&amp;L · All Time</div>
         <div class="td-hero-value ${m.net>=0?'pos':'neg'}">${fmtPnl(Math.round(m.net))}</div>
@@ -8973,8 +9074,24 @@
         saveAppSettings();
         try{ autoCalcTradeFields(); }catch(e){}
         try{ renderTradeOverview(); }catch(e){}
+        // Account capital doubles as the % denominator for Hide Amounts mode,
+        // so a change here can shift every displayed percentage — refresh live.
+        try{ renderTradeDashboard(); }catch(e){}
+        try{ renderTradesList(); }catch(e){}
       });
     });
+
+    const hideAmountsToggleEl = document.getElementById('hideAmountsToggle');
+    if(hideAmountsToggleEl){
+      hideAmountsToggleEl.checked = !!appSettings.hideAmounts;
+      hideAmountsToggleEl.addEventListener('change', ()=>{
+        appSettings.hideAmounts = hideAmountsToggleEl.checked;
+        saveAppSettings();
+        refreshAmountVisibilityUI();
+        try{ renderTradeDashboard(); }catch(e){}
+        try{ renderTradesList(); }catch(e){}
+      });
+    }
 
     const nameInputEl = document.getElementById('profileNameInput');
     if(nameInputEl){
@@ -9137,6 +9254,7 @@
   renderStudyAnalysis();
   refreshProfilePanel();
   applyTraderVisibility();
+  refreshAmountVisibilityUI();
   setTimeout(()=>{ try{ maybeShowDailyGoalReminder(); }catch(e){} }, 900);
 
 })();

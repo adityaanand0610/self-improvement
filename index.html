@@ -5119,6 +5119,19 @@
     return t.date || '';
   }
 
+  // Same-day tie-breaker: tradeBasisDate() only carries day-level precision
+  // (by design — P&L attribution is per-day), so two trades closed on the
+  // same date compare equal on that alone and previously fell back to
+  // whatever order they happened to sit in db.trades, not the order they
+  // actually happened. This resolves ties using the real timestamp
+  // (exit time, then entry time, then midnight of the logged date) so
+  // same-day trades sort chronologically everywhere basis-date sorting is used.
+  function tradeBasisTimestamp(t){
+    const raw = t.exitDT || t.entryDT || (t.date ? t.date+'T00:00' : '');
+    const ts = raw ? Date.parse(raw) : NaN;
+    return isNaN(ts) ? 0 : ts;
+  }
+
   // ---- Capital deployed & return-on-capital ----------------------------
   // There's nowhere in this app that stores your real account size (nobody
   // wants to type their net worth into a phone app, and it drifts anyway).
@@ -5251,8 +5264,8 @@
 
     // ---- sort ----
     const sortFns = {
-      'date-desc': (a,b)=> tradeBasisDate(b).localeCompare(tradeBasisDate(a)),
-      'date-asc': (a,b)=> tradeBasisDate(a).localeCompare(tradeBasisDate(b)),
+      'date-desc': (a,b)=> tradeBasisDate(b).localeCompare(tradeBasisDate(a)) || (tradeBasisTimestamp(b)-tradeBasisTimestamp(a)),
+      'date-asc': (a,b)=> tradeBasisDate(a).localeCompare(tradeBasisDate(b)) || (tradeBasisTimestamp(a)-tradeBasisTimestamp(b)),
       'pnl-desc': (a,b)=> (parseFloat(b.pnl)||0) - (parseFloat(a.pnl)||0),
       'pnl-asc': (a,b)=> (parseFloat(a.pnl)||0) - (parseFloat(b.pnl)||0),
       'r-desc': (a,b)=> (parseFloat(b.rMultiple)||0) - (parseFloat(a.rMultiple)||0),
@@ -5397,7 +5410,7 @@
 
     // Max drawdown off the running equity curve (peak-to-trough, chronological
     // order by EXIT day — see tradeBasisDate — since that's when each P&L landed)
-    const chrono = withPnl.slice().sort((a,b)=> tradeBasisDate(a).localeCompare(tradeBasisDate(b)));
+    const chrono = withPnl.slice().sort((a,b)=> tradeBasisDate(a).localeCompare(tradeBasisDate(b)) || (tradeBasisTimestamp(a)-tradeBasisTimestamp(b)));
     let running=0, peak=0, maxDD=0;
     chrono.forEach(t=>{ running += parseFloat(t.pnl); if(running>peak) peak=running; const dd=peak-running; if(dd>maxDD) maxDD=dd; });
 
@@ -5907,7 +5920,7 @@
       (groups[key] = groups[key]||[]).push(t);
     });
     let rows = Object.entries(groups).map(([name, list])=>{
-      const chrono = list.slice().sort((a,b)=>tradeBasisDate(a).localeCompare(tradeBasisDate(b)));
+      const chrono = list.slice().sort((a,b)=>tradeBasisDate(a).localeCompare(tradeBasisDate(b)) || (tradeBasisTimestamp(a)-tradeBasisTimestamp(b)));
       const withPnl = chrono.filter(t=> t.pnl!==undefined && t.pnl!=='' && !isNaN(parseFloat(t.pnl)));
       const wins = withPnl.filter(t=>parseFloat(t.pnl)>=0).length;
       const net = withPnl.reduce((s,t)=>s+parseFloat(t.pnl),0);

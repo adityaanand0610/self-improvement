@@ -5238,15 +5238,76 @@
       `;
     }).join('');
   }
-  function capitalBaseForPct(){
-    if((db.capitalHistory||[]).length>0){
-      const net = netContributedCapital();
-      if(net>0) return net;
-    }
+  // Capital base used everywhere a ₹ figure needs to become a percentage:
+  // Return on Capital, hide-amounts mode, and the "Capital Deployed" stat
+  // cards all resolve through this one function so they can never disagree.
+  //   1) The Capital you enter yourself in Settings → Trading Risk — the
+  //      real, authoritative number when you've bothered to set it.
+  //   2) Net deposits/withdrawals logged in the Capital History ledger —
+  //      a decent proxy for account size when you track transfers but
+  //      haven't typed in a running total.
+  //   3) Inferred peak capital tied up in open positions (derived from
+  //      logged position sizes) — a last-resort estimate for people who
+  //      haven't entered a capital figure or logged any deposits.
+  // NOTE: option 3 is deliberately last. Using it as a default denominator
+  // made "Peak Capital Deployed" get divided by itself, i.e. show as
+  // ~100% of its own value — a tautology, not a real metric. It only
+  // kicks in now when there's truly nothing else to go on.
+  function capitalBaseForPeriod(allTrades, fromDate, toDate){
     const cap = parseFloat(appSettings.accountCapital);
     if(!isNaN(cap) && cap>0) return cap;
-    const allCap = maxCapitalDeployed(db.trades||[], null, null);
-    return (allCap && allCap>0) ? allCap : null;
+    if((db.capitalHistory||[]).length>0){
+      const net = netContributedCapital(toDate || undefined);
+      if(net>0) return net;
+    }
+    const deployed = maxCapitalDeployed(allTrades, fromDate, toDate);
+    return (deployed && deployed>0) ? deployed : null;
+  }
+  function capitalBaseForPct(){
+    return capitalBaseForPeriod(db.trades||[], null, null);
+  }
+  // Describes which tier of capitalBaseForPeriod is actually driving the
+  // current Return on Capital / % figures, so UI copy ("vs ...") stays
+  // truthful instead of hardcoding "peak capital deployed" even when a
+  // real Capital figure is set.
+  function capitalBaseSourceLabel(){
+    const cap = parseFloat(appSettings.accountCapital);
+    if(!isNaN(cap) && cap>0) return 'your capital';
+    if((db.capitalHistory||[]).length>0 && netContributedCapital()>0) return 'net deposits';
+    return 'peak capital deployed (estimated)';
+  }
+  // Formatter for the "Capital Deployed Right Now" / "Peak Capital Deployed"
+  // stats specifically. These are capital *amounts*, not returns — running
+  // them through the generic fmtMoney() in hide-amounts mode was dividing
+  // them by a base that, absent a real Capital entry or deposit ledger,
+  // silently fell back to being derived from deployed capital itself. That
+  // made "Peak Capital Deployed" show as ~100% of its own value: a
+  // tautology, not a metric. Here, once there's no real capital base to
+  // measure against, we show a hidden placeholder instead of a fake %.
+  function fmtCapitalStat(n){
+    if(appSettings.hideAmounts){
+      const cap = parseFloat(appSettings.accountCapital);
+      const hasRealCap = !isNaN(cap) && cap>0;
+      const hasLedger = (db.capitalHistory||[]).length>0 && netContributedCapital()>0;
+      if(!hasRealCap && !hasLedger) return '••';
+      const base = capitalBaseForPct();
+      if(!base || isNaN(n)) return '••';
+      const pct = (n/base)*100;
+      return (n<0?'-':'')+Math.abs(pct).toFixed(2)+'%';
+    }
+    return (n<0?'-':'')+'₹'+Math.round(Math.abs(n)).toLocaleString('en-IN');
+  }
+  function returnOnCapitalPct(allTrades, fromDate, toDate){
+    const periodNet = (allTrades||[]).filter(t=>{
+      const bd = tradeBasisDate(t);
+      if(!bd || t.pnl===undefined || t.pnl==='' || isNaN(parseFloat(t.pnl))) return false;
+      if(fromDate && bd<fromDate) return false;
+      if(toDate && bd>toDate) return false;
+      return true;
+    }).reduce((s,t)=>s+parseFloat(t.pnl),0);
+    const cap = capitalBaseForPeriod(allTrades, fromDate, toDate);
+    if(!cap) return null;
+    return (periodNet/cap)*100;
   }
   function fmtPnl(n){
     if(appSettings.hideAmounts){
@@ -5301,40 +5362,6 @@
     });
     return Math.max(0, max);
   }
-  // Capital base for a Return-on-Capital figure, scoped to [fromDate,toDate].
-  // Same three-tier fallback used for the "hide amounts" % formatter, so a
-  // stat card and a privacy-mode percentage never disagree about what
-  // "capital" means:
-  //   1) Actual money moved in/out of the account (capitalHistory ledger),
-  //      as of the end of the period — the real, user-entered source of
-  //      truth when it exists.
-  //   2) A manually-set "Account capital" figure from Settings.
-  //   3) Inferred peak capital tied up in open positions during the period
-  //      (derived from logged position sizes) — a last-resort estimate for
-  //      people who haven't logged deposits or a capital figure at all.
-  function capitalBaseForPeriod(allTrades, fromDate, toDate){
-    if((db.capitalHistory||[]).length>0){
-      const net = netContributedCapital(toDate || undefined);
-      if(net>0) return net;
-    }
-    const cap = parseFloat(appSettings.accountCapital);
-    if(!isNaN(cap) && cap>0) return cap;
-    const deployed = maxCapitalDeployed(allTrades, fromDate, toDate);
-    return (deployed && deployed>0) ? deployed : null;
-  }
-  function returnOnCapitalPct(allTrades, fromDate, toDate){
-    const periodNet = (allTrades||[]).filter(t=>{
-      const bd = tradeBasisDate(t);
-      if(!bd || t.pnl===undefined || t.pnl==='' || isNaN(parseFloat(t.pnl))) return false;
-      if(fromDate && bd<fromDate) return false;
-      if(toDate && bd>toDate) return false;
-      return true;
-    }).reduce((s,t)=>s+parseFloat(t.pnl),0);
-    const cap = capitalBaseForPeriod(allTrades, fromDate, toDate);
-    if(!cap) return null;
-    return (periodNet/cap)*100;
-  }
-
   const MONTH_LABELS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
   function monthLabelFromDateStr(dateStr){
     if(!dateStr) return 'No date';
@@ -5717,8 +5744,8 @@
         <div class="td-hero-stats-row">
           <div class="td-hero-stat"><div class="td-hero-stat-lbl">Today</div><div class="td-hero-stat-val ${todayPnl>=0?'pos':'neg'}">${fmtPnl(Math.round(todayPnl))}</div></div>
           <div class="td-hero-stat"><div class="td-hero-stat-lbl">Last 7 Days</div><div class="td-hero-stat-val ${weekPnl>=0?'pos':'neg'}">${fmtPnl(Math.round(weekPnl))}</div></div>
-          <div class="td-hero-stat"><div class="td-hero-stat-lbl">Capital Deployed Right Now</div><div class="td-hero-stat-val">${capitalDeployed?fmtMoney(capitalDeployed):'—'}</div></div>
-          <div class="td-hero-stat"><div class="td-hero-stat-lbl">Peak Capital Deployed</div><div class="td-hero-stat-val">${allTimeCap?fmtMoney(allTimeCap):'—'}</div></div>
+          <div class="td-hero-stat"><div class="td-hero-stat-lbl">Capital Deployed Right Now</div><div class="td-hero-stat-val">${capitalDeployed?fmtCapitalStat(capitalDeployed):'—'}</div></div>
+          <div class="td-hero-stat"><div class="td-hero-stat-lbl">Peak Capital Deployed</div><div class="td-hero-stat-val">${allTimeCap?fmtCapitalStat(allTimeCap):'—'}</div></div>
         </div>`;
     }
 
@@ -5746,7 +5773,7 @@
       statCardHtml('Max Drawdown', m.maxDD? '-'+Math.round(m.maxDD) : '—', m.maxDD?'neg':''),
       statCardHtml(m.streakType==='loss'?'Losing Streak':'Winning Streak', m.streakCount||0, m.streakType==='loss'?'neg':(m.streakType==='win'?'pos':'')),
       statCardHtml('Total Trades', trades.length),
-      statCardHtml('Return on Capital', allTimeReturnPct!==null ? (allTimeReturnPct>=0?'+':'')+allTimeReturnPct.toFixed(1)+'%' : '—', allTimeReturnPct!==null?(allTimeReturnPct>=0?'pos':'neg'):'', 'vs peak capital deployed'),
+      statCardHtml('Return on Capital', allTimeReturnPct!==null ? (allTimeReturnPct>=0?'+':'')+allTimeReturnPct.toFixed(1)+'%' : '—', allTimeReturnPct!==null?(allTimeReturnPct>=0?'pos':'neg'):'', 'vs '+capitalBaseSourceLabel()),
     ].join('');
 
     // ---- Equity curve (SVG line + area, drawdown shading, peak/trough, tooltips) ----

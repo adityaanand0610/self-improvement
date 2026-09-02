@@ -3095,6 +3095,32 @@
           <label class="switch"><input type="checkbox" id="hideAmountsToggle"><span class="switch-track"></span></label>
         </div>
       </div>
+      <div class="card">
+        <div class="card-title">💰 Capital History</div>
+        <p style="font-size:12.5px; color:var(--ink-dim); margin-bottom:14px;">Log every deposit or withdrawal to your trading account. Your net capital is the running total below — it's used as the capital base wherever the app needs one, instead of the single manual figure above.</p>
+        <div class="completion-summary" style="margin-bottom:14px;">
+          <div>
+            <div class="completion-pct" id="capitalHistoryNet">₹0</div>
+            <div style="font-size:11px; color:var(--ink-faint); margin-top:2px;">net capital contributed</div>
+          </div>
+          <div class="completion-note" id="capitalHistoryNote">Add your first deposit to start tracking.</div>
+        </div>
+        <div class="modal-row">
+          <div class="modal-field"><label>Date</label><input type="date" id="capHistDate"></div>
+          <div class="modal-field"><label>Type</label>
+            <select id="capHistType">
+              <option value="deposit">Deposit (+)</option>
+              <option value="withdraw">Withdrawal (−)</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-row">
+          <div class="modal-field"><label>Amount (₹)</label><input type="number" id="capHistAmount" step="1" min="0" placeholder="e.g. 50000"></div>
+          <div class="modal-field"><label>Note (optional)</label><input type="text" id="capHistNote" placeholder="e.g. Added from salary"></div>
+        </div>
+        <button class="btn primary" id="capHistAddBtn" style="padding:8px 16px; font-size:12.5px; margin-bottom:14px;">+ Add Entry</button>
+        <div class="todo-list" id="capitalHistoryList"></div>
+      </div>
     </div>
 
     <div class="section-label">Preferences</div>
@@ -3586,7 +3612,7 @@
       const raw = localStorage.getItem(DB_KEY);
       if(raw) return JSON.parse(raw);
     }catch(e){}
-    return {days:{}, subjects: DEFAULT_SUBJECTS.slice(), streak:0, bestStreak:0, schedule: JSON.parse(JSON.stringify(DEFAULT_SCHEDULE)), trades:[], notes:[], notesPin:'', goals:[], todos:[], inbox:[], weeklyReviews:{}, revisions:[], customHabits: JSON.parse(JSON.stringify(DEFAULT_CUSTOM_HABITS)), gymPlan: JSON.parse(JSON.stringify(DEFAULT_GYM_PLAN)), gymLogs:[]};
+    return {days:{}, subjects: DEFAULT_SUBJECTS.slice(), streak:0, bestStreak:0, schedule: JSON.parse(JSON.stringify(DEFAULT_SCHEDULE)), trades:[], notes:[], notesPin:'', goals:[], todos:[], inbox:[], weeklyReviews:{}, revisions:[], customHabits: JSON.parse(JSON.stringify(DEFAULT_CUSTOM_HABITS)), gymPlan: JSON.parse(JSON.stringify(DEFAULT_GYM_PLAN)), gymLogs:[], capitalHistory:[]};
   }
 
   // ---------- Firebase ----------
@@ -5165,7 +5191,58 @@
   // meaningful denominator. fmtPnl/fmtMoney are the single formatting
   // choke point used everywhere numbers are rendered, so flipping the
   // toggle here is enough to cascade through the whole journal.
+  // ---- Capital History: deposits/withdrawals over time --------------------
+  // A running ledger of money actually moved in/out of the trading account,
+  // as opposed to the single static "Account capital" figure. When present,
+  // it's a more accurate capital base than a number someone typed in once
+  // and forgot to update.
+  function sortedCapitalHistory(){
+    return (db.capitalHistory||[]).slice().sort((a,b)=> (a.date||'').localeCompare(b.date||''));
+  }
+  function netContributedCapital(asOfDate){
+    let sum = 0;
+    sortedCapitalHistory().forEach(ev=>{
+      if(asOfDate && ev.date > asOfDate) return;
+      const amt = parseFloat(ev.amount) || 0;
+      sum += (ev.type==='withdraw' ? -amt : amt);
+    });
+    return sum;
+  }
+  function renderCapitalHistoryUI(){
+    const netEl = document.getElementById('capitalHistoryNet');
+    const noteEl = document.getElementById('capitalHistoryNote');
+    const listEl = document.getElementById('capitalHistoryList');
+    if(!listEl) return;
+    const history = sortedCapitalHistory();
+    const net = netContributedCapital();
+    if(netEl) netEl.textContent = fmtMoney(net);
+    if(noteEl) noteEl.textContent = history.length ? (history.length===1?'1 entry logged':history.length+' entries logged') : 'Add your first deposit to start tracking.';
+    if(history.length===0){
+      listEl.innerHTML = '<div class="todo-empty">No deposits or withdrawals logged yet.</div>';
+      return;
+    }
+    listEl.innerHTML = history.slice().reverse().map(ev=>{
+      const amt = parseFloat(ev.amount) || 0;
+      const sign = ev.type==='withdraw' ? '−' : '+';
+      const color = ev.type==='withdraw' ? 'var(--rose)' : 'var(--teal)';
+      const label = ev.type==='withdraw' ? 'Withdrawal' : 'Deposit';
+      return `
+        <div class="todo-item" data-id="${ev.id}">
+          <div class="todo-text">
+            <strong style="color:${color};">${sign}${fmtMoney(amt).replace(/^-/,'')}</strong>
+            &nbsp;·&nbsp;${label}&nbsp;·&nbsp;${escapeHtml(ev.date||'')}
+            ${ev.note ? '<br><span style="color:var(--ink-faint); font-size:11.5px;">'+escapeHtml(ev.note)+'</span>' : ''}
+          </div>
+          <button class="todo-del" data-action="delete" title="Delete">✕</button>
+        </div>
+      `;
+    }).join('');
+  }
   function capitalBaseForPct(){
+    if((db.capitalHistory||[]).length>0){
+      const net = netContributedCapital();
+      if(net>0) return net;
+    }
     const cap = parseFloat(appSettings.accountCapital);
     if(!isNaN(cap) && cap>0) return cap;
     const allCap = maxCapitalDeployed(db.trades||[], null, null);
@@ -5224,6 +5301,27 @@
     });
     return Math.max(0, max);
   }
+  // Capital base for a Return-on-Capital figure, scoped to [fromDate,toDate].
+  // Same three-tier fallback used for the "hide amounts" % formatter, so a
+  // stat card and a privacy-mode percentage never disagree about what
+  // "capital" means:
+  //   1) Actual money moved in/out of the account (capitalHistory ledger),
+  //      as of the end of the period — the real, user-entered source of
+  //      truth when it exists.
+  //   2) A manually-set "Account capital" figure from Settings.
+  //   3) Inferred peak capital tied up in open positions during the period
+  //      (derived from logged position sizes) — a last-resort estimate for
+  //      people who haven't logged deposits or a capital figure at all.
+  function capitalBaseForPeriod(allTrades, fromDate, toDate){
+    if((db.capitalHistory||[]).length>0){
+      const net = netContributedCapital(toDate || undefined);
+      if(net>0) return net;
+    }
+    const cap = parseFloat(appSettings.accountCapital);
+    if(!isNaN(cap) && cap>0) return cap;
+    const deployed = maxCapitalDeployed(allTrades, fromDate, toDate);
+    return (deployed && deployed>0) ? deployed : null;
+  }
   function returnOnCapitalPct(allTrades, fromDate, toDate){
     const periodNet = (allTrades||[]).filter(t=>{
       const bd = tradeBasisDate(t);
@@ -5232,7 +5330,7 @@
       if(toDate && bd>toDate) return false;
       return true;
     }).reduce((s,t)=>s+parseFloat(t.pnl),0);
-    const cap = maxCapitalDeployed(allTrades, fromDate, toDate);
+    const cap = capitalBaseForPeriod(allTrades, fromDate, toDate);
     if(!cap) return null;
     return (periodNet/cap)*100;
   }
@@ -9094,6 +9192,48 @@
       });
     });
 
+    // ---- Capital History: deposits/withdrawals over time ----
+    const capHistDateEl = document.getElementById('capHistDate');
+    if(capHistDateEl) capHistDateEl.value = todayKey();
+    const capHistAddBtnEl = document.getElementById('capHistAddBtn');
+    if(capHistAddBtnEl){
+      capHistAddBtnEl.addEventListener('click', ()=>{
+        const dateEl = document.getElementById('capHistDate');
+        const typeEl = document.getElementById('capHistType');
+        const amountEl = document.getElementById('capHistAmount');
+        const noteEl = document.getElementById('capHistNote');
+        const date = (dateEl.value || todayKey());
+        const type = typeEl.value === 'withdraw' ? 'withdraw' : 'deposit';
+        const amount = parseFloat(amountEl.value);
+        if(isNaN(amount) || amount<=0){ showToast('Enter a valid amount.', 'error'); return; }
+        db.capitalHistory = db.capitalHistory || [];
+        db.capitalHistory.push({id:'cap_'+Date.now(), date, type, amount, note:(noteEl.value||'').trim()});
+        saveDB();
+        amountEl.value = ''; noteEl.value = '';
+        renderCapitalHistoryUI();
+        try{ renderTradeDashboard(); }catch(e){}
+        try{ renderTradesList(); }catch(e){}
+        showToast('Capital entry added.', 'success');
+      });
+    }
+    const capitalHistoryListEl = document.getElementById('capitalHistoryList');
+    if(capitalHistoryListEl){
+      capitalHistoryListEl.addEventListener('click', (e)=>{
+        const btn = e.target.closest('[data-action="delete"]');
+        if(!btn) return;
+        const item = e.target.closest('.todo-item');
+        if(!item) return;
+        const id = item.getAttribute('data-id');
+        db.capitalHistory = (db.capitalHistory||[]).filter(ev=>ev.id!==id);
+        saveDB();
+        renderCapitalHistoryUI();
+        try{ renderTradeDashboard(); }catch(e){}
+        try{ renderTradesList(); }catch(e){}
+        showToast('Entry deleted.', 'success');
+      });
+    }
+    renderCapitalHistoryUI();
+
     const hideAmountsToggleEl = document.getElementById('hideAmountsToggle');
     if(hideAmountsToggleEl){
       hideAmountsToggleEl.checked = !!appSettings.hideAmounts;
@@ -9261,6 +9401,7 @@
     try{ renderStudyAnalysis(); }catch(e){}
     try{ refreshProfilePanel(); }catch(e){}
     try{ maybeShowDailyGoalReminder(); }catch(e){}
+    try{ renderCapitalHistoryUI(); }catch(e){}
   };
 
   initSettingsPanel();

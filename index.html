@@ -1220,38 +1220,85 @@
   .td-bd-bar-fill.pos{ background: var(--teal); }
   .td-bd-bar-fill.neg{ background: var(--rose); }
 
+  /* ---- Trade calendar: month P&L summary strip ---- */
+  .tcal-card{ padding-top:16px; }
+  .tcal-summary-bar{
+    display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-bottom:18px;
+  }
+  @media (min-width:560px){ .tcal-summary-bar{ grid-template-columns:repeat(4,1fr); } }
+  .tcal-stat{
+    background:var(--surface-raised); border:1px solid var(--line); border-radius:var(--radius-sm);
+    padding:10px 12px; position:relative; overflow:hidden;
+  }
+  .tcal-stat::before{ content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--line); }
+  .tcal-stat.pos::before{ background:var(--teal); }
+  .tcal-stat.neg::before{ background:var(--rose); }
+  .tcal-stat-lbl{ font-size:9px; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-faint); font-weight:700; }
+  .tcal-stat-val{ font-family:'IBM Plex Mono'; font-size:16px; font-weight:700; margin-top:4px; color:var(--ink); }
+  .tcal-stat-val.pos{ color:var(--teal-dim); }
+  .tcal-stat-val.neg{ color:var(--rose-dim); }
+
   .tcal-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
   .tcal-nav-btn{
-    width:32px; height:32px; border-radius:50%; border:1px solid var(--line); background:var(--surface);
-    color:var(--ink-dim); display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:16px;
+    width:34px; height:34px; border-radius:50%; border:1px solid var(--line); background:var(--surface);
+    color:var(--ink-dim); display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:17px;
+    transition: all .15s var(--ease);
   }
-  .tcal-nav-btn:hover{ background:var(--surface-hover); color:var(--ink); }
-  .tcal-month-label{ font-family:'Sora'; font-weight:800; font-size:15px; }
-  .tcal-weekday-row{ display:grid; grid-template-columns:repeat(7,1fr); gap:6px; margin-bottom:8px; }
-  .tcal-weekday-row span{ text-align:center; font-size:10px; color:var(--ink-faint); font-weight:700; text-transform:uppercase; }
-  .tcal-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:6px; }
+  .tcal-nav-btn:hover{ background:var(--surface-hover); color:var(--ink); border-color:var(--ink-faint); }
+  .tcal-nav-btn:active{ transform:scale(0.92); }
+  .tcal-month-label{ font-family:'Sora'; font-weight:800; font-size:16px; letter-spacing:-0.01em; }
+  .tcal-today-btn{
+    font-family:'Inter'; font-size:10.5px; font-weight:700; color:var(--accent-dim); background:var(--accent-bg);
+    border:1px solid transparent; border-radius:999px; padding:4px 11px; cursor:pointer; margin-left:8px;
+  }
+  .tcal-today-btn:hover{ border-color:var(--accent); }
+
+  .tcal-table{ width:100%; }
+  .tcal-weekday-row{
+    display:grid; grid-template-columns:repeat(7,1fr) minmax(52px,0.82fr); gap:6px; margin-bottom:8px;
+  }
+  .tcal-weekday-row span{ text-align:center; font-size:9.5px; color:var(--ink-faint); font-weight:700; text-transform:uppercase; letter-spacing:0.04em; }
+  .tcal-weekday-row .tcal-week-hdr{ color:var(--ink-faint); opacity:0.7; }
+  .tcal-grid{ display:flex; flex-direction:column; gap:6px; }
+  .tcal-week-row{ display:grid; grid-template-columns:repeat(7,1fr) minmax(52px,0.82fr); gap:6px; }
   .tcal-cell{
     aspect-ratio:1; border-radius:10px; border:1px solid var(--line); background:var(--surface);
     display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
-    cursor:default; position:relative; padding:2px; transition: transform .12s var(--ease), box-shadow .12s var(--ease);
+    cursor:default; position:relative; padding:2px; transition: transform .12s var(--ease), box-shadow .12s var(--ease), border-color .12s var(--ease);
   }
   .tcal-cell.empty{ background:transparent; border-color:transparent; }
   .tcal-cell.has-trades{ cursor:pointer; }
-  .tcal-cell.has-trades:hover{ transform:translateY(-1px); box-shadow: var(--shadow-sm); }
-  .tcal-cell.is-today{ outline:2px solid var(--ink); outline-offset:1px; }
-  .tcal-cell.is-selected{ border-width:2px; border-color: var(--accent); }
-  .tcal-cell.win{ background: var(--teal-bg); border-color: var(--teal); }
-  .tcal-cell.loss{ background: var(--rose-bg); border-color: var(--rose); }
-  .tcal-day-num{ font-size:11px; font-weight:700; color:var(--ink-dim); }
-  .tcal-cell.win .tcal-day-num, .tcal-cell.loss .tcal-day-num{ color:var(--ink); }
-  .tcal-pnl-tag{ font-family:'IBM Plex Mono'; font-size:8.5px; font-weight:700; }
+  .tcal-cell.has-trades:hover{ transform:translateY(-2px); box-shadow: var(--shadow-md); z-index:2; }
+  .tcal-cell.is-today{ box-shadow: inset 0 0 0 2px var(--ink); }
+  .tcal-cell.is-selected{ box-shadow: inset 0 0 0 2px var(--accent); border-color:var(--accent); }
+  .tcal-cell.win{ border-color: var(--teal); }
+  .tcal-cell.loss{ border-color: var(--rose); }
+  .tcal-cell.flat{ background:var(--surface-raised); }
+  .tcal-day-num{ font-size:10.5px; font-weight:700; color:var(--ink-faint); align-self:flex-start; margin-left:2px; }
+  .tcal-cell.win .tcal-day-num, .tcal-cell.loss .tcal-day-num{ color:var(--ink); opacity:0.75; }
+  .tcal-pnl-tag{ font-family:'IBM Plex Mono'; font-size:11px; font-weight:800; line-height:1.1; }
   .tcal-cell.win .tcal-pnl-tag{ color: var(--teal-dim); }
   .tcal-cell.loss .tcal-pnl-tag{ color: var(--rose-dim); }
-  .tcal-legend{ display:flex; align-items:center; gap:16px; margin-top:14px; font-size:11px; color:var(--ink-faint); flex-wrap:wrap; }
+  .tcal-trade-count{ font-family:'IBM Plex Mono'; font-size:8px; font-weight:600; color:var(--ink-faint); opacity:0.85; }
+  .tcal-cell.win .tcal-trade-count, .tcal-cell.loss .tcal-trade-count{ color:var(--ink-dim); }
+  .tcal-week-total{
+    aspect-ratio:unset; border-radius:10px; border:1px dashed var(--line); background:transparent;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px;
+    padding:2px 3px;
+  }
+  .tcal-week-total-lbl{ font-size:7.5px; text-transform:uppercase; letter-spacing:0.04em; color:var(--ink-faint); font-weight:700; }
+  .tcal-week-total-val{ font-family:'IBM Plex Mono'; font-size:10.5px; font-weight:700; color:var(--ink-faint); }
+  .tcal-week-total-val.pos{ color:var(--teal-dim); }
+  .tcal-week-total-val.neg{ color:var(--rose-dim); }
+
+  .tcal-legend{ display:flex; align-items:center; gap:16px; margin-top:16px; font-size:11px; color:var(--ink-faint); flex-wrap:wrap; }
   .tcal-legend-item{ display:flex; align-items:center; gap:6px; }
   .tcal-legend-dot{ width:10px; height:10px; border-radius:3px; }
   .tcal-selected-trades{ margin-top:16px; }
-  .tcal-selected-label{ font-size:11px; font-weight:700; color:var(--ink-faint); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:10px; }
+  .tcal-selected-label{ display:flex; align-items:center; justify-content:space-between; font-size:11px; font-weight:700; color:var(--ink-faint); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:10px; }
+  .tcal-selected-label .tcal-selected-total{ font-family:'IBM Plex Mono'; text-transform:none; letter-spacing:0; font-size:12.5px; }
+  .tcal-selected-total.pos{ color:var(--teal-dim); }
+  .tcal-selected-total.neg{ color:var(--rose-dim); }
 
   .td-rdist{ display:flex; align-items:flex-end; gap:6px; height:130px; padding-top:10px; }
   .td-rdist-bar-wrap{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%; gap:6px; min-width:0; }
@@ -2545,18 +2592,27 @@
 
       <!-- Calendar view -->
       <div class="history-view" id="historyCalendarView">
-        <div class="td-card">
+        <div class="td-card tcal-card">
+          <div class="tcal-summary-bar" id="tcalSummaryBar"></div>
           <div class="tcal-head">
-            <button class="tcal-nav-btn" id="tcalPrevBtn" aria-label="Previous month">‹</button>
-            <div class="tcal-month-label" id="tcalMonthLabel">—</div>
+            <div style="display:flex; align-items:center;">
+              <button class="tcal-nav-btn" id="tcalPrevBtn" aria-label="Previous month">‹</button>
+            </div>
+            <div style="display:flex; align-items:center;">
+              <div class="tcal-month-label" id="tcalMonthLabel">—</div>
+              <button class="tcal-today-btn" id="tcalTodayBtn">Today</button>
+            </div>
             <button class="tcal-nav-btn" id="tcalNextBtn" aria-label="Next month">›</button>
           </div>
-          <div class="tcal-weekday-row"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div>
-          <div class="tcal-grid" id="tcalGrid"></div>
+          <div class="tcal-table">
+            <div class="tcal-weekday-row"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span class="tcal-week-hdr">Week</span></div>
+            <div class="tcal-grid" id="tcalGrid"></div>
+          </div>
           <div class="tcal-legend">
             <div class="tcal-legend-item"><span class="tcal-legend-dot" style="background:var(--teal-bg); border:1px solid var(--teal);"></span>Profitable day</div>
             <div class="tcal-legend-item"><span class="tcal-legend-dot" style="background:var(--rose-bg); border:1px solid var(--rose);"></span>Loss day</div>
             <div class="tcal-legend-item"><span class="tcal-legend-dot" style="background:var(--surface); border:1px solid var(--line);"></span>No trades</div>
+            <div class="tcal-legend-item">Darker = bigger day</div>
           </div>
           <div class="tcal-selected-trades" id="tcalSelectedTrades"></div>
         </div>
@@ -5575,6 +5631,7 @@
   function renderTradeCalendar(){
     const gridEl = document.getElementById('tcalGrid');
     const labelEl = document.getElementById('tcalMonthLabel');
+    const summaryEl = document.getElementById('tcalSummaryBar');
     if(!gridEl) return;
     const y = tcalViewDate.getFullYear(), mo = tcalViewDate.getMonth();
     labelEl.textContent = MONTH_LABELS[mo]+' '+y;
@@ -5582,21 +5639,94 @@
     const daysInMonth = new Date(y,mo+1,0).getDate();
     const byDay = tradesByDayKey();
     const todayKeyStr = todayKey();
-    let html = '';
-    for(let i=0;i<firstDow;i++) html += '<div class="tcal-cell empty"></div>';
+
+    // ---- Pass 1: compute per-day P&L for this month + month-level stats,
+    // so day-cell heat intensity can scale relative to the month's biggest day. ----
+    const dayStats = {}; // key -> {pnl, trades, count}
+    let winDays=0, lossDays=0, monthPnl=0, monthTrades=0, maxAbsPnl=0;
+    let bestDay=null, worstDay=null;
     for(let d=1; d<=daysInMonth; d++){
       const key = y+'-'+String(mo+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
       const dayTrades = byDay[key]||[];
       const withPnl = dayTrades.filter(t=> t.pnl!==undefined && t.pnl!=='' && !isNaN(parseFloat(t.pnl)));
       const dayPnl = withPnl.reduce((s,t)=>s+parseFloat(t.pnl),0);
-      let cls = 'tcal-cell';
-      if(dayTrades.length){ cls += ' has-trades'; if(withPnl.length){ cls += (dayPnl>=0?' win':' loss'); } }
-      if(key===todayKeyStr) cls += ' is-today';
-      if(key===tcalSelectedKey) cls += ' is-selected';
-      html += `<div class="${cls}" data-daykey="${key}">
-        <div class="tcal-day-num">${d}</div>
-        ${withPnl.length?`<div class="tcal-pnl-tag">${fmtPnl(Math.round(dayPnl))}</div>`:(dayTrades.length?`<div class="tcal-pnl-tag" style="color:var(--ink-faint);">${dayTrades.length}T</div>`:'')}
-      </div>`;
+      dayStats[key] = { pnl: dayPnl, hasPnl: withPnl.length>0, count: dayTrades.length };
+      if(withPnl.length){
+        monthPnl += dayPnl; monthTrades += dayTrades.length;
+        if(dayPnl>=0) winDays++; else lossDays++;
+        maxAbsPnl = Math.max(maxAbsPnl, Math.abs(dayPnl));
+        if(bestDay===null || dayPnl>bestDay.pnl) bestDay={key,pnl:dayPnl};
+        if(worstDay===null || dayPnl<worstDay.pnl) worstDay={key,pnl:dayPnl};
+      } else if(dayTrades.length){
+        monthTrades += dayTrades.length;
+      }
+    }
+    const tradedDays = winDays+lossDays;
+    const winRate = tradedDays ? Math.round((winDays/tradedDays)*100) : null;
+
+    // ---- Summary bar ----
+    if(summaryEl){
+      const netCls = monthPnl>0?'pos':(monthPnl<0?'neg':'');
+      summaryEl.innerHTML = `
+        <div class="tcal-stat ${netCls}">
+          <div class="tcal-stat-lbl">Net P&amp;L this month</div>
+          <div class="tcal-stat-val ${netCls}">${tradedDays?fmtPnl(Math.round(monthPnl)):'—'}</div>
+        </div>
+        <div class="tcal-stat">
+          <div class="tcal-stat-lbl">Win days / Loss days</div>
+          <div class="tcal-stat-val"><span style="color:var(--teal-dim);">${winDays}</span> / <span style="color:var(--rose-dim);">${lossDays}</span></div>
+        </div>
+        <div class="tcal-stat">
+          <div class="tcal-stat-lbl">Day win rate</div>
+          <div class="tcal-stat-val">${winRate===null?'—':winRate+'%'}</div>
+        </div>
+        <div class="tcal-stat">
+          <div class="tcal-stat-lbl">Trades logged</div>
+          <div class="tcal-stat-val">${monthTrades||'—'}</div>
+        </div>`;
+    }
+
+    // ---- Pass 2: build week rows (7 day cells + 1 week-total cell each) ----
+    const cells = [];
+    for(let i=0;i<firstDow;i++) cells.push({empty:true});
+    for(let d=1; d<=daysInMonth; d++){
+      const key = y+'-'+String(mo+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+      cells.push({ key, d });
+    }
+    while(cells.length % 7 !== 0) cells.push({empty:true});
+
+    let html = '';
+    for(let w=0; w<cells.length; w+=7){
+      const week = cells.slice(w, w+7);
+      let weekTotal = 0, weekHasPnl = false;
+      html += '<div class="tcal-week-row">';
+      week.forEach(c=>{
+        if(c.empty){ html += '<div class="tcal-cell empty"></div>'; return; }
+        const stat = dayStats[c.key] || {pnl:0, hasPnl:false, count:0};
+        let cls = 'tcal-cell';
+        let styleAttr = '';
+        if(stat.count){
+          cls += ' has-trades';
+          if(stat.hasPnl){
+            cls += (stat.pnl>=0 ? ' win' : ' loss');
+            weekTotal += stat.pnl; weekHasPnl = true;
+            const intensity = maxAbsPnl ? Math.round(14 + (Math.abs(stat.pnl)/maxAbsPnl)*56) : 14;
+            const baseVar = stat.pnl>=0 ? '--teal' : '--rose';
+            styleAttr = ` style="background:color-mix(in srgb, var(${baseVar}) ${intensity}%, var(--surface));"`;
+          } else {
+            cls += ' flat';
+          }
+        }
+        if(c.key===todayKeyStr) cls += ' is-today';
+        if(c.key===tcalSelectedKey) cls += ' is-selected';
+        html += `<div class="${cls}" data-daykey="${c.key}"${styleAttr}>
+          <div class="tcal-day-num">${c.d}</div>
+          ${stat.hasPnl?`<div class="tcal-pnl-tag">${fmtPnl(Math.round(stat.pnl))}</div><div class="tcal-trade-count">${stat.count} trade${stat.count===1?'':'s'}</div>`:(stat.count?`<div class="tcal-pnl-tag" style="color:var(--ink-faint);">${stat.count}T</div>`:'')}
+        </div>`;
+      });
+      const wtCls = weekHasPnl ? (weekTotal>=0?'pos':'neg') : '';
+      html += `<div class="tcal-week-total"><div class="tcal-week-total-lbl">Wk</div><div class="tcal-week-total-val ${wtCls}">${weekHasPnl?fmtPnl(Math.round(weekTotal)):'—'}</div></div>`;
+      html += '</div>';
     }
     gridEl.innerHTML = html;
     gridEl.querySelectorAll('.tcal-cell.has-trades').forEach(cell=>{
@@ -5613,11 +5743,22 @@
     if(!el) return;
     if(!tcalSelectedKey){ el.innerHTML=''; return; }
     const dayTrades = (tradesByDayKey()[tcalSelectedKey])||[];
-    el.innerHTML = `<div class="tcal-selected-label">Trades on ${tcalSelectedKey}</div>` + dayTrades.map(t=>{
+    const withPnl = dayTrades.filter(t=> t.pnl!==undefined && t.pnl!=='' && !isNaN(parseFloat(t.pnl)));
+    const dayTotal = withPnl.reduce((s,t)=>s+parseFloat(t.pnl),0);
+    const totalCls = withPnl.length ? (dayTotal>=0?'pos':'neg') : '';
+    const dateLabel = new Date(tcalSelectedKey+'T00:00:00').toLocaleDateString('en-IN',{weekday:'short', day:'numeric', month:'short', year:'numeric'});
+    el.innerHTML = `<div class="tcal-selected-label"><span>${dateLabel} · ${dayTrades.length} trade${dayTrades.length===1?'':'s'}</span>${withPnl.length?`<span class="tcal-selected-total ${totalCls}">${fmtPnl(Math.round(dayTotal))}</span>`:''}</div>` + dayTrades.map(t=>{
       const n = parseFloat(t.pnl);
       const cls = isNaN(n)?'':(n>=0?'pos':'neg');
-      return `<div class="td-bd-row"><div class="td-bd-top"><span class="td-bd-name">${escapeHtml(t.ticker||'')}</span><span class="trade-pnl ${cls}">${isNaN(n)?'—':n}</span></div><div class="td-bd-meta">${escapeHtml(t.timeframe||'')}${t.grade?(' · Grade '+t.grade):''}</div></div>`;
+      const dirTag = t.direction==='short'?'Short':'Long';
+      const rTag = (t.rMultiple!==undefined && t.rMultiple!=='' && !isNaN(parseFloat(t.rMultiple))) ? (parseFloat(t.rMultiple).toFixed(2)+'R') : '';
+      const metaBits = [dirTag, t.timeframe||'', rTag, t.grade?('Grade '+t.grade):''].filter(Boolean).join(' · ');
+      return `<div class="td-bd-row" data-tcal-edit="${t.id||''}" style="cursor:pointer;"><div class="td-bd-top"><span class="td-bd-name">${escapeHtml(t.ticker||'')}</span><span class="trade-pnl ${cls}">${isNaN(n)?'—':fmtPnl(Math.round(n))}</span></div><div class="td-bd-meta">${escapeHtml(metaBits)}</div></div>`;
     }).join('');
+    el.querySelectorAll('[data-tcal-edit]').forEach(row=> row.addEventListener('click', ()=>{
+      const id = row.dataset.tcalEdit;
+      if(id) try{ editTrade(id); }catch(e){}
+    }));
   }
   // History panel: List / Calendar toggle (replaces the old standalone Calendar tab —
   // both are just different ways of browsing the same trade log, so they now live
@@ -5638,6 +5779,8 @@
   const tcalNextBtn = document.getElementById('tcalNextBtn');
   if(tcalPrevBtn) tcalPrevBtn.addEventListener('click', ()=>{ tcalViewDate = new Date(tcalViewDate.getFullYear(), tcalViewDate.getMonth()-1, 1); tcalSelectedKey=null; renderTradeCalendar(); });
   if(tcalNextBtn) tcalNextBtn.addEventListener('click', ()=>{ tcalViewDate = new Date(tcalViewDate.getFullYear(), tcalViewDate.getMonth()+1, 1); tcalSelectedKey=null; renderTradeCalendar(); });
+  const tcalTodayBtn = document.getElementById('tcalTodayBtn');
+  if(tcalTodayBtn) tcalTodayBtn.addEventListener('click', ()=>{ tcalViewDate = new Date(); tcalSelectedKey = todayKey(); renderTradeCalendar(); });
 
   // Tiny inline trend line for list rows (Groww holdings-style). Returns an SVG string,
   // not a chart library — consistent with the rest of the dashboard's zero-dependency charts.

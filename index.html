@@ -2586,12 +2586,15 @@
             <button class="eq-range-btn on" data-range="all">All</button>
           </div>
         </div>
-        <div class="td-card-sub" id="tdRocDepRange" style="margin-bottom:6px; display:block;"></div>
-        <div style="display:flex; align-items:center; gap:14px; font-size:11px; color:var(--ink-dim); margin-bottom:6px;">
-          <span style="display:inline-flex; align-items:center; gap:5px;"><span style="width:14px; height:2px; background:var(--teal); display:inline-block; border-radius:2px;"></span>Return on Capital</span>
-          <span style="display:inline-flex; align-items:center; gap:5px;"><span style="width:14px; height:2px; background:var(--accent); display:inline-block; border-radius:2px; border-top:2px dashed var(--accent); background:none;"></span>Deposits</span>
-        </div>
-        <div id="tdRocDepChart"></div>
+        <div class="td-hero-stats-row" id="tdRocDepStats" style="margin:2px 0 16px;"></div>
+
+        <div style="font-size:12px; font-weight:600; color:var(--ink-dim); margin-bottom:4px;">Return on Capital (%)</div>
+        <div class="td-card-sub" id="tdRocDepRoiRange" style="margin-bottom:6px; display:block;"></div>
+        <div id="tdRocDepRoiChart"></div>
+
+        <div style="font-size:12px; font-weight:600; color:var(--ink-dim); margin:18px 0 4px;">Deposits (₹)</div>
+        <div class="td-card-sub" id="tdRocDepCapRange" style="margin-bottom:6px; display:block;"></div>
+        <div id="tdRocDepCapChart"></div>
       </div>
       <div class="td-two-col">
         <div class="td-card">
@@ -5745,6 +5748,64 @@
   let rocDepPointsAll = [];
   let rocDepRange = 'all';
 
+  // Small single-line/area chart, same visual language as the equity curve
+  // but stripped down: one metric, one scale, one color rule (teal above
+  // zero / rose below). Used for both the ROI mini-chart and the Deposits
+  // mini-chart below so a person only ever has to read one axis at a time.
+  function renderSimpleSeriesSVG(containerEl, pts, opts){
+    opts = opts || {};
+    if(!containerEl) return;
+    if(!pts.length){
+      containerEl.innerHTML = '<div class="td-empty-note">'+(opts.emptyText||'No data yet.')+'</div>';
+      return;
+    }
+    const w=640, h=opts.height||130, padL=6, padR=6, padT=14, padB=6;
+    const xFor = i => padL + (i/(Math.max(1,pts.length-1)))*(w-padL-padR);
+    const vals = pts.map(p=>p.v);
+    const minV = Math.min(0, ...vals);
+    const maxV = Math.max(0, ...vals, opts.minSpan||0);
+    const spanV = (maxV-minV)||1;
+    const yFor = v => padT + (1-((v-minV)/spanV))*(h-padT-padB);
+    const zeroY = yFor(0).toFixed(1);
+
+    const linePts = pts.map((p,i)=> xFor(i).toFixed(1)+','+yFor(p.v).toFixed(1)).join(' ');
+    const lastV = pts[pts.length-1].v;
+    const color = opts.forceColor || (lastV<0 ? 'var(--rose)' : (opts.posColor||'var(--teal)'));
+    const firstX = xFor(0).toFixed(1), lastX = xFor(pts.length-1).toFixed(1);
+    const areaPts = `${firstX},${zeroY} ${linePts} ${lastX},${zeroY}`;
+
+    const dots = pts.map((p,i)=>{
+      if(!p.marker) return '';
+      const mColor = p.marker==='withdraw' ? 'var(--rose)' : color;
+      return `<circle class="simple-series-dot" data-i="${i}" cx="${xFor(i).toFixed(1)}" cy="${yFor(p.v).toFixed(1)}" r="4" fill="${mColor}"/>`;
+    }).join('');
+
+    containerEl.innerHTML = `
+      <svg class="td-chart-svg eq-svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+        <line x1="${padL}" y1="${zeroY}" x2="${w-padR}" y2="${zeroY}" stroke="var(--line)" stroke-width="1" stroke-dasharray="3,3"/>
+        <polygon points="${areaPts}" fill="${color}" opacity="0.1"/>
+        <polyline points="${linePts}" fill="none" stroke="${color}" stroke-width="2.25"/>
+        ${dots}
+      </svg>`;
+
+    if(opts.onDotHover){
+      const tip = ensureEquityTooltip();
+      containerEl.querySelectorAll('.simple-series-dot').forEach(dot=>{
+        const i = parseInt(dot.dataset.i,10);
+        const show = ()=>{
+          tip.innerHTML = opts.onDotHover(pts[i]);
+          tip.style.display = 'block';
+          const dotRect = dot.getBoundingClientRect();
+          tip.style.left = (dotRect.left + dotRect.width/2 + window.scrollX) + 'px';
+          tip.style.top = (dotRect.top + window.scrollY - 6) + 'px';
+        };
+        dot.addEventListener('mouseenter', show);
+        dot.addEventListener('mouseleave', hideEquityTooltip);
+        dot.addEventListener('click', (e)=>{ e.stopPropagation(); show(); });
+      });
+    }
+  }
+
   function buildRocDepositsSeries(){
     const capSorted = sortedCapitalHistory().map(ev=>({
       date: ev.date || '',
@@ -5775,104 +5836,26 @@
     return points;
   }
 
-  function renderRocDepositsSVG(containerEl, rangeEl, pts){
-    if(!containerEl) return;
-    if(!pts.length || (db.capitalHistory||[]).length===0){
-      containerEl.innerHTML = '<div class="td-empty-note">Log deposits &amp; withdrawals in Settings → Capital History to see return vs deposits over time.</div>';
-      if(rangeEl) rangeEl.textContent = '';
-      return;
-    }
-    if(pts.length<2){
-      containerEl.innerHTML = '<div class="td-empty-note">Not enough history yet — add a bit more data.</div>';
-      if(rangeEl) rangeEl.textContent = '';
-      return;
-    }
-
-    const w=640, h=200, padL=6, padR=6, padT=18, padB=6;
-    const xFor = i => padL + (i/(pts.length-1))*(w-padL-padR);
-
-    const rocVals = pts.map(p=>p.roc).filter(v=>v!==null && !isNaN(v));
-    const minRoc = Math.min(0, ...(rocVals.length?rocVals:[0]));
-    const maxRoc = Math.max(0, ...(rocVals.length?rocVals:[1]));
-    const spanRoc = (maxRoc-minRoc)||1;
-    const yForRoc = v => padT + (1-((v-minRoc)/spanRoc))*(h-padT-padB);
-
-    const capVals = pts.map(p=>p.netCap);
-    const minCap = Math.min(0, ...capVals);
-    const maxCap = Math.max(0, ...capVals, 1);
-    const spanCap = (maxCap-minCap)||1;
-    const yForCap = v => padT + (1-((v-minCap)/spanCap))*(h-padT-padB);
-
-    // ROC line: only connect points from the first date a real capital base
-    // exists (before the first deposit, "return on capital" is undefined,
-    // not zero, so we don't draw a misleading flat line at 0).
-    const rocPts = pts.map((p,i)=> ({i, v:p.roc})).filter(p=>p.v!==null && !isNaN(p.v));
-    const rocLinePts = rocPts.map(p=> xFor(p.i).toFixed(1)+','+yForRoc(p.v).toFixed(1)).join(' ');
-    const lastRoc = rocPts.length ? rocPts[rocPts.length-1].v : null;
-    const rocColor = (lastRoc!==null && lastRoc<0) ? 'var(--rose)' : 'var(--teal)';
-    let rocAreaSvg = '';
-    if(rocPts.length>1){
-      const zeroY = yForRoc(0).toFixed(1);
-      const firstX = xFor(rocPts[0].i).toFixed(1), lastX = xFor(rocPts[rocPts.length-1].i).toFixed(1);
-      rocAreaSvg = `<polygon points="${firstX},${zeroY} ${rocLinePts} ${lastX},${zeroY}" fill="${rocColor}" opacity="0.08"/>`;
-    }
-
-    // Deposits line: a running step of net capital contributed. Plotted on
-    // its own scale (right side, dashed) so a ₹5L deposit and a 12% return
-    // can share one chart without either flattening the other.
-    const capLinePts = pts.map((p,i)=> xFor(i).toFixed(1)+','+yForCap(p.netCap).toFixed(1)).join(' ');
-
-    const zeroRocY = yForRoc(0).toFixed(1);
-
-    const capDots = pts.map((p,i)=>{
-      if(!p.capEvent) return '';
-      const isWithdraw = p.capEvent.amt<0;
-      const color = isWithdraw ? 'var(--rose)' : 'var(--accent)';
-      return `<circle class="rocdep-dot" data-i="${i}" cx="${xFor(i).toFixed(1)}" cy="${yForCap(p.netCap).toFixed(1)}" r="4" fill="${color}"/>`;
-    }).join('');
-
-    containerEl.innerHTML = `
-      <svg class="td-chart-svg eq-svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
-        <line x1="${padL}" y1="${zeroRocY}" x2="${w-padR}" y2="${zeroRocY}" stroke="var(--line)" stroke-width="1" stroke-dasharray="3,3"/>
-        ${rocAreaSvg}
-        <polyline points="${capLinePts}" fill="none" stroke="var(--accent)" stroke-width="1.75" stroke-dasharray="5,4" opacity="0.85"/>
-        ${rocLinePts ? `<polyline points="${rocLinePts}" fill="none" stroke="${rocColor}" stroke-width="2.25"/>` : ''}
-        ${capDots}
-      </svg>`;
-
-    const tip = ensureEquityTooltip();
-    containerEl.querySelectorAll('.rocdep-dot').forEach(dot=>{
-      const i = parseInt(dot.dataset.i,10);
-      const p = pts[i];
-      const show = ()=>{
-        const ev = p.capEvent;
-        const evLabel = ev ? ((ev.amt<0?'Withdrew ':'Deposited ')+fmtMoney(Math.abs(ev.amt))) : '';
-        const rocLabel = p.roc!==null ? (p.roc>=0?'+':'')+p.roc.toFixed(2)+'% ROC so far' : 'ROC not available yet';
-        tip.innerHTML = `<div class="eq-tip-tk">${escapeHtml(evLabel)}</div><div class="eq-tip-date">${escapeHtml(p.date||'')}</div><div class="eq-tip-pnl">${escapeHtml(rocLabel)} · capital ${escapeHtml(fmtMoney(p.netCap))}</div>`;
-        tip.style.display = 'block';
-        const dotRect = dot.getBoundingClientRect();
-        tip.style.left = (dotRect.left + dotRect.width/2 + window.scrollX) + 'px';
-        tip.style.top = (dotRect.top + window.scrollY - 6) + 'px';
-      };
-      dot.addEventListener('mouseenter', show);
-      dot.addEventListener('mouseleave', hideEquityTooltip);
-      dot.addEventListener('click', (e)=>{ e.stopPropagation(); show(); });
-    });
-
-    if(rangeEl){
-      const firstDated = pts.find(p=>p.date && p.date!=='Start');
-      const lastP = pts[pts.length-1];
-      const rocText = lastRoc!==null ? (lastRoc>=0?'+':'')+lastRoc.toFixed(2)+'% ROC' : 'ROC —';
-      rangeEl.textContent = (firstDated?firstDated.date:'') + ' → ' + (lastP.date!=='Start'?lastP.date:'') + ' · ' + rocText + ' · deposits ' + fmtMoney(lastP.netCap);
-    }
-  }
-
   function renderRocDepositsRange(range){
     rocDepRange = range;
-    const chartEl = document.getElementById('tdRocDepChart');
-    const rangeEl = document.getElementById('tdRocDepRange');
+    const roiChartEl = document.getElementById('tdRocDepRoiChart');
+    const capChartEl = document.getElementById('tdRocDepCapChart');
+    const roiRangeEl = document.getElementById('tdRocDepRoiRange');
+    const capRangeEl = document.getElementById('tdRocDepCapRange');
+    const statsEl = document.getElementById('tdRocDepStats');
     const toggle = document.getElementById('tdRocDepRangeToggle');
     if(toggle) toggle.querySelectorAll('.eq-range-btn').forEach(b=> b.classList.toggle('on', b.dataset.range===range));
+
+    if((db.capitalHistory||[]).length===0){
+      const msg = '<div class="td-empty-note">Log deposits &amp; withdrawals in Settings → Capital History to see return vs deposits over time.</div>';
+      if(roiChartEl) roiChartEl.innerHTML = msg;
+      if(capChartEl) capChartEl.innerHTML = '';
+      if(roiRangeEl) roiRangeEl.textContent = '';
+      if(capRangeEl) capRangeEl.textContent = '';
+      if(statsEl) statsEl.innerHTML = '';
+      return;
+    }
+
     let filtered = rocDepPointsAll;
     if(range!=='all' && rocDepPointsAll.length){
       const now = new Date();
@@ -5881,14 +5864,52 @@
       else if(range==='3m'){ fromDate = new Date(now); fromDate.setMonth(now.getMonth()-3); }
       else if(range==='ytd'){ fromDate = new Date(now.getFullYear(),0,1); }
       const fromKey = todayKey(fromDate);
-      filtered = rocDepPointsAll.filter(p=> p.date==='Start' || p.date>=fromKey);
-      // Keep at least the point right before the window so the line doesn't
-      // appear to start from nothing — the values are already cumulative,
-      // so no recomputation is needed, just including one prior anchor.
       const cutIdx = rocDepPointsAll.findIndex(p=> p.date!=='Start' && p.date>=fromKey);
-      if(cutIdx>0) filtered = rocDepPointsAll.slice(cutIdx-1);
+      filtered = cutIdx>0 ? rocDepPointsAll.slice(cutIdx-1) : rocDepPointsAll.filter(p=> p.date==='Start' || p.date>=fromKey);
     }
-    renderRocDepositsSVG(chartEl, rangeEl, filtered);
+
+    if(filtered.length<2){
+      const msg = '<div class="td-empty-note">Not enough history in this range yet.</div>';
+      if(roiChartEl) roiChartEl.innerHTML = msg;
+      if(capChartEl) capChartEl.innerHTML = '';
+      if(roiRangeEl) roiRangeEl.textContent = '';
+      if(capRangeEl) capRangeEl.textContent = '';
+      if(statsEl) statsEl.innerHTML = '';
+      return;
+    }
+
+    const roiPts = filtered.map(p=>({v:p.roc, date:p.date})).filter(p=>p.v!==null && !isNaN(p.v));
+    const capPts = filtered.map(p=>({v:p.netCap, date:p.date, marker: p.capEvent ? (p.capEvent.amt<0?'withdraw':'deposit') : null, capEvent:p.capEvent, roc:p.roc}));
+
+    renderSimpleSeriesSVG(roiChartEl, roiPts, {
+      emptyText: 'Return on Capital appears once you\u2019ve logged a deposit.',
+      minSpan: 1
+    });
+    renderSimpleSeriesSVG(capChartEl, capPts, {
+      emptyText: 'No deposits logged yet.',
+      forceColor: 'var(--accent)',
+      minSpan: 1,
+      onDotHover: p=>{
+        const ev = p.capEvent;
+        const evLabel = ev ? ((ev.amt<0?'Withdrew ':'Deposited ')+fmtMoney(Math.abs(ev.amt))) : '';
+        const rocLabel = p.roc!==null ? ' · ROC so far '+(p.roc>=0?'+':'')+p.roc.toFixed(2)+'%' : '';
+        return `<div class="eq-tip-tk">${escapeHtml(evLabel)}</div><div class="eq-tip-date">${escapeHtml(p.date||'')}</div><div class="eq-tip-pnl">Capital ${escapeHtml(fmtMoney(p.v))}${escapeHtml(rocLabel)}</div>`;
+      }
+    });
+
+    const firstDated = filtered.find(p=>p.date && p.date!=='Start');
+    const lastP = filtered[filtered.length-1];
+    const lastRoc = roiPts.length ? roiPts[roiPts.length-1].v : null;
+    const rangeSpan = (firstDated?firstDated.date:'') + ' → ' + (lastP.date!=='Start'?lastP.date:'');
+    if(roiRangeEl) roiRangeEl.textContent = rangeSpan + (lastRoc!==null ? ' · '+(lastRoc>=0?'+':'')+lastRoc.toFixed(2)+'% cumulative' : '');
+    if(capRangeEl) capRangeEl.textContent = rangeSpan + ' · ' + fmtMoney(lastP.netCap) + ' net deposited';
+
+    if(statsEl){
+      const rocCls = lastRoc===null?'':(lastRoc>=0?'pos':'neg');
+      statsEl.innerHTML = `
+        <div class="td-hero-stat"><div class="td-hero-stat-lbl">Return on Capital</div><div class="td-hero-stat-val ${rocCls}">${lastRoc!==null ? (lastRoc>=0?'+':'')+lastRoc.toFixed(2)+'%' : '—'}</div></div>
+        <div class="td-hero-stat"><div class="td-hero-stat-lbl">Total Deposited</div><div class="td-hero-stat-val">${fmtMoney(lastP.netCap)}</div></div>`;
+    }
   }
   const tdRocDepRangeToggleEl = document.getElementById('tdRocDepRangeToggle');
   if(tdRocDepRangeToggleEl){

@@ -2558,6 +2558,13 @@
       <div id="tdDailyLimitBanner"></div>
       <div class="td-hero-card" id="tdHeroCard"></div>
       <div class="td-stat-grid" id="tdOverviewStats"></div>
+      <div class="td-card" id="tdOpenAllocCard" style="display:none;">
+        <div class="td-card-head" style="flex-wrap:wrap; gap:8px;">
+          <span>Open Position Allocation</span>
+        </div>
+        <div class="td-card-sub" id="tdOpenAllocSub" style="margin-bottom:8px; display:block;"></div>
+        <div id="tdOpenAllocList"></div>
+      </div>
       <div class="td-card">
         <div class="td-card-head" style="flex-wrap:wrap; gap:8px;">
           <span>Equity Curve</span>
@@ -5951,6 +5958,50 @@
           <div class="td-hero-stat"><div class="td-hero-stat-lbl">Capital Deployed Right Now</div><div class="td-hero-stat-val">${capitalDeployed?fmtCapitalStat(capitalDeployed):'—'}</div></div>
           <div class="td-hero-stat"><div class="td-hero-stat-lbl">Peak Capital Deployed</div><div class="td-hero-stat-val">${allTimeCap?fmtCapitalStat(allTimeCap):'—'}</div></div>
         </div>`;
+    }
+
+    // ---- Open Position Allocation: what share of the capital you have
+    // deployed *right now* (i.e. total capital tied up across all open
+    // trades this instant) each individual open trade represents. This is
+    // deliberately a different denominator than Return on Capital — it's
+    // "how is my currently-open book split up", not "how much of my whole
+    // account is at risk" — so the percentages here always sum to 100%.
+    const allocCardEl = document.getElementById('tdOpenAllocCard');
+    const allocListEl = document.getElementById('tdOpenAllocList');
+    const allocSubEl = document.getElementById('tdOpenAllocSub');
+    if(allocCardEl && allocListEl){
+      const openTrades = trades.filter(t=> tradeOutcome(t)==='open' && !isNaN(parseFloat(t.posSize)) && parseFloat(t.posSize)>0);
+      if(openTrades.length===0){
+        allocCardEl.style.display = 'none';
+      } else {
+        allocCardEl.style.display = '';
+        const totalDeployed = openTrades.reduce((s,t)=> s+parseFloat(t.posSize), 0);
+        const rows = openTrades
+          .map(t=>{
+            const size = parseFloat(t.posSize);
+            const pct = totalDeployed ? (size/totalDeployed)*100 : null;
+            return {t, size, pct};
+          })
+          .sort((a,b)=> b.size-a.size);
+
+        allocListEl.innerHTML = rows.map(r=>{
+          const dirCls = r.t.direction==='short' ? 'neg' : 'pos';
+          const barPct = r.pct!==null ? Math.min(100, Math.max(0, r.pct)) : 0;
+          const pctLabel = r.pct!==null ? r.pct.toFixed(1)+'%' : '—';
+          const sizeLabel = fmtCapitalStat(r.size);
+          return `<div class="td-bd-row">
+            <div class="td-bd-top">
+              <span class="td-bd-name">${escapeHtml(r.t.ticker||'Trade')} <span style="font-weight:400; color:var(--ink-faint); text-transform:none;">${r.t.direction==='short'?'Short':'Long'}</span></span>
+              <span class="td-bd-meta">${escapeHtml(sizeLabel)} · ${escapeHtml(pctLabel)}</span>
+            </div>
+            <div class="td-bd-bar-track"><div class="td-bd-bar-fill ${dirCls}" style="width:${barPct}%;"></div></div>
+          </div>`;
+        }).join('');
+
+        if(allocSubEl){
+          allocSubEl.textContent = openTrades.length+' open position'+(openTrades.length===1?'':'s')+' · '+fmtCapitalStat(totalDeployed)+' deployed total';
+        }
+      }
     }
 
     const allTimeReturnPct = returnOnCapitalPct(trades, null, null);

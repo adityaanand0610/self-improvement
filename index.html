@@ -5300,6 +5300,15 @@
     });
     return sum;
   }
+  // Deposits/withdrawals are absolute cash movements, not returns — showing
+  // "this deposit was 5.11% of your capital" under hide-amounts mode never
+  // made much sense (a deposit doesn't have a meaningful "% of itself").
+  // So this list masks with •••• instead of running amounts through the
+  // %-of-capital math that fmtMoney() uses everywhere else.
+  function fmtCapitalHistoryAmount(n){
+    if(appSettings.hideAmounts) return '••••';
+    return '₹'+Math.round(Math.abs(n)).toLocaleString('en-IN');
+  }
   function renderCapitalHistoryUI(){
     const netEl = document.getElementById('capitalHistoryNet');
     const noteEl = document.getElementById('capitalHistoryNote');
@@ -5307,7 +5316,7 @@
     if(!listEl) return;
     const history = sortedCapitalHistory();
     const net = netContributedCapital();
-    if(netEl) netEl.textContent = fmtMoney(net);
+    if(netEl) netEl.textContent = fmtCapitalHistoryAmount(net);
     if(noteEl) noteEl.textContent = history.length ? (history.length===1?'1 entry logged':history.length+' entries logged') : 'Add your first deposit to start tracking.';
     if(history.length===0){
       listEl.innerHTML = '<div class="todo-empty">No deposits or withdrawals logged yet.</div>';
@@ -5321,7 +5330,7 @@
       return `
         <div class="todo-item" data-id="${ev.id}">
           <div class="todo-text">
-            <strong style="color:${color};">${sign}${fmtMoney(amt).replace(/^-/,'')}</strong>
+            <strong style="color:${color};">${sign}${fmtCapitalHistoryAmount(amt)}</strong>
             &nbsp;·&nbsp;${label}&nbsp;·&nbsp;${escapeHtml(ev.date||'')}
             ${ev.note ? '<br><span style="color:var(--ink-faint); font-size:11.5px;">'+escapeHtml(ev.note)+'</span>' : ''}
           </div>
@@ -5438,6 +5447,12 @@
     refreshAmountVisibilityUI();
     try{ renderTradeDashboard(); }catch(e){}
     try{ renderTradesList(); }catch(e){}
+    // Capital History (Settings → deposits/withdrawals ledger) has its own
+    // render function and was never re-run on toggle, so it used to keep
+    // showing whichever mode (₹ or %) it last happened to render in —
+    // stuck out of sync with the eye icon / switch until something else
+    // (like adding a new entry) forced it to redraw.
+    try{ renderCapitalHistoryUI(); }catch(e){}
     showToast(appSettings.hideAmounts ? 'Amounts hidden — showing % of capital.' : 'Amounts visible again.', 'success');
   }
   document.querySelectorAll('.amount-visibility-toggle').forEach(btn=> btn.addEventListener('click', toggleAmountVisibility));
@@ -6026,7 +6041,12 @@
       // sum of every position ever sized (which would double-count capital that was freed
       // up and redeployed into later trades).
       const capitalDeployed = trades.filter(t=> tradeOutcome(t)==='open').reduce((s,t)=>{ const n=parseFloat(t.posSize); return s+(isNaN(n)?0:n); },0);
-      const allTimeCap = maxCapitalDeployed(trades, null, null);
+      // Peak can never be legitimately lower than what's deployed right now —
+      // "right now" is itself a point in that same history. If the timeline
+      // walk (which skips trades with an unparseable entry date) comes out
+      // lower than the live sum, the live sum IS the true peak; this max()
+      // guarantees the two stats can never contradict each other on screen.
+      const allTimeCap = Math.max(maxCapitalDeployed(trades, null, null), capitalDeployed);
       heroEl.className = 'td-hero-card' + (trades.length ? (m.net>=0?' pos':' neg') : '');
       heroEl.innerHTML = `
         <div class="td-hero-lbl">Net P&amp;L · All Time</div>
@@ -9619,6 +9639,7 @@
         refreshAmountVisibilityUI();
         try{ renderTradeDashboard(); }catch(e){}
         try{ renderTradesList(); }catch(e){}
+        try{ renderCapitalHistoryUI(); }catch(e){}
       });
     }
 

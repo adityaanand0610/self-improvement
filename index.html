@@ -1014,12 +1014,18 @@
     font-family:'IBM Plex Mono'; font-size:10.5px; font-weight:700; color:var(--ink-dim); margin-top:5px;
     display:inline-block; background:var(--surface-raised); border:1px solid var(--line); border-radius:999px; padding:2px 8px;
   }
+  @media (max-width:480px){
+    .trade-card{ padding:14px 14px 14px 16px; }
+    .trade-ticker{ font-size:15.5px; }
+    .trade-pnl{ font-size:14px; }
+    .trade-date{ font-size:10.5px; }
+  }
 
   /* ================= Trading Dashboard (Overview / History / Calendar / Strategy / Risk) ================= */
   /* Trader-terminal touches scoped to the Trade Log view only, so Study/Habits/Gym keep their own feel */
   #view-trades input[type=number]{ font-family:'IBM Plex Mono'; font-weight:600; }
   #view-trades .trade-subnav-btn{ font-family:'IBM Plex Mono'; letter-spacing:0.03em; }
-  .trade-subnav-row{ display:flex; align-items:center; gap:8px; margin-bottom:20px; }
+  .trade-subnav-row{ display:flex; align-items:center; gap:8px; margin-bottom:20px; position:relative; }
   .trade-subnav-row .trade-subnav{ flex:1; min-width:0; margin-bottom:0; }
   .amount-visibility-toggle{
     flex-shrink:0; width:38px; height:38px; border-radius:50%; border:1px solid var(--line); background:var(--surface);
@@ -1040,6 +1046,16 @@
   .trade-subnav-btn.active{ background:var(--ink); border-color:var(--ink); color:var(--bg); }
   .trade-subnav-btn.entry-btn{ margin-left:auto; background:var(--accent-bg); border-color:var(--accent); color:var(--accent-dim); }
   .trade-subnav-btn.entry-btn.active{ background:var(--accent); border-color:var(--accent); color:var(--accent-ink); }
+  @media (max-width:640px){
+    /* A row of tabs that scrolls off the right edge isn't obviously scrollable on
+       a phone, so a soft fade hints there's more to swipe to. */
+    .trade-subnav-row::after, #analyticsSubnav::after{
+      content:''; position:absolute; top:0; right:0; bottom:2px; width:28px; pointer-events:none;
+      background:linear-gradient(90deg, transparent, var(--bg) 88%);
+    }
+    .trade-subnav-row{ padding-right:4px; }
+    #analyticsSubnav{ position:relative; padding-right:4px; }
+  }
 
   .trade-panel{ display:none; animation: fadeIn .2s var(--ease); }
   .trade-panel.active{ display:block; }
@@ -1109,14 +1125,48 @@
   .td-bar{ transition: opacity .15s; }
   .td-bar:hover{ opacity:0.72; }
 
-  .td-donut-wrap{ display:flex; align-items:center; gap:22px; flex-wrap:wrap; justify-content:center; padding:6px 0; }
-  .td-donut-center-val{ font-family:'Sora'; font-weight:800; font-size:17px; }
-  .td-donut-center-lbl{ font-size:8.5px; color:var(--ink-faint); text-transform:uppercase; letter-spacing:0.05em; font-weight:700; }
-  .td-donut-legend{ display:flex; flex-direction:column; gap:9px; font-size:12px; }
-  .td-donut-legend-item{ display:flex; align-items:center; gap:8px; }
-  .td-donut-dot{ width:9px; height:9px; border-radius:3px; flex-shrink:0; }
+  .td-donut-wrap{ display:flex; align-items:center; gap:28px; flex-wrap:wrap; justify-content:center; padding:10px 0; }
+  .td-donut{
+    position:relative; width:148px; height:148px; border-radius:50%; flex-shrink:0;
+    box-shadow: var(--shadow-sm);
+  }
+  .td-donut-center{
+    position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+    width:96px; height:96px; border-radius:50%; background:var(--surface);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+    box-shadow: inset 0 0 0 1px var(--line);
+  }
+  .td-donut-center-val{ font-family:'Sora'; font-weight:800; font-size:22px; line-height:1; }
+  .td-donut-center-lbl{ font-size:9px; color:var(--ink-faint); text-transform:uppercase; letter-spacing:0.05em; font-weight:700; }
+  .td-donut-legend{ display:flex; flex-direction:column; gap:12px; font-size:12.5px; min-width:150px; }
+  .td-donut-legend-item{ display:flex; align-items:center; gap:9px; }
+  .td-donut-legend-item .td-donut-legend-txt{ display:flex; flex-direction:column; gap:2px; }
+  .td-donut-legend-item .td-donut-legend-count{ font-weight:700; color:var(--ink); }
+  .td-donut-legend-item .td-donut-legend-sub{ font-size:10.5px; color:var(--ink-faint); font-family:'IBM Plex Mono'; }
+  .td-donut-dot{ width:11px; height:11px; border-radius:4px; flex-shrink:0; }
+  @media (max-width:520px){
+    .td-donut-wrap{ gap:18px; }
+    .td-donut{ width:128px; height:128px; }
+    .td-donut-center{ width:82px; height:82px; }
+    .td-donut-center-val{ font-size:19px; }
+  }
 
+  .td-bd-list{ display:grid; grid-template-columns:1fr; gap:10px; }
+  @media (min-width:700px){ .td-bd-list{ grid-template-columns:repeat(2,1fr); } }
   .td-bd-row{ padding:11px 0; border-bottom:1px solid var(--line); }
+  /* Open Position Allocation uses its own card look (.alloc-row) rather than the
+     shared plain-list .td-bd-row style, so this change doesn't ripple into the
+     Strategy/Exit-reason breakdowns or Gym Log lists that reuse .td-bd-row. */
+  .td-bd-row.alloc-row{
+    padding:13px 14px; border-radius:var(--radius-md); background:var(--surface-raised);
+    border:1px solid transparent; transition:border-color .15s; border-bottom:none;
+  }
+  .td-bd-row.alloc-row:hover{ border-color:var(--line); }
+  .alloc-row .td-bd-top{ align-items:flex-start; margin-bottom:9px; }
+  .alloc-row .td-bd-name{ font-weight:700; font-size:13.5px; display:flex; align-items:center; gap:7px; flex-wrap:wrap; text-transform:none; }
+  .alloc-row .td-bd-meta{ text-align:right; }
+  .alloc-row .td-bd-meta .td-bd-meta-pct{ display:block; font-size:14px; font-weight:700; color:var(--ink); font-family:'Sora'; }
+  .alloc-row .td-bd-bar-track{ background:var(--surface); height:7px; }
 
   /* ---------- Command Center (home) ---------- */
   .cc-wrap{ background:linear-gradient(160deg, var(--surface-raised), var(--surface)); border:1px solid var(--line); border-radius:var(--radius-lg); padding:18px; margin-bottom:var(--space-6); box-shadow:var(--shadow-sm); }
@@ -1377,10 +1427,25 @@
   .td-hero-stat-val.neg{ color: var(--rose); }
 
   /* ---- sortable ticker/exercise list with inline sparkline (Groww holdings-row style) ---- */
-  .td-list-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px; }
+  .td-list-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px; flex-wrap:wrap; }
   .td-list-sort{
     padding:7px 12px; border-radius:999px; border:1px solid var(--line); background:var(--surface);
     color:var(--ink-dim); font-family:'Inter'; font-size:11.5px; font-weight:600; cursor:pointer;
+  }
+  @media (max-width:640px){
+    /* History toolbar: stack search full-width above sort, and let filter chips
+       scroll horizontally instead of squeezing/wrapping into a cramped grid, so
+       everything stays reachable with a thumb on a phone-width screen. */
+    .td-list-head{ align-items:flex-start; }
+    .td-list-head > div:last-child{ width:100%; justify-content:space-between; }
+    .trades-toolbar{ flex-direction:column; align-items:stretch; }
+    .trades-search-wrap{ min-width:0; }
+    .trades-sort-select{ width:100%; }
+    .trades-filter-row{ flex-direction:column-reverse; align-items:stretch; gap:8px; }
+    .trades-filter-chips{ flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; padding-bottom:2px; }
+    .trades-filter-chips::-webkit-scrollbar{ display:none; }
+    .trade-filter-chip{ flex-shrink:0; }
+    .trades-result-count{ text-align:right; }
   }
   .td-list-row{ display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--line); }
   .td-list-row:last-child{ border-bottom:none; }
@@ -5657,7 +5722,12 @@
       const isPeak = i===peakIdx, isTrough = (i===troughIdx && maxDD>0);
       const r = isPeak||isTrough ? 4.5 : 2.6;
       const fill = isPeak ? 'var(--teal)' : (isTrough ? 'var(--rose)' : (isWin?'var(--teal)':'var(--rose)'));
-      return `<circle class="eq-dot" data-i="${i}" cx="${xFor(i).toFixed(1)}" cy="${yFor(p.y).toFixed(1)}" r="${r}" fill="${fill}" opacity="${isPeak||isTrough?1:0.8}"/>`;
+      const cx = xFor(i).toFixed(1), cy = yFor(p.y).toFixed(1);
+      // Invisible larger hit-circle sits under the visible dot so the tap/hover
+      // target is comfortably finger-sized on mobile without changing how the
+      // chart looks — the small dot alone is too fiddly to tap accurately.
+      return `<circle class="eq-dot-hit" data-i="${i}" cx="${cx}" cy="${cy}" r="11" fill="transparent"/>` +
+        `<circle class="eq-dot" data-i="${i}" cx="${cx}" cy="${cy}" r="${r}" fill="${fill}" opacity="${isPeak||isTrough?1:0.8}" pointer-events="none"/>`;
     }).join('');
 
     const markerLabels = `
@@ -5678,7 +5748,7 @@
       </svg>`;
 
     const tip = ensureEquityTooltip();
-    containerEl.querySelectorAll('.eq-dot').forEach(dot=>{
+    containerEl.querySelectorAll('.eq-dot-hit').forEach(dot=>{
       const i = parseInt(dot.dataset.i,10);
       const p = pts[i];
       const show = ()=>{
@@ -5781,10 +5851,15 @@
     const firstX = xFor(0).toFixed(1), lastX = xFor(pts.length-1).toFixed(1);
     const areaPts = `${firstX},${zeroY} ${linePts} ${lastX},${zeroY}`;
 
+    // Markers (deposit/withdraw days) get a visible dot; every other point still
+    // gets an invisible tap/hover target so a person can trace the line on mobile,
+    // not just the days something was deposited.
     const dots = pts.map((p,i)=>{
-      if(!p.marker) return '';
-      const mColor = p.marker==='withdraw' ? 'var(--rose)' : color;
-      return `<circle class="simple-series-dot" data-i="${i}" cx="${xFor(i).toFixed(1)}" cy="${yFor(p.v).toFixed(1)}" r="4" fill="${mColor}"/>`;
+      const cx = xFor(i).toFixed(1), cy = yFor(p.v).toFixed(1);
+      const visible = p.marker
+        ? `<circle class="simple-series-dot-visible" cx="${cx}" cy="${cy}" r="4" fill="${p.marker==='withdraw' ? 'var(--rose)' : color}"/>`
+        : '';
+      return `<circle class="simple-series-dot" data-i="${i}" cx="${cx}" cy="${cy}" r="9" fill="transparent"/>${visible}`;
     }).join('');
 
     containerEl.innerHTML = `
@@ -5890,7 +5965,11 @@
 
     renderSimpleSeriesSVG(roiChartEl, roiPts, {
       emptyText: 'Return on Capital appears once you\u2019ve logged a deposit.',
-      minSpan: 1
+      minSpan: 1,
+      onDotHover: p=>{
+        const rocLabel = p.v!==null ? (p.v>=0?'+':'')+p.v.toFixed(2)+'%' : '—';
+        return `<div class="eq-tip-tk">Return on Capital</div><div class="eq-tip-date">${escapeHtml(p.date||'')}</div><div class="eq-tip-pnl ${p.v>=0?'pos':'neg'}">${escapeHtml(rocLabel)} cumulative</div>`;
+      }
     });
     renderSimpleSeriesSVG(capChartEl, capPts, {
       emptyText: 'No deposits logged yet.',
@@ -5984,19 +6063,21 @@
           })
           .sort((a,b)=> b.size-a.size);
 
-        allocListEl.innerHTML = rows.map(r=>{
+        allocListEl.innerHTML = '<div class="td-bd-list">' + rows.map(r=>{
           const dirCls = r.t.direction==='short' ? 'neg' : 'pos';
           const barPct = r.pct!==null ? Math.min(100, Math.max(0, r.pct)) : 0;
           const pctLabel = r.pct!==null ? r.pct.toFixed(1)+'%' : '—';
           const sizeLabel = fmtCapitalStat(r.size);
-          return `<div class="td-bd-row">
+          return `<div class="td-bd-row alloc-row">
             <div class="td-bd-top">
-              <span class="td-bd-name">${escapeHtml(r.t.ticker||'Trade')} <span style="font-weight:400; color:var(--ink-faint); text-transform:none;">${r.t.direction==='short'?'Short':'Long'}</span></span>
-              <span class="td-bd-meta">${escapeHtml(sizeLabel)} · ${escapeHtml(pctLabel)}</span>
+              <span class="td-bd-name">${escapeHtml(r.t.ticker||'Trade')}
+                <span class="trade-dir-badge ${r.t.direction==='short'?'short':'long'}"><span class="dir-arrow">${r.t.direction==='short'?'▼':'▲'}</span>${r.t.direction==='short'?'Short':'Long'}</span>
+              </span>
+              <span class="td-bd-meta"><span class="td-bd-meta-pct">${escapeHtml(pctLabel)}</span>${escapeHtml(sizeLabel)}</span>
             </div>
             <div class="td-bd-bar-track"><div class="td-bd-bar-fill ${dirCls}" style="width:${barPct}%;"></div></div>
           </div>`;
-        }).join('');
+        }).join('') + '</div>';
 
         if(allocSubEl){
           allocSubEl.textContent = openTrades.length+' open position'+(openTrades.length===1?'':'s')+' · '+fmtCapitalStat(totalDeployed)+' deployed total';
@@ -6106,9 +6187,18 @@
               </div>
             </div>
             <div class="td-donut-legend">
-              <div class="td-donut-legend-item"><span class="td-donut-dot" style="background:var(--teal);"></span>Wins · ${m.wins} (${Math.round(winPct)}%)</div>
-              <div class="td-donut-legend-item"><span class="td-donut-dot" style="background:var(--rose);"></span>Losses · ${m.losses} (${Math.round(lossPct)}%)</div>
-              <div class="td-donut-legend-item"><span class="td-donut-dot" style="background:var(--surface-raised); border:1px solid var(--line);"></span>Open · ${openCount} (${Math.round(openPct)}%)</div>
+              <div class="td-donut-legend-item">
+                <span class="td-donut-dot" style="background:var(--teal);"></span>
+                <div class="td-donut-legend-txt"><span class="td-donut-legend-count">Wins</span><span class="td-donut-legend-sub">${m.wins} trades · ${Math.round(winPct)}%</span></div>
+              </div>
+              <div class="td-donut-legend-item">
+                <span class="td-donut-dot" style="background:var(--rose);"></span>
+                <div class="td-donut-legend-txt"><span class="td-donut-legend-count">Losses</span><span class="td-donut-legend-sub">${m.losses} trades · ${Math.round(lossPct)}%</span></div>
+              </div>
+              <div class="td-donut-legend-item">
+                <span class="td-donut-dot" style="background:var(--surface-raised); border:1px solid var(--line);"></span>
+                <div class="td-donut-legend-txt"><span class="td-donut-legend-count">Open</span><span class="td-donut-legend-sub">${openCount} trades · ${Math.round(openPct)}%</span></div>
+              </div>
             </div>
           </div>`;
       }

@@ -1302,6 +1302,23 @@
   .td-bd-bar-fill.pos{ background: var(--teal); }
   .td-bd-bar-fill.neg{ background: var(--rose); }
 
+  /* ---- Trade Mix: split proportion bars (Win/Loss, Long/Short) ---- */
+  .td-mix-block{ margin-bottom:18px; }
+  .td-mix-block:last-child{ margin-bottom:0; }
+  .td-mix-head{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px; font-size:12px; font-weight:700; color:var(--ink-dim); }
+  .td-mix-bar{ display:flex; height:10px; border-radius:999px; overflow:hidden; background:var(--surface-raised); width:100%; }
+  .td-mix-seg{ height:100%; transition: width .3s var(--ease); }
+  .td-mix-seg.a{ background: var(--teal); }
+  .td-mix-seg.b{ background: var(--rose); }
+  .td-mix-seg.short{ background: var(--ink-dim); }
+  .td-mix-labels{ display:flex; justify-content:space-between; margin-top:7px; font-size:11.5px; font-family:'IBM Plex Mono'; }
+  .td-mix-label{ display:flex; align-items:center; gap:6px; color:var(--ink-dim); }
+  .td-mix-label .dot{ width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .td-mix-label .dot.a{ background:var(--teal); }
+  .td-mix-label .dot.b{ background:var(--rose); }
+  .td-mix-label .dot.short{ background:var(--ink-dim); }
+  .td-mix-label .num{ font-weight:700; color:var(--ink); }
+
   /* ---- Trade calendar: month P&L summary strip ---- */
   .tcal-card{ padding-top:16px; }
   .tcal-summary-bar{
@@ -2668,6 +2685,11 @@
         <div class="td-card-sub" id="tdRocDepCapRange" style="margin-bottom:6px; display:block;"></div>
         <div id="tdRocDepCapChart"></div>
       </div>
+      <div class="td-card">
+        <div class="td-card-head"><span>P&amp;L by Weekday</span></div>
+        <div id="tdWeekdayChart"></div>
+      </div>
+
       <div class="td-two-col">
         <div class="td-card">
           <div class="td-card-head"><span>P&amp;L by Month</span></div>
@@ -2677,6 +2699,11 @@
           <div class="td-card-head"><span>Trade Outcomes</span></div>
           <div id="tdOutcomeDonut"></div>
         </div>
+      </div>
+
+      <div class="td-card">
+        <div class="td-card-head"><span>Trade Mix</span></div>
+        <div id="tdTradeMix"></div>
       </div>
     </div>
 
@@ -6188,6 +6215,48 @@
       }
     }
 
+    // ---- P&L by weekday (which day of the week treats you best) ----
+    const weekdayEl = document.getElementById('tdWeekdayChart');
+    if(weekdayEl){
+      const wdLabels = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+      const byWd = [0,0,0,0,0,0,0];
+      let anyWd = false;
+      (trades||[]).forEach(t=>{
+        const n = parseFloat(t.pnl); const bd = tradeBasisDate(t); if(isNaN(n) || !bd) return;
+        const dow = new Date(bd+'T00:00:00').getDay();
+        byWd[dow] += n; anyWd = true;
+      });
+      if(!anyWd){
+        weekdayEl.innerHTML = '<div class="td-empty-note">No P&amp;L data yet.</div>';
+      } else {
+        const fmtCompact = v=>{
+          const abs = Math.abs(v);
+          const num = abs>=100000 ? (abs/100000).toFixed(1)+'L' : abs>=1000 ? (abs/1000).toFixed(1)+'k' : Math.round(abs).toString();
+          return (v>=0?'+':'-')+num;
+        };
+        const maxAbs = Math.max(1, ...byWd.map(v=>Math.abs(v)));
+        let bestI = 0, worstI = 0;
+        byWd.forEach((v,i)=>{ if(v>byWd[bestI]) bestI=i; if(v<byWd[worstI]) worstI=i; });
+        const w=340, h=160, barW = (w/7)*0.6, gap=(w/7);
+        const midY = h/2 - 4;
+        const bars = byWd.map((v,i)=>{
+          const barH = (Math.abs(v)/maxAbs) * (h/2 - 30);
+          const x = i*gap + (gap-barW)/2;
+          const y = v>=0 ? midY-barH : midY;
+          const isStandout = (i===bestI && v>0) || (i===worstI && v<0);
+          const valLabelY = v>=0 ? y-4 : y+barH+11;
+          return `<rect class="td-bar" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${Math.max(barH,1).toFixed(1)}" rx="2" fill="${v>=0?'var(--teal)':'var(--rose)'}" opacity="${isStandout?1:0.85}"><title>${wdLabels[i]}: ${fmtPnl(Math.round(v))}</title></rect>
+            <text x="${(x+barW/2).toFixed(1)}" y="${valLabelY.toFixed(1)}" text-anchor="middle" class="td-chart-axis-label" style="font-size:8.5px; font-weight:${isStandout?700:500}; fill:${v>=0?'var(--teal)':'var(--rose)'};">${v===0?'':fmtCompact(v)}</text>
+            <text x="${(x+barW/2).toFixed(1)}" y="${h-2}" text-anchor="middle" class="td-chart-axis-label" style="font-size:8px;">${wdLabels[i]}</text>`;
+        }).join('');
+        weekdayEl.innerHTML = `<svg class="td-chart-svg" viewBox="0 0 ${w} ${h}"><line x1="0" y1="${midY}" x2="${w}" y2="${midY}" stroke="var(--line)" stroke-width="1"/>${bars}</svg>
+          <div class="td-chart-callout-row">
+            <span class="td-chart-callout pos">Best: ${wdLabels[bestI]} ${fmtPnl(Math.round(byWd[bestI]))}</span>
+            <span class="td-chart-callout neg">Worst: ${wdLabels[worstI]} ${fmtPnl(Math.round(byWd[worstI]))}</span>
+          </div>`;
+      }
+    }
+
     // ---- Outcome donut (win / loss / open) ----
     const donutEl = document.getElementById('tdOutcomeDonut');
     if(donutEl){
@@ -6219,6 +6288,38 @@
                 <span class="td-donut-dot" style="background:var(--surface-raised); border:1px solid var(--line);"></span>
                 <div class="td-donut-legend-txt"><span class="td-donut-legend-count">Open</span><span class="td-donut-legend-sub">${openCount} trades · ${Math.round(openPct)}%</span></div>
               </div>
+            </div>
+          </div>`;
+      }
+    }
+
+    // ---- Trade Mix: Win/Loss and Long/Short split bars ----
+    const mixEl = document.getElementById('tdTradeMix');
+    if(mixEl){
+      if(trades.length===0){
+        mixEl.innerHTML = '<div class="td-empty-note">No trades yet.</div>';
+      } else {
+        const longCount = trades.filter(t=> (t.direction||'long')!=='short').length;
+        const shortCount = trades.length - longCount;
+        const winPct2 = m.withPnlCount ? (m.wins/m.withPnlCount)*100 : 0;
+        const lossPct2 = m.withPnlCount ? 100-winPct2 : 0;
+        const longPct = trades.length ? (longCount/trades.length)*100 : 0;
+        const shortPct = trades.length ? 100-longPct : 0;
+        mixEl.innerHTML = `
+          <div class="td-mix-block">
+            <div class="td-mix-head"><span>Win / Loss</span><span>${m.withPnlCount} closed</span></div>
+            <div class="td-mix-bar"><div class="td-mix-seg a" style="width:${winPct2}%;"></div><div class="td-mix-seg b" style="width:${lossPct2}%;"></div></div>
+            <div class="td-mix-labels">
+              <span class="td-mix-label"><span class="dot a"></span>Win <span class="num">${m.wins}</span></span>
+              <span class="td-mix-label"><span class="dot b"></span>Loss <span class="num">${m.losses}</span></span>
+            </div>
+          </div>
+          <div class="td-mix-block">
+            <div class="td-mix-head"><span>Long / Short</span><span>${trades.length} total</span></div>
+            <div class="td-mix-bar"><div class="td-mix-seg a" style="width:${longPct}%;"></div><div class="td-mix-seg short" style="width:${shortPct}%;"></div></div>
+            <div class="td-mix-labels">
+              <span class="td-mix-label"><span class="dot a"></span>Long <span class="num">${longCount}</span></span>
+              <span class="td-mix-label"><span class="dot short"></span>Short <span class="num">${shortCount}</span></span>
             </div>
           </div>`;
       }
@@ -6417,9 +6518,10 @@
       const chrono = list.slice().sort((a,b)=>tradeBasisDate(a).localeCompare(tradeBasisDate(b)) || (tradeBasisTimestamp(a)-tradeBasisTimestamp(b)));
       const withPnl = chrono.filter(t=> t.pnl!==undefined && t.pnl!=='' && !isNaN(parseFloat(t.pnl)));
       const wins = withPnl.filter(t=>parseFloat(t.pnl)>=0).length;
+      const losses = withPnl.length - wins;
       const net = withPnl.reduce((s,t)=>s+parseFloat(t.pnl),0);
       const winRate = withPnl.length ? (wins/withPnl.length)*100 : null;
-      return {name, count:list.length, net, winRate};
+      return {name, count:list.length, net, winRate, wins, losses};
     });
     const sortFns = {
       pnl: (a,b)=> b.net-a.net,
@@ -6434,7 +6536,7 @@
       return `<div class="td-list-row">
         <div class="td-list-name-wrap">
           <div class="td-list-name">${escapeHtml(r.name)}</div>
-          <div class="td-list-sub">${r.count} trade${r.count===1?'':'s'}${r.winRate!==null?(' · '+Math.round(r.winRate)+'% win'):''}</div>
+          <div class="td-list-sub">${r.count} trade${r.count===1?'':'s'}${r.winRate!==null?(' · '+r.wins+'W / '+r.losses+'L'):''}</div>
         </div>
         <div class="td-list-right"><div class="td-list-val ${cls}">${fmtPnl(Math.round(r.net))}</div></div>
       </div>`;
@@ -6623,12 +6725,26 @@
     const avgRiskPct = riskPcts.length ? riskPcts.reduce((a,b)=>a+b,0)/riskPcts.length : null;
     const m = computeTradeMetrics(trades);
     const rrRatio = (m.avgLoss>0 && m.avgWin>0) ? (m.avgWin/m.avgLoss) : null;
+    // Average Reward:Risk shown as a "1 : X" ratio (clearer at a glance than a bare decimal)
+    const avgRRLabel = rrRatio!==null ? '1 : '+rrRatio.toFixed(2) : '—';
+    // Kelly criterion — the fraction of capital classic Kelly staking would risk per trade,
+    // given this system's historical win rate and reward:risk. Only meaningful once both
+    // a win rate and a reward:risk ratio exist; shown as a %, clamped to a sane display range.
+    const winFrac = m.withPnlCount ? m.wins/m.withPnlCount : null;
+    let kellyPct = null;
+    if(winFrac!==null && rrRatio!==null && rrRatio>0){
+      kellyPct = (winFrac - (1-winFrac)/rrRatio) * 100;
+    }
+    const posSizes = trades.map(t=> parseFloat(t.posSize)).filter(n=> !isNaN(n) && n>0);
+    const avgPosSize = posSizes.length ? posSizes.reduce((a,b)=>a+b,0)/posSizes.length : null;
 
     grid.innerHTML = [
       statCardHtml('Avg Risk / Trade', avgRisk!==null? fmtMoney(avgRisk) : '—'),
       statCardHtml('Avg Risk %', avgRiskPct!==null? avgRiskPct.toFixed(1)+'%' : '—'),
       statCardHtml('Largest Risk Taken', maxRisk!==null? fmtMoney(maxRisk) : '—'),
-      statCardHtml('Avg Win / Avg Loss', rrRatio!==null? rrRatio.toFixed(2) : '—'),
+      statCardHtml('Avg Reward : Risk', avgRRLabel),
+      statCardHtml('Kelly Criterion', kellyPct!==null? kellyPct.toFixed(1)+'%' : '—', kellyPct!==null?(kellyPct>=0?'pos':'neg'):'', kellyPct!==null?'of capital, per trade':undefined),
+      statCardHtml('Avg Position Size', avgPosSize!==null? fmtCapitalStat(avgPosSize) : '—'),
       statCardHtml('Expectancy / Trade', m.withPnlCount? fmtPnl(Math.round(m.expectancy)) : '—', m.expectancy>=0?'pos':'neg'),
       statCardHtml('Max Drawdown', m.maxDD? '-'+Math.round(m.maxDD) : '—', m.maxDD?'neg':''),
     ].join('');

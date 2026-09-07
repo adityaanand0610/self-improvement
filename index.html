@@ -5957,9 +5957,22 @@
         `<circle class="eq-dot" data-i="${i}" cx="${cx}" cy="${cy}" r="${r}" fill="${fill}" opacity="${isPeak||isTrough?1:0.8}" pointer-events="none"/>`;
     }).join('');
 
+    // Peak/trough labels flip to whichever side of their dot has room, instead
+    // of always sitting above (Peak) or below (trough) — a trough near the
+    // bottom edge or a peak near the top edge used to get its label clamped
+    // right back onto the dot it's labeling, so text and marker overlapped.
+    const peakY = yFor(pts[peakIdx].y);
+    const troughY = yFor(pts[troughIdx].y);
+    const peakLabelY = (peakY - 8 >= padT + 7) ? peakY - 8 : peakY + 13;
+    const troughLabelY = (troughY + 13 <= h - padB + 1) ? troughY + 13 : troughY - 8;
+    // Routes through fmtDrawdown so the on-chart label matches the "Max
+    // Drawdown" stat card: a plain "-1234" figure normally, or "-x.xx%" of
+    // capital when Settings → hide amounts is on (it used to always print
+    // the raw rupee number here, leaking amounts hide-mode is meant to hide).
+    const ddLabel = maxDD>0 ? fmtDrawdown(maxDD) : '';
     const markerLabels = `
-      ${peakIdx>0 ? `<text x="${xFor(peakIdx).toFixed(1)}" y="${Math.max(10,yFor(pts[peakIdx].y)-8).toFixed(1)}" font-size="9" fill="var(--teal)" text-anchor="middle" font-family="IBM Plex Mono">Peak</text>` : ''}
-      ${troughIdx>0 && maxDD>0 ? `<text x="${xFor(troughIdx).toFixed(1)}" y="${Math.min(h-2,yFor(pts[troughIdx].y)+13).toFixed(1)}" font-size="9" fill="var(--rose)" text-anchor="middle" font-family="IBM Plex Mono">-${Math.round(maxDD)}</text>` : ''}
+      ${peakIdx>0 ? `<text x="${xFor(peakIdx).toFixed(1)}" y="${peakLabelY.toFixed(1)}" font-size="9" fill="var(--teal)" text-anchor="middle" font-family="IBM Plex Mono">Peak</text>` : ''}
+      ${troughIdx>0 && maxDD>0 ? `<text x="${xFor(troughIdx).toFixed(1)}" y="${troughLabelY.toFixed(1)}" font-size="9" fill="var(--rose)" text-anchor="middle" font-family="IBM Plex Mono">${ddLabel}</text>` : ''}
     `;
 
     containerEl.innerHTML = `
@@ -5991,7 +6004,7 @@
     });
 
     if(rangeEl){
-      const ddText = maxDD>0 ? ' · max DD -'+Math.round(maxDD) : '';
+      const ddText = maxDD>0 ? ' · max DD '+fmtDrawdown(maxDD) : '';
       rangeEl.textContent = (pts[1]?.label||'')+' → '+(pts[pts.length-1].label||'')+' · '+fmtPnl(Math.round(running))+' cumulative'+ddText;
     }
   }

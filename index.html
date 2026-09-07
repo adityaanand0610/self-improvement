@@ -1118,10 +1118,24 @@
   .td-empty-note{ font-size:12px; color:var(--ink-faint); text-align:center; padding:30px 0; }
 
   .td-chart-svg{ width:100%; height:auto; display:block; overflow:visible; }
-  .td-chart-callout-row{ display:flex; gap:10px; margin-top:8px; flex-wrap:wrap; }
-  .td-chart-callout{ font-size:11px; font-family:'IBM Plex Mono',monospace; padding:4px 9px; border-radius:999px; }
-  .td-chart-callout.pos{ background:var(--teal-bg); color:var(--teal-dim); }
-  .td-chart-callout.neg{ background:var(--rose-bg); color:var(--rose-dim); }
+  /* Best/Worst mini-cards under P&L by Month / P&L by Weekday — richer than a
+     plain pill: shows trade count, win rate, and avg P&L per trade alongside
+     the headline number so "best" isn't just a lucky single trade in disguise. */
+  .td-bw-row{ display:flex; gap:10px; margin-top:10px; flex-wrap:wrap; }
+  .td-bw-card{ flex:1 1 150px; min-width:150px; border-radius:var(--radius-sm); padding:10px 12px 11px; border:1px solid var(--line); background:var(--surface); position:relative; overflow:hidden; }
+  .td-bw-card::before{ content:''; position:absolute; top:0; left:0; bottom:0; width:3px; }
+  .td-bw-card.pos::before{ background:var(--teal); }
+  .td-bw-card.neg::before{ background:var(--rose); }
+  .td-bw-lbl{ font-size:10px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--ink-faint); display:flex; align-items:center; gap:5px; }
+  .td-bw-lbl .arrow{ font-size:10px; }
+  .td-bw-card.pos .td-bw-lbl .arrow{ color:var(--teal); }
+  .td-bw-card.neg .td-bw-lbl .arrow{ color:var(--rose); }
+  .td-bw-main{ display:flex; align-items:baseline; justify-content:space-between; gap:8px; margin-top:5px; }
+  .td-bw-date{ font-size:13px; font-weight:600; color:var(--ink); }
+  .td-bw-val{ font-family:'IBM Plex Mono'; font-size:14px; font-weight:700; white-space:nowrap; }
+  .td-bw-val.pos{ color:var(--teal); }
+  .td-bw-val.neg{ color:var(--rose); }
+  .td-bw-sub{ font-size:11px; color:var(--ink-faint); margin-top:4px; line-height:1.4; }
   .td-bar{ transition: opacity .15s; }
   .td-bar:hover{ opacity:0.72; }
 
@@ -5558,6 +5572,74 @@
     }
     return (n<0?'-':'')+'₹'+Math.round(Math.abs(n)).toLocaleString('en-IN');
   }
+  // Max Drawdown mirrors fmtMoney/fmtPnl's hide-amounts behavior (₹ magnitude
+  // becomes a % of capital when hidden) while keeping the plain "-1234" style
+  // (no ₹ symbol) this stat card has always used when amounts are visible.
+  function fmtDrawdown(v){
+    if(!v) return '—';
+    if(appSettings.hideAmounts){
+      const base = capitalBaseForPct();
+      if(!base) return '-••%';
+      return '-'+((v/base)*100).toFixed(2)+'%';
+    }
+    return '-'+Math.round(v);
+  }
+  // Shared compact-number formatter for chart bar labels (P&L by Month, P&L by
+  // Weekday). Previously each chart had its own local fmtCompact() that always
+  // printed a raw ₹ figure ("+45k", "-1.2L") even in hide-amounts mode — the
+  // Best/Worst callouts under the chart correctly switched to %, but the labels
+  // drawn directly on the bars leaked the real rupee amounts. This routes both
+  // through the same hide-amounts check as fmtMoney/fmtPnl.
+  function fmtCompactPnl(v){
+    if(appSettings.hideAmounts){
+      const base = capitalBaseForPct();
+      if(!base) return '••%';
+      const pct = (v/base)*100;
+      return (pct>=0?'+':'-')+Math.abs(pct).toFixed(1)+'%';
+    }
+    const abs = Math.abs(v);
+    const num = abs>=100000 ? (abs/100000).toFixed(1)+'L' : abs>=1000 ? (abs/1000).toFixed(1)+'k' : Math.round(abs).toString();
+    return (v>=0?'+':'-')+num;
+  }
+  // ---- Best/Worst mini-cards (P&L by Month, P&L by Weekday) ----
+  // Friendlier and more informative than a bare "Best: 07/25 +45k" pill: shows
+  // trade count, win rate, and avg P&L/trade so a "best" period backed by one
+  // lucky trade reads differently from one backed by a consistent edge.
+  function monthKeyLabel(key){
+    const d = new Date(key+'-01T00:00:00');
+    return d.toLocaleDateString('en-IN', {month:'short', year:'numeric'});
+  }
+  function bwCardHtml(kind, dateLabel, stats){
+    // kind: 'pos' or 'neg'. stats: {pnl, count, wins}
+    const winRate = stats.count ? Math.round((stats.wins/stats.count)*100) : 0;
+    const avg = stats.count ? stats.pnl/stats.count : 0;
+    const arrow = kind==='pos' ? '▲' : '▼';
+    const label = kind==='pos' ? 'Best' : 'Worst';
+    return `<div class="td-bw-card ${kind}">
+      <div class="td-bw-lbl"><span class="arrow">${arrow}</span> ${label}</div>
+      <div class="td-bw-main">
+        <span class="td-bw-date">${escapeHtml(dateLabel)}</span>
+        <span class="td-bw-val ${kind}">${fmtPnl(Math.round(stats.pnl))}</span>
+      </div>
+      <div class="td-bw-sub">${stats.count} trade${stats.count===1?'':'s'} · ${winRate}% win rate · avg ${fmtPnl(Math.round(avg))}/trade</div>
+    </div>`;
+  }
+  // Single-period fallback (only one month/weekday has data) — showing the
+  // same period as both "Best" and "Worst" was misleading, so this collapses
+  // to one neutral card instead.
+  function bwSingleCardHtml(dateLabel, stats){
+    const winRate = stats.count ? Math.round((stats.wins/stats.count)*100) : 0;
+    const avg = stats.count ? stats.pnl/stats.count : 0;
+    const kind = stats.pnl>=0 ? 'pos' : (stats.pnl<0 ? 'neg' : '');
+    return `<div class="td-bw-card ${kind}">
+      <div class="td-bw-lbl">Only period with data</div>
+      <div class="td-bw-main">
+        <span class="td-bw-date">${escapeHtml(dateLabel)}</span>
+        <span class="td-bw-val ${kind}">${fmtPnl(Math.round(stats.pnl))}</span>
+      </div>
+      <div class="td-bw-sub">${stats.count} trade${stats.count===1?'':'s'} · ${winRate}% win rate · avg ${fmtPnl(Math.round(avg))}/trade</div>
+    </div>`;
+  }
   const EYE_OPEN_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg>';
   const EYE_OFF_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a21.4 21.4 0 0 1 5.06-6.06M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a21.4 21.4 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><path d="M1 1l22 22"/></svg>';
   function refreshAmountVisibilityUI(){
@@ -6256,7 +6338,7 @@
       statCardHtml('Win Rate', m.withPnlCount? Math.round(m.winRate)+'%' : '—', '', m.wins+'W / '+m.losses+'L'),
       statCardHtml('Profit Factor', m.profitFactor===Infinity ? '∞' : (m.grossLoss||m.grossProfit ? m.profitFactor.toFixed(2) : '—')),
       statCardHtml('Avg R-Multiple', m.avgR!==null ? m.avgR.toFixed(2)+'R' : '—'),
-      statCardHtml('Max Drawdown', m.maxDD? '-'+Math.round(m.maxDD) : '—', m.maxDD?'neg':''),
+      statCardHtml('Max Drawdown', fmtDrawdown(m.maxDD), m.maxDD?'neg':''),
       statCardHtml(m.streakType==='loss'?'Losing Streak':'Winning Streak', m.streakCount||0, m.streakType==='loss'?'neg':(m.streakType==='win'?'pos':'')),
       statCardHtml('Total Trades', trades.length),
       statCardHtml('Return on Capital', allTimeReturnPct!==null ? (allTimeReturnPct>=0?'+':'')+allTimeReturnPct.toFixed(1)+'%' : '—', allTimeReturnPct!==null?(allTimeReturnPct>=0?'pos':'neg'):'', 'vs '+capitalBaseSourceLabel()),
@@ -6274,32 +6356,30 @@
     // Value labels are drawn directly on the chart rather than relying on the SVG
     // <title> hover tooltip, which never appears on a touch tap — so on mobile the
     // old version of this chart showed bars with no readable numbers at all. Best/worst
-    // month are also called out below so the takeaway is legible without any interaction.
+    // month are called out below as richer mini-cards (trade count, win rate, avg/trade)
+    // so a "best" month isn't mistaken for a fluke off one big trade.
     const monthlyEl = document.getElementById('tdMonthlyChart');
     if(monthlyEl){
-      const byMonth = {};
+      const monthStats = {};
       (trades||[]).forEach(t=>{
         const n = parseFloat(t.pnl); const bd = tradeBasisDate(t); if(isNaN(n) || !bd) return;
         const key = bd.slice(0,7);
-        byMonth[key] = (byMonth[key]||0) + n;
+        if(!monthStats[key]) monthStats[key] = {pnl:0, count:0, wins:0};
+        monthStats[key].pnl += n; monthStats[key].count++;
+        if(n>0) monthStats[key].wins++;
       });
-      const keys = Object.keys(byMonth).sort().slice(-9);
+      const keys = Object.keys(monthStats).sort().slice(-9);
       if(keys.length===0){
         monthlyEl.innerHTML = '<div class="td-empty-note">No monthly data yet.</div>';
       } else {
-        const fmtCompact = v=>{
-          const abs = Math.abs(v);
-          const num = abs>=100000 ? (abs/100000).toFixed(1)+'L' : abs>=1000 ? (abs/1000).toFixed(1)+'k' : Math.round(abs).toString();
-          return (v>=0?'+':'-')+num;
-        };
-        const vals = keys.map(k=>byMonth[k]);
+        const vals = keys.map(k=>monthStats[k].pnl);
         const maxAbs = Math.max(1, ...vals.map(v=>Math.abs(v)));
         let bestK = keys[0], worstK = keys[0];
-        keys.forEach(k=>{ if(byMonth[k]>byMonth[bestK]) bestK=k; if(byMonth[k]<byMonth[worstK]) worstK=k; });
+        keys.forEach(k=>{ if(monthStats[k].pnl>monthStats[bestK].pnl) bestK=k; if(monthStats[k].pnl<monthStats[worstK].pnl) worstK=k; });
         const w=340, h=160, barW = (w/keys.length)*0.6, gap=(w/keys.length);
         const midY = h/2 - 4;
         const bars = keys.map((k,i)=>{
-          const v = byMonth[k];
+          const v = monthStats[k].pnl;
           const barH = (Math.abs(v)/maxAbs) * (h/2 - 30);
           const x = i*gap + (gap-barW)/2;
           const y = v>=0 ? midY-barH : midY;
@@ -6307,14 +6387,14 @@
           const isStandout = (k===bestK && v>0) || (k===worstK && v<0);
           const valLabelY = v>=0 ? y-4 : y+barH+11;
           return `<rect class="td-bar" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${Math.max(barH,1).toFixed(1)}" rx="2" fill="${v>=0?'var(--teal)':'var(--rose)'}" opacity="${isStandout?1:0.85}"><title>${label}: ${fmtPnl(v)}</title></rect>
-            <text x="${(x+barW/2).toFixed(1)}" y="${valLabelY.toFixed(1)}" text-anchor="middle" class="td-chart-axis-label" style="font-size:8.5px; font-weight:${isStandout?700:500}; fill:${v>=0?'var(--teal)':'var(--rose)'};">${fmtCompact(v)}</text>
+            <text x="${(x+barW/2).toFixed(1)}" y="${valLabelY.toFixed(1)}" text-anchor="middle" class="td-chart-axis-label" style="font-size:8.5px; font-weight:${isStandout?700:500}; fill:${v>=0?'var(--teal)':'var(--rose)'};">${fmtCompactPnl(v)}</text>
             <text x="${(x+barW/2).toFixed(1)}" y="${h-2}" text-anchor="middle" class="td-chart-axis-label" style="font-size:8px;">${label}</text>`;
         }).join('');
+        const bwHtml = bestK===worstK
+          ? bwSingleCardHtml(monthKeyLabel(bestK), monthStats[bestK])
+          : bwCardHtml('pos', monthKeyLabel(bestK), monthStats[bestK]) + bwCardHtml('neg', monthKeyLabel(worstK), monthStats[worstK]);
         monthlyEl.innerHTML = `<svg class="td-chart-svg" viewBox="0 0 ${w} ${h}"><line x1="0" y1="${midY}" x2="${w}" y2="${midY}" stroke="var(--line)" stroke-width="1"/>${bars}</svg>
-          <div class="td-chart-callout-row">
-            <span class="td-chart-callout pos">Best: ${bestK.slice(5,7)}/${bestK.slice(2,4)} ${fmtPnl(Math.round(byMonth[bestK]))}</span>
-            <span class="td-chart-callout neg">Worst: ${worstK.slice(5,7)}/${worstK.slice(2,4)} ${fmtPnl(Math.round(byMonth[worstK]))}</span>
-          </div>`;
+          <div class="td-bw-row">${bwHtml}</div>`;
       }
     }
 
@@ -6322,24 +6402,24 @@
     const weekdayEl = document.getElementById('tdWeekdayChart');
     if(weekdayEl){
       const wdLabels = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-      const byWd = [0,0,0,0,0,0,0];
+      const wdLabelsFull = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+      const wdStats = wdLabels.map(()=>({pnl:0, count:0, wins:0}));
       let anyWd = false;
       (trades||[]).forEach(t=>{
         const n = parseFloat(t.pnl); const bd = tradeBasisDate(t); if(isNaN(n) || !bd) return;
         const dow = new Date(bd+'T00:00:00').getDay();
-        byWd[dow] += n; anyWd = true;
+        wdStats[dow].pnl += n; wdStats[dow].count++;
+        if(n>0) wdStats[dow].wins++;
+        anyWd = true;
       });
       if(!anyWd){
         weekdayEl.innerHTML = '<div class="td-empty-note">No P&amp;L data yet.</div>';
       } else {
-        const fmtCompact = v=>{
-          const abs = Math.abs(v);
-          const num = abs>=100000 ? (abs/100000).toFixed(1)+'L' : abs>=1000 ? (abs/1000).toFixed(1)+'k' : Math.round(abs).toString();
-          return (v>=0?'+':'-')+num;
-        };
+        const byWd = wdStats.map(s=>s.pnl);
         const maxAbs = Math.max(1, ...byWd.map(v=>Math.abs(v)));
-        let bestI = 0, worstI = 0;
-        byWd.forEach((v,i)=>{ if(v>byWd[bestI]) bestI=i; if(v<byWd[worstI]) worstI=i; });
+        const activeIdx = wdStats.map((s,i)=>i).filter(i=>wdStats[i].count>0);
+        let bestI = activeIdx[0], worstI = activeIdx[0];
+        activeIdx.forEach(i=>{ if(byWd[i]>byWd[bestI]) bestI=i; if(byWd[i]<byWd[worstI]) worstI=i; });
         const w=340, h=160, barW = (w/7)*0.6, gap=(w/7);
         const midY = h/2 - 4;
         const bars = byWd.map((v,i)=>{
@@ -6349,14 +6429,14 @@
           const isStandout = (i===bestI && v>0) || (i===worstI && v<0);
           const valLabelY = v>=0 ? y-4 : y+barH+11;
           return `<rect class="td-bar" x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${Math.max(barH,1).toFixed(1)}" rx="2" fill="${v>=0?'var(--teal)':'var(--rose)'}" opacity="${isStandout?1:0.85}"><title>${wdLabels[i]}: ${fmtPnl(Math.round(v))}</title></rect>
-            <text x="${(x+barW/2).toFixed(1)}" y="${valLabelY.toFixed(1)}" text-anchor="middle" class="td-chart-axis-label" style="font-size:8.5px; font-weight:${isStandout?700:500}; fill:${v>=0?'var(--teal)':'var(--rose)'};">${v===0?'':fmtCompact(v)}</text>
+            <text x="${(x+barW/2).toFixed(1)}" y="${valLabelY.toFixed(1)}" text-anchor="middle" class="td-chart-axis-label" style="font-size:8.5px; font-weight:${isStandout?700:500}; fill:${v>=0?'var(--teal)':'var(--rose)'};">${v===0?'':fmtCompactPnl(v)}</text>
             <text x="${(x+barW/2).toFixed(1)}" y="${h-2}" text-anchor="middle" class="td-chart-axis-label" style="font-size:8px;">${wdLabels[i]}</text>`;
         }).join('');
+        const bwHtml = bestI===worstI
+          ? bwSingleCardHtml(wdLabelsFull[bestI], wdStats[bestI])
+          : bwCardHtml('pos', wdLabelsFull[bestI], wdStats[bestI]) + bwCardHtml('neg', wdLabelsFull[worstI], wdStats[worstI]);
         weekdayEl.innerHTML = `<svg class="td-chart-svg" viewBox="0 0 ${w} ${h}"><line x1="0" y1="${midY}" x2="${w}" y2="${midY}" stroke="var(--line)" stroke-width="1"/>${bars}</svg>
-          <div class="td-chart-callout-row">
-            <span class="td-chart-callout pos">Best: ${wdLabels[bestI]} ${fmtPnl(Math.round(byWd[bestI]))}</span>
-            <span class="td-chart-callout neg">Worst: ${wdLabels[worstI]} ${fmtPnl(Math.round(byWd[worstI]))}</span>
-          </div>`;
+          <div class="td-bw-row">${bwHtml}</div>`;
       }
     }
 
@@ -6849,7 +6929,7 @@
       statCardHtml('Kelly Criterion', kellyPct!==null? kellyPct.toFixed(1)+'%' : '—', kellyPct!==null?(kellyPct>=0?'pos':'neg'):'', kellyPct!==null?'of capital, per trade':undefined),
       statCardHtml('Avg Position Size', avgPosSize!==null? fmtCapitalStat(avgPosSize) : '—'),
       statCardHtml('Expectancy / Trade', m.withPnlCount? fmtPnl(Math.round(m.expectancy)) : '—', m.expectancy>=0?'pos':'neg'),
-      statCardHtml('Max Drawdown', m.maxDD? '-'+Math.round(m.maxDD) : '—', m.maxDD?'neg':''),
+      statCardHtml('Max Drawdown', fmtDrawdown(m.maxDD), m.maxDD?'neg':''),
     ].join('');
 
     if(distEl){

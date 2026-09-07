@@ -5965,14 +5965,12 @@
     const troughY = yFor(pts[troughIdx].y);
     const peakLabelY = (peakY - 8 >= padT + 7) ? peakY - 8 : peakY + 13;
     const troughLabelY = (troughY + 13 <= h - padB + 1) ? troughY + 13 : troughY - 8;
-    // Routes through fmtDrawdown so the on-chart label matches the "Max
-    // Drawdown" stat card: a plain "-1234" figure normally, or "-x.xx%" of
-    // capital when Settings → hide amounts is on (it used to always print
-    // the raw rupee number here, leaking amounts hide-mode is meant to hide).
-    const ddLabel = maxDD>0 ? fmtDrawdown(maxDD) : '';
+    // On-chart trough label now just reads "Bottom" (mirroring "Peak") instead
+    // of printing the drawdown figure — the actual number still lives in the
+    // "max DD ..." summary line under the chart title via fmtDrawdown().
     const markerLabels = `
       ${peakIdx>0 ? `<text x="${xFor(peakIdx).toFixed(1)}" y="${peakLabelY.toFixed(1)}" font-size="9" fill="var(--teal)" text-anchor="middle" font-family="IBM Plex Mono">Peak</text>` : ''}
-      ${troughIdx>0 && maxDD>0 ? `<text x="${xFor(troughIdx).toFixed(1)}" y="${troughLabelY.toFixed(1)}" font-size="9" fill="var(--rose)" text-anchor="middle" font-family="IBM Plex Mono">${ddLabel}</text>` : ''}
+      ${troughIdx>0 && maxDD>0 ? `<text x="${xFor(troughIdx).toFixed(1)}" y="${troughLabelY.toFixed(1)}" font-size="9" fill="var(--rose)" text-anchor="middle" font-family="IBM Plex Mono">Bottom</text>` : ''}
     `;
 
     containerEl.innerHTML = `

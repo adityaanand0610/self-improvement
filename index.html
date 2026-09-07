@@ -2630,6 +2630,7 @@
         <button class="trade-subnav-btn active" data-tpanel="overview">Overview</button>
         <button class="trade-subnav-btn" data-tpanel="history">History</button>
         <button class="trade-subnav-btn" data-tpanel="analytics">Analytics</button>
+        <button class="trade-subnav-btn" data-tpanel="lessons">Lessons</button>
         <button class="trade-subnav-btn entry-btn" data-tpanel="entry">+ New Trade</button>
       </div>
       <button class="amount-visibility-toggle" id="tradeAmountToggleBtn" title="Showing ₹ amounts — tap to hide" aria-label="Toggle amount visibility"></button>
@@ -2640,6 +2641,20 @@
       <div id="tdDailyLimitBanner"></div>
       <div class="td-hero-card" id="tdHeroCard"></div>
       <div class="td-stat-grid" id="tdOverviewStats"></div>
+      <div class="td-card" id="tdLessonsCarouselCard" style="display:none;">
+        <div class="td-card-head" style="flex-wrap:wrap; gap:8px;">
+          <span>Lessons Reminder</span>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <button class="eq-range-btn" id="lessonsCarouselPrevBtn" aria-label="Previous lesson" style="padding:4px 10px;">‹</button>
+            <span class="td-card-sub" id="lessonsCarouselPos" style="margin:0; display:block;"></span>
+            <button class="eq-range-btn" id="lessonsCarouselNextBtn" aria-label="Next lesson" style="padding:4px 10px;">›</button>
+          </div>
+        </div>
+        <div id="lessonsCarouselViewport" style="overflow:hidden;">
+          <div id="lessonsCarouselTrack" style="display:flex; transition:transform .35s var(--ease);"></div>
+        </div>
+        <div id="lessonsCarouselDots" style="display:flex; gap:6px; justify-content:center; margin-top:12px;"></div>
+      </div>
       <div class="td-card" id="tdOpenAllocCard" style="display:none;">
         <div class="td-card-head" style="flex-wrap:wrap; gap:8px;">
           <span>Open Position Allocation</span>
@@ -2881,6 +2896,18 @@
           <div class="fy-compare-row" id="cmpResultRow"></div>
         </div>
       </div>
+    </div>
+
+    <!-- ---- LESSONS PANEL (merged, deduped "one lesson" notes from every trade) ---- -->
+    <div class="trade-panel" id="tpanel-lessons">
+      <div class="td-list-head">
+        <div class="td-card-head" style="margin-bottom:0;"><span>Lessons Learned</span></div>
+        <div class="trades-result-count" id="lessonsResultCount"></div>
+      </div>
+      <div class="td-empty-note" style="text-align:left; padding:0 0 12px;">
+        Every "One lesson" note from your closed trades is grouped here — repeats are merged into one card with a count, so the mistakes you keep making rise to the top instead of getting buried in the log.
+      </div>
+      <div id="lessonsList"></div>
     </div>
 
     <!-- ---- NEW TRADE ENTRY PANEL ---- -->
@@ -3411,11 +3438,11 @@
       <div class="modal-title">Import Trades from CSV</div>
       <div id="csvImportStep1">
         <div class="modal-field">
-          <label>Broker tradebook or generic CSV</label>
-          <input type="file" id="csvImportFile" accept=".csv,text/csv">
+          <label>Broker tradebook (CSV or XLSX) or generic CSV</label>
+          <input type="file" id="csvImportFile" accept=".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel">
         </div>
         <div class="td-empty-note" style="text-align:left; padding:8px 0 0;">
-          Zerodha Console equity tradebook exports are detected automatically — buy/sell legs get matched FIFO into round-trip trades. Any other broker: export/save as a CSV with columns <b>Ticker, Entry Date, Entry Price, Exit Date, Exit Price, Qty</b> (Direction optional).
+          Zerodha Console and Groww tradebook/order-history exports (.csv or .xlsx) are detected automatically — buy/sell legs get matched FIFO into round-trip trades. Any other broker: export/save as a CSV with columns <b>Ticker, Entry Date, Entry Price, Exit Date, Exit Price, Qty</b> (Direction optional).
         </div>
         <div id="csvImportError" class="td-empty-note" style="color:var(--rose); display:none; text-align:left; padding-top:8px;"></div>
       </div>
@@ -5153,25 +5180,100 @@
     };
   }
 
-  function detectAndParseCsv(text){
-    const {headers, records} = parseCSV(text);
+  // ---- Header aliasing: lets the same detector understand Zerodha's exact
+  // column names *and* Groww's (and most other brokers') differently-worded
+  // tradebook headers, without needing a bespoke parser per broker. ----
+  const LEG_HEADER_ALIASES = {
+    symbol: ['symbol','stock name','stock','scrip','scrip name','company','company name','name','trading symbol','tradingsymbol','instrument'],
+    trade_date: ['trade_date','trade date','date','order date','execution date'],
+    trade_type: ['trade_type','trade type','type','order type','txn type','transaction type','buy/sell','side'],
+    quantity: ['quantity','qty','quantity (shares)','shares','filled qty','filled quantity'],
+    price: ['price','trade price','avg price','average price','avg. price','rate'],
+    exec_time: ['order_execution_time','order execution time','time','trade time','execution time']
+  };
+  const GENERIC_HEADER_ALIASES = {
+    ticker: ['ticker','symbol','stock name','stock'],
+    entryDate: ['entry date','buy date'],
+    entryPrice: ['entry price','buy price'],
+    exitDate: ['exit date','sell date'],
+    exitPrice: ['exit price','sell price'],
+    qty: ['qty','quantity'],
+    direction: ['direction','side']
+  };
+  function mapHeaders(headers, aliasTable){
+    const map = {};
+    Object.keys(aliasTable).forEach(canon=>{
+      const found = aliasTable[canon].find(a=> headers.includes(a));
+      if(found) map[canon] = found;
+    });
+    return map;
+  }
+  function normalizeTradeType(v){
+    const s = (v||'').toString().trim().toLowerCase();
+    if(s.startsWith('b')) return 'buy';
+    if(s.startsWith('s')) return 'sell';
+    return s;
+  }
+
+  function tradesFromRecords(headers, records){
     if(!records.length) throw new Error('No data rows found in that file.');
-    const has = (h)=> headers.includes(h);
-    if(has('symbol') && has('trade_type') && has('quantity') && has('price') && has('trade_date')){
-      // Zerodha Console tradebook format
-      const legTrades = fifoReconstructFromLegs(records);
+    // Path 1: one row per buy/sell leg (Zerodha, Groww, and most other Indian
+    // broker tradebook exports). Legs get matched FIFO per symbol into round trips.
+    const legMap = mapHeaders(headers, LEG_HEADER_ALIASES);
+    if(legMap.symbol && legMap.trade_type && legMap.quantity && legMap.price && legMap.trade_date){
+      const normalized = records.map(r=> ({
+        symbol: r[legMap.symbol],
+        trade_type: normalizeTradeType(r[legMap.trade_type]),
+        quantity: r[legMap.quantity],
+        price: r[legMap.price],
+        trade_date: r[legMap.trade_date],
+        order_execution_time: legMap.exec_time ? r[legMap.exec_time] : ''
+      }));
+      const legTrades = fifoReconstructFromLegs(normalized);
       if(!legTrades.length) throw new Error('Found broker rows but could not match any complete buy/sell round trips.');
       return legTrades.map(buildTradeObject);
     }
-    const hasGeneric = ['ticker','entry date','entry price','exit date','exit price','qty']
-      .every(h=> headers.includes(h));
+    // Path 2: one row per already-closed round trip.
+    const gMap = mapHeaders(headers, GENERIC_HEADER_ALIASES);
+    const hasGeneric = ['ticker','entryDate','entryPrice','exitDate','exitPrice','qty'].every(k=> gMap[k]);
     if(hasGeneric){
       return records.map(r=> buildTradeObject({
-        ticker: r['ticker'], entryDT: r['entry date'], entryPrice: r['entry price'],
-        exitDT: r['exit date'], exitPrice: r['exit price'], qty: r['qty'], direction: r['direction']
+        ticker: r[gMap.ticker], entryDT: r[gMap.entryDate], entryPrice: r[gMap.entryPrice],
+        exitDT: r[gMap.exitDate], exitPrice: r[gMap.exitPrice], qty: r[gMap.qty],
+        direction: gMap.direction ? r[gMap.direction] : ''
       })).filter(t=>t.ticker);
     }
-    throw new Error('Unrecognized CSV format. Expected a Zerodha tradebook export, or columns: Ticker, Entry Date, Entry Price, Exit Date, Exit Price, Qty.');
+    throw new Error('Unrecognized file format. Expected a broker tradebook export (Zerodha, Groww, etc.), or columns: Ticker, Entry Date, Entry Price, Exit Date, Exit Price, Qty.');
+  }
+
+  function detectAndParseCsv(text){
+    const {headers, records} = parseCSV(text);
+    return tradesFromRecords(headers, records);
+  }
+
+  // Groww's own tradebook/order-history export comes as .xlsx, not .csv — read
+  // it with the SheetJS lib already loaded in this page, normalize the sheet
+  // into the same {headers, records} shape the CSV path uses, and reuse the
+  // exact same alias-based detector above.
+  function xlsxCellToStr(v){
+    if(v instanceof Date){
+      const pad = n=> String(n).padStart(2,'0');
+      return v.getFullYear()+'-'+pad(v.getMonth()+1)+'-'+pad(v.getDate())+' '+pad(v.getHours())+':'+pad(v.getMinutes())+':'+pad(v.getSeconds());
+    }
+    return (v===undefined||v===null) ? '' : String(v).trim();
+  }
+  function tradesFromXlsx(arrayBuffer){
+    const wb = XLSX.read(arrayBuffer, {type:'array', cellDates:true});
+    const sheet = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(sheet, {defval:'', raw:true});
+    if(!rows.length) throw new Error('No data rows found in that file.');
+    const headers = Object.keys(rows[0]).map(h=>h.trim().toLowerCase());
+    const records = rows.map(row=>{
+      const obj = {};
+      Object.keys(row).forEach(k=>{ obj[k.trim().toLowerCase()] = xlsxCellToStr(row[k]); });
+      return obj;
+    });
+    return tradesFromRecords(headers, records);
   }
 
   function isDuplicateTrade(t){
@@ -5199,10 +5301,11 @@
     if(!file) return;
     const errEl = document.getElementById('csvImportError');
     errEl.style.display = 'none';
+    const isExcel = /\.(xlsx|xls)$/i.test(file.name);
     const reader = new FileReader();
     reader.onload = ()=>{
       try{
-        const parsed = detectAndParseCsv(reader.result);
+        const parsed = isExcel ? tradesFromXlsx(reader.result) : detectAndParseCsv(reader.result);
         const withDupFlag = parsed.map(t=> ({...t, _dup: isDuplicateTrade(t)}));
         csvImportParsedTrades = withDupFlag;
         const newCount = withDupFlag.filter(t=>!t._dup).length;
@@ -5226,7 +5329,7 @@
         errEl.style.display = 'block';
       }
     };
-    reader.readAsText(file);
+    if(isExcel) reader.readAsArrayBuffer(file); else reader.readAsText(file);
   });
 
   document.getElementById('csvImportConfirmBtn').addEventListener('click', ()=>{
@@ -6979,6 +7082,140 @@
       });
     }
   }
+
+  // ================= Lessons panel + Overview carousel (merged/deduped "one lesson" notes) =================
+  // Groups every trade's lesson text so the same mistake written more than once
+  // collapses into a single reminder card with a repeat count, instead of showing
+  // up over and over in the trade list. Shared by the Lessons tab and the
+  // Overview carousel so both stay in sync off one source of truth.
+  function normalizeLessonKey(s){
+    return (s||'').trim().toLowerCase().replace(/\s+/g,' ').replace(/[.!?]+$/,'');
+  }
+
+  function computeLessonGroups(){
+    const groups = {};
+    (db.trades||[]).forEach(t=>{
+      const raw = (t.lesson||'').trim();
+      if(!raw) return;
+      const key = normalizeLessonKey(raw);
+      if(!key) return;
+      if(!groups[key]) groups[key] = { text: raw, count: 0, trades: [] };
+      groups[key].count++;
+      groups[key].trades.push(t);
+      // Prefer the longest phrasing of a repeated lesson as the display text —
+      // usually the most complete version of what you wrote.
+      if(raw.length > groups[key].text.length) groups[key].text = raw;
+    });
+    return Object.values(groups).sort((a,b)=>{
+      if(b.count !== a.count) return b.count - a.count;
+      const lastA = a.trades.reduce((m,t)=> (t.date||'')>m?(t.date||''):m, '');
+      const lastB = b.trades.reduce((m,t)=> (t.date||'')>m?(t.date||''):m, '');
+      return lastB.localeCompare(lastA);
+    });
+  }
+
+  function lessonChipsHtml(trades){
+    const sorted = trades.slice().sort((a,b)=> (b.date||'').localeCompare(a.date||''));
+    const chips = sorted.slice(0,8).map(t=>{
+      const out = tradeOutcome(t);
+      const color = out==='win' ? 'var(--teal)' : out==='loss' ? 'var(--rose)' : 'var(--ink-faint)';
+      const d = t.date ? new Date(t.date+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short'}) : '';
+      return `<span style="display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:999px; background:var(--surface-raised); font-size:11px; color:var(--ink-dim); margin:0 6px 6px 0;">
+        <span style="width:6px; height:6px; border-radius:50%; background:${color}; flex:0 0 auto;"></span>${escapeHtml(t.ticker||'—')}${d?' · '+d:''}
+      </span>`;
+    }).join('');
+    const more = sorted.length>8 ? `<span style="font-size:11px; color:var(--ink-faint); align-self:center;">+${sorted.length-8} more</span>` : '';
+    return chips+more;
+  }
+
+  function lessonCardHtml(g, opts){
+    opts = opts || {};
+    const repeated = g.count>1;
+    return `<div class="td-card" style="${opts.noMargin?'':'margin-bottom:12px;'}">
+      <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:10px;">
+        <div style="font-size:14px; font-weight:600; color:var(--ink); line-height:1.45;">${escapeHtml(g.text)}</div>
+        <div style="flex:0 0 auto; font-size:12px; font-weight:700; padding:3px 9px; border-radius:999px; white-space:nowrap; background:${repeated?'var(--rose-bg)':'var(--surface-raised)'}; color:${repeated?'var(--rose)':'var(--ink-faint)'};">
+          ×${g.count}${repeated?' repeats':''}
+        </div>
+      </div>
+      <div style="margin-top:10px; display:flex; flex-wrap:wrap; align-items:center;">${lessonChipsHtml(g.trades)}</div>
+    </div>`;
+  }
+
+  function renderLessonsPanel(){
+    const listEl = document.getElementById('lessonsList');
+    const countEl = document.getElementById('lessonsResultCount');
+    if(!listEl) return;
+    const list = computeLessonGroups();
+    if(countEl) countEl.textContent = list.length ? `${list.length} lesson${list.length===1?'':'s'}` : '';
+    if(!list.length){
+      listEl.innerHTML = '<div class="td-empty-note">No lessons logged yet — add a "One lesson" note when you close a trade and it\'ll show up here, merged with any repeats.</div>';
+      return;
+    }
+    listEl.innerHTML = list.map(g=> lessonCardHtml(g)).join('');
+  }
+
+  // ---- Overview carousel: cycles one lesson card at a time so the reminder
+  // is visible right where you land, without pushing every lesson into view. ----
+  let lessonsCarouselIndex = 0;
+  let lessonsCarouselTimer = null;
+
+  function restartLessonsAutoplay(){
+    if(lessonsCarouselTimer){ clearInterval(lessonsCarouselTimer); lessonsCarouselTimer = null; }
+    const list = computeLessonGroups();
+    if(list.length>1) lessonsCarouselTimer = setInterval(()=> stepLessonCarousel(1), 6000);
+  }
+
+  function goToLessonSlide(i){
+    const track = document.getElementById('lessonsCarouselTrack');
+    if(!track) return;
+    const list = computeLessonGroups();
+    if(!list.length) return;
+    const n = list.length;
+    const idx = ((i % n) + n) % n;
+    lessonsCarouselIndex = idx;
+    track.style.transform = `translateX(-${idx*100}%)`;
+    document.querySelectorAll('#lessonsCarouselDots .lessons-carousel-dot').forEach(d=>
+      d.style.background = (parseInt(d.dataset.idx,10)===idx) ? 'var(--accent)' : 'var(--line)');
+    const posEl = document.getElementById('lessonsCarouselPos');
+    if(posEl) posEl.textContent = `${idx+1} / ${n}`;
+  }
+
+  function stepLessonCarousel(delta){
+    goToLessonSlide(lessonsCarouselIndex + delta);
+  }
+
+  function renderLessonsCarousel(){
+    const card = document.getElementById('tdLessonsCarouselCard');
+    const track = document.getElementById('lessonsCarouselTrack');
+    const dots = document.getElementById('lessonsCarouselDots');
+    if(!card || !track) return;
+    const list = computeLessonGroups();
+    if(!list.length){
+      card.style.display = 'none';
+      if(lessonsCarouselTimer){ clearInterval(lessonsCarouselTimer); lessonsCarouselTimer = null; }
+      return;
+    }
+    card.style.display = '';
+    if(lessonsCarouselIndex >= list.length) lessonsCarouselIndex = 0;
+    track.innerHTML = list.map(g=> `<div style="flex:0 0 100%; max-width:100%; box-sizing:border-box; padding:2px;">${lessonCardHtml(g, {noMargin:true})}</div>`).join('');
+    dots.innerHTML = list.map((_,i)=> `<button class="lessons-carousel-dot" data-idx="${i}" aria-label="Go to lesson ${i+1}" style="width:6px; height:6px; border-radius:50%; border:none; padding:0; cursor:pointer; background:var(--line);"></button>`).join('');
+    goToLessonSlide(lessonsCarouselIndex);
+    restartLessonsAutoplay();
+  }
+
+  const lessonsCarouselPrevBtn = document.getElementById('lessonsCarouselPrevBtn');
+  const lessonsCarouselNextBtn = document.getElementById('lessonsCarouselNextBtn');
+  if(lessonsCarouselPrevBtn) lessonsCarouselPrevBtn.addEventListener('click', ()=>{ stepLessonCarousel(-1); restartLessonsAutoplay(); });
+  if(lessonsCarouselNextBtn) lessonsCarouselNextBtn.addEventListener('click', ()=>{ stepLessonCarousel(1); restartLessonsAutoplay(); });
+  const lessonsCarouselDotsEl = document.getElementById('lessonsCarouselDots');
+  if(lessonsCarouselDotsEl) lessonsCarouselDotsEl.addEventListener('click', (e)=>{
+    const btn = e.target.closest('.lessons-carousel-dot');
+    if(!btn) return;
+    goToLessonSlide(parseInt(btn.dataset.idx,10));
+    restartLessonsAutoplay();
+  });
+
   // Activates one trade sub-panel (Overview/History/Calendar/Analytics/New Trade) and
   // keeps the subnav button state in sync. Shared by the subnav click handler and editTrade(),
   // so opening the entry form for editing reliably shows the form instead of whatever panel
@@ -8827,6 +9064,8 @@
     renderRecordStats();
     renderTradesList();
     renderTradeStats();
+    renderLessonsPanel();
+    renderLessonsCarousel();
     renderNotesList();
     renderGoals();
     renderTodos();

@@ -2714,6 +2714,23 @@
         <div class="td-card-sub" id="tdRocDepCapRange" style="margin-bottom:6px; display:block;"></div>
         <div id="tdRocDepCapChart"></div>
       </div>
+      <div class="td-card" id="tdXirrCard" style="display:none;">
+        <div class="td-card-head"><span>Portfolio XIRR</span></div>
+        <div class="td-card-sub" style="margin-bottom:8px; display:block;">Annualized return across every deposit &amp; withdrawal in Capital History, weighted by exactly when each one happened — the same math brokerage apps use for "XIRR", not a simple average.</div>
+        <div class="td-hero-stats-row" style="margin:2px 0 14px;">
+          <div class="td-hero-stat"><div class="td-hero-stat-lbl">XIRR (annualized)</div><div class="td-hero-stat-val" id="tdXirrStat">—</div></div>
+          <div class="td-hero-stat"><div class="td-hero-stat-lbl">Current Value</div><div class="td-hero-stat-val" id="tdXirrCurrentVal">—</div></div>
+          <div class="td-hero-stat"><div class="td-hero-stat-lbl">Net Invested</div><div class="td-hero-stat-val" id="tdXirrNetInvested">—</div></div>
+        </div>
+        <div style="font-size:12px; font-weight:600; color:var(--ink-dim); margin-bottom:4px;">Portfolio Value Over Time (₹)</div>
+        <div class="td-card-sub" id="tdXirrSub" style="margin-bottom:6px; display:block;"></div>
+        <div id="tdXirrChart"></div>
+      </div>
+      <div class="td-card" id="tdTopRocCard" style="display:none;">
+        <div class="td-card-head"><span>Top 5 · Return on Capital</span></div>
+        <div class="td-card-sub" style="margin-bottom:8px; display:block;">Best individual closed trades by P&amp;L as a % of the capital each one tied up — highest to lowest.</div>
+        <div id="tdTopRocList"></div>
+      </div>
       <div class="td-card">
         <div class="td-card-head"><span>P&amp;L by Weekday</span></div>
         <div id="tdWeekdayChart"></div>
@@ -2839,14 +2856,14 @@
           <div id="tdByTimeframe"></div>
         </div>
         <div class="td-card">
-          <div class="td-card-head"><span>Performance by Sector</span></div>
-          <div class="td-card-sub" style="margin-bottom:8px; display:block;">Auto-classified from company name — best-effort, correct any misclassified ticker in Settings → Sector Overrides.</div>
-          <div id="tdBySector"></div>
-        </div>
-        <div class="td-card">
           <div class="td-card-head"><span>Performance by Position Size</span></div>
           <div class="td-card-sub" style="margin-bottom:8px; display:block;">Small / Medium / Large relative to your own trade history, not a fixed rupee cutoff.</div>
           <div id="tdByPosSize"></div>
+        </div>
+        <div class="td-card">
+          <div class="td-card-head"><span>Return on Capital vs Holding Period</span></div>
+          <div class="td-card-sub" id="tdRocHoldSub" style="margin-bottom:8px; display:block;"></div>
+          <div id="tdRocHoldChart"></div>
         </div>
       </div>
 
@@ -3362,45 +3379,6 @@
       </div>
     </div>
 
-    <div class="section-label">Broker Sync</div>
-    <div class="dashboard-grid">
-      <div class="card" style="grid-column: 1 / -1;">
-        <div class="card-title">Groww API — Auto Sync</div>
-        <p style="font-size:12.5px; color:var(--ink-dim); margin-bottom:10px;">
-          Pull your executed trades straight from Groww's official Trading API instead of downloading a P&amp;L Statement every time. Groww's API needs to be called from a server (it isn't reachable directly from a browser, and your API key shouldn't live in this page's code) — deploy the small proxy function included alongside this app once, then paste its URL below. Takes about 10 minutes; see <b>groww-sync-function/README.md</b> for the walkthrough.
-        </p>
-        <div class="modal-field" style="margin-bottom:10px;">
-          <label>Proxy Function URL</label>
-          <input type="text" id="growwSyncEndpoint" placeholder="https://your-region-your-project.cloudfunctions.net/growwSync">
-        </div>
-        <div class="modal-field" style="margin-bottom:10px;">
-          <label>Sync Secret</label>
-          <input type="password" id="growwSyncSecret" placeholder="Shared secret you set when deploying the proxy">
-        </div>
-        <div class="toggle-row" style="padding:8px 0;">
-          <div>
-            <div class="toggle-label">Auto-sync on app load</div>
-            <div class="toggle-sub">Quietly checks for new trades once a day when you open the app</div>
-          </div>
-          <label class="switch"><input type="checkbox" id="growwAutoSyncToggle"><span class="switch-track"></span></label>
-        </div>
-        <div style="display:flex; align-items:center; gap:10px; margin-top:4px; flex-wrap:wrap;">
-          <button class="btn primary" id="growwSyncNowBtn">⇄ Sync Now</button>
-          <span id="growwSyncStatus" style="display:flex; align-items:center; gap:6px; font-size:12px; color:var(--ink-dim);"><span class="dot" style="width:6px;height:6px;border-radius:50%;background:var(--ink-faint);"></span><span id="growwSyncStatusText">Not connected</span></span>
-        </div>
-      </div>
-      <div class="card" style="grid-column: 1 / -1;">
-        <div class="card-title">Sector Overrides</div>
-        <p style="font-size:12.5px; color:var(--ink-dim); margin-bottom:12px;">Sector is auto-classified from the company name for Performance by Sector. Fix any ticker it got wrong (or classify one it didn't recognize) here — your overrides always win over the built-in guess.</p>
-        <div class="subjects-manager-list" id="sectorOverridesList"></div>
-        <div style="display:flex; gap:8px; flex-wrap:wrap;">
-          <input type="text" id="sectorOverrideTicker" placeholder="Ticker, e.g. SYRMA SGS TECHNOLOGY LTD" style="flex:2; min-width:180px;">
-          <input type="text" id="sectorOverrideSector" placeholder="Sector, e.g. Electronics Manufacturing" style="flex:1; min-width:140px;">
-          <button class="btn ghost" id="sectorOverrideAddBtn">Add</button>
-        </div>
-      </div>
-    </div>
-
     <div class="section-label">About &amp; Support</div>
     <div class="card">
       <details class="form-section" style="margin-bottom:10px;" open>
@@ -3704,9 +3682,9 @@
   function loadAppSettings(){
     try{
       const raw = localStorage.getItem(APP_SETTINGS_KEY);
-      if(raw) return Object.assign({focusMins:25, breakMins:5, longBreakMins:15, notifications:false, isTrader:true, displayName:'', desktopLayout:'full', dailyTargetPct:70, autoTheme:false, accountCapital:'', maxRiskPct:'', dailyLossLimit:'', hideAmounts:false, growwSync:{endpoint:'',secret:'',autoSync:false,lastSyncAt:''}}, JSON.parse(raw));
+      if(raw) return Object.assign({focusMins:25, breakMins:5, longBreakMins:15, notifications:false, isTrader:true, displayName:'', desktopLayout:'full', dailyTargetPct:70, autoTheme:false, accountCapital:'', maxRiskPct:'', dailyLossLimit:'', hideAmounts:false}, JSON.parse(raw));
     }catch(e){}
-    return {focusMins:25, breakMins:5, longBreakMins:15, notifications:false, isTrader:true, displayName:'', desktopLayout:'full', dailyTargetPct:70, autoTheme:false, accountCapital:'', maxRiskPct:'', dailyLossLimit:'', hideAmounts:false, growwSync:{endpoint:'',secret:'',autoSync:false,lastSyncAt:''}};
+    return {focusMins:25, breakMins:5, longBreakMins:15, notifications:false, isTrader:true, displayName:'', desktopLayout:'full', dailyTargetPct:70, autoTheme:false, accountCapital:'', maxRiskPct:'', dailyLossLimit:'', hideAmounts:false};
   }
   let appSettings = loadAppSettings();
   applyGrowwMode();
@@ -3827,7 +3805,7 @@
       const raw = localStorage.getItem(DB_KEY);
       if(raw) return JSON.parse(raw);
     }catch(e){}
-    return {days:{}, subjects: DEFAULT_SUBJECTS.slice(), streak:0, bestStreak:0, schedule: JSON.parse(JSON.stringify(DEFAULT_SCHEDULE)), trades:[], tradeCharges:[], tickerSectors:{}, notes:[], notesPin:'', goals:[], todos:[], inbox:[], weeklyReviews:{}, revisions:[], customHabits: JSON.parse(JSON.stringify(DEFAULT_CUSTOM_HABITS)), gymPlan: JSON.parse(JSON.stringify(DEFAULT_GYM_PLAN)), gymLogs:[], capitalHistory:[]};
+    return {days:{}, subjects: DEFAULT_SUBJECTS.slice(), streak:0, bestStreak:0, schedule: JSON.parse(JSON.stringify(DEFAULT_SCHEDULE)), trades:[], tradeCharges:[], notes:[], notesPin:'', goals:[], todos:[], inbox:[], weeklyReviews:{}, revisions:[], customHabits: JSON.parse(JSON.stringify(DEFAULT_CUSTOM_HABITS)), gymPlan: JSON.parse(JSON.stringify(DEFAULT_GYM_PLAN)), gymLogs:[], capitalHistory:[]};
   }
 
   // ---------- Firebase ----------
@@ -3893,7 +3871,6 @@
         if(!db.schedule) db.schedule = JSON.parse(JSON.stringify(DEFAULT_SCHEDULE));
         if(!db.trades) db.trades = [];
         if(!db.tradeCharges) db.tradeCharges = [];
-        if(!db.tickerSectors) db.tickerSectors = {};
         if(!db.notes) db.notes = [];
         if(!db.notesPin) db.notesPin = '';
         if(!db.goals) db.goals = [];
@@ -3936,7 +3913,6 @@
   if(!db.schedule) db.schedule = JSON.parse(JSON.stringify(DEFAULT_SCHEDULE));
   if(!db.trades) db.trades = [];
   if(!db.tradeCharges) db.tradeCharges = [];
-  if(!db.tickerSectors) db.tickerSectors = {};
   if(!db.notes) db.notes = [];
   if(!db.notesPin) db.notesPin = '';
   if(!db.goals) db.goals = [];
@@ -5608,10 +5584,9 @@
     if(isExcel) reader.readAsArrayBuffer(file); else reader.readAsText(file);
   });
 
-  // Shared by the manual CSV/XLSX import confirm button and the Groww API
-  // auto-sync — same upsert-open-positions + file-charges-once behavior
-  // either way, so trades imported through the API line up exactly with
-  // trades imported by hand.
+  // Shared merge/upsert logic used whenever trades are imported from a file
+  // (CSV/XLSX P&L statement) — keeps the same upsert-open-positions +
+  // file-charges-once behavior across every import.
   function mergeTradesIntoDb(parsedTrades, chargesMeta){
     let addedCount=0, updatedCount=0;
     parsedTrades.forEach(t=>{
@@ -5643,83 +5618,7 @@
     closeCsvImport();
   });
 
-  // ================= Groww API Auto-Sync =====================================
-  // Groww's Trading API can't be called directly from a static page (no CORS
-  // allowance, and an API key/secret would sit exposed in this page's
-  // source) — so this calls a small proxy function the user deploys once
-  // (see groww-sync-function/ alongside this file). The proxy is expected
-  // to return raw buy/sell legs shaped exactly like a broker tradebook row
-  // — {symbol, trade_type, quantity, price, trade_date, order_execution_time}
-  // — so the same fifoReconstructFromLegs + buildTradeObject pipeline used
-  // for file imports handles API-synced trades too. One code path means an
-  // API-synced trade and a file-imported one can never be interpreted
-  // differently.
-  function updateGrowwSyncStatusText(){
-    const dotWrap = document.getElementById('growwSyncStatus');
-    const textEl = document.getElementById('growwSyncStatusText');
-    if(!textEl) return;
-    const dot = dotWrap ? dotWrap.querySelector('.dot') : null;
-    const gs = appSettings.growwSync || {};
-    if(!gs.endpoint){
-      textEl.textContent = 'Not connected';
-      if(dot) dot.style.background = 'var(--ink-faint)';
-    } else if(gs.lastSyncAt){
-      textEl.textContent = 'Last synced '+new Date(gs.lastSyncAt).toLocaleString('en-IN');
-      if(dot) dot.style.background = 'var(--teal)';
-    } else {
-      textEl.textContent = 'Connected — not yet synced';
-      if(dot) dot.style.background = 'var(--accent)';
-    }
-  }
-  async function growwSyncNow(manual){
-    const gs = appSettings.growwSync || {};
-    if(!gs.endpoint){
-      if(manual) showToast('Add your proxy function URL first (Settings → Broker Sync).', 'error');
-      return;
-    }
-    const textEl = document.getElementById('growwSyncStatusText');
-    const dot = document.getElementById('growwSyncStatus') ? document.getElementById('growwSyncStatus').querySelector('.dot') : null;
-    if(textEl) textEl.textContent = 'Syncing…';
-    if(dot) dot.style.background = 'var(--accent)';
-    try{
-      const sep = gs.endpoint.includes('?') ? '&' : '?';
-      const url = gs.endpoint + sep + 'since=' + encodeURIComponent(gs.lastSyncAt||'');
-      const res = await fetch(url, { headers: { 'Authorization': 'Bearer '+(gs.secret||'') } });
-      if(!res.ok) throw new Error('Proxy returned HTTP '+res.status);
-      const data = await res.json();
-      if(data.error) throw new Error(data.error);
-      const legs = Array.isArray(data.legs) ? data.legs : [];
-      const legTrades = fifoReconstructFromLegs(legs);
-      const parsed = legTrades.map(buildTradeObject).map(t=>{
-        if(!t.exitDT){
-          const match = findOpenPositionMatch(t);
-          if(match) return {...t, _upsertId: match.id};
-        }
-        return {...t, _dup: isDuplicateTrade(t)};
-      });
-      const {addedCount, updatedCount} = mergeTradesIntoDb(parsed, null);
-      appSettings.growwSync = Object.assign({}, gs, {lastSyncAt: new Date().toISOString()});
-      saveAppSettings();
-      updateGrowwSyncStatusText();
-      if(addedCount || updatedCount) renderAll();
-      if(manual) showToast(`Synced from Groww — ${addedCount} new trade${addedCount===1?'':'s'}${updatedCount?`, ${updatedCount} updated`:''}.`, 'success');
-    } catch(err){
-      console.error(err);
-      if(textEl) textEl.textContent = 'Sync failed — check the proxy URL & secret';
-      if(dot) dot.style.background = 'var(--rose)';
-      if(manual) showToast('Groww sync failed: '+(err.message||'unknown error'), 'error');
-    }
-  }
-  // Quiet once-a-day auto-sync, only if the user opted in and has already
-  // connected an endpoint — never nags or retries aggressively on failure.
-  (function maybeAutoSyncGroww(){
-    const gs = appSettings.growwSync || {};
-    if(!gs.autoSync || !gs.endpoint) return;
-    const last = gs.lastSyncAt ? Date.parse(gs.lastSyncAt) : 0;
-    if(Date.now() - last > 20*60*60*1000){ // ~once/day, with slack for whenever the app happens to be opened
-      setTimeout(()=> growwSyncNow(false), 2000);
-    }
-  })();
+
 
 
   // Trade History: search text, sort mode, and outcome filter — kept live in one place
@@ -5758,6 +5657,33 @@
     const raw = t.exitDT || t.entryDT || (t.date ? t.date+'T00:00' : '');
     const ts = raw ? Date.parse(raw) : NaN;
     return isNaN(ts) ? 0 : ts;
+  }
+
+  // ---- Per-trade Return on Capital % & Holding Period ---------------------
+  // Return on Capital here is per-trade — P&L as a % of the capital that
+  // specific trade tied up (posSize), not the account-wide "Return on
+  // Capital vs Deposits" chart above. Holding period is calendar days
+  // between entry and exit. Both need a closed trade with a real position
+  // size to mean anything, so open trades / trades missing posSize or exit
+  // timestamps are excluded rather than guessed at.
+  function tradeHoldingDays(t){
+    if(!t.entryDT || !t.exitDT) return null;
+    const entryT = Date.parse(t.entryDT), exitT = Date.parse(t.exitDT);
+    if(isNaN(entryT) || isNaN(exitT)) return null;
+    const days = (exitT-entryT)/86400000;
+    return days>=0 ? days : null;
+  }
+  function tradeRocPct(t){
+    const pnl = parseFloat(t.pnl), size = parseFloat(t.posSize);
+    if(isNaN(pnl) || isNaN(size) || size<=0) return null;
+    return (pnl/size)*100;
+  }
+  // Trades with both a valid ROC% and holding period, ready to plot/rank.
+  function rocHoldPairs(trades){
+    return (trades||[]).map(t=>{
+      const roc = tradeRocPct(t), days = tradeHoldingDays(t);
+      return {t, roc, days};
+    }).filter(r=> r.roc!==null && r.days!==null);
   }
 
   // ---- Capital deployed & return-on-capital ----------------------------
@@ -6522,6 +6448,176 @@
     return points;
   }
 
+  // ---- Portfolio XIRR calculator -------------------------------------------
+  // XIRR (extended internal rate of return) is what brokerage/mutual-fund
+  // apps show as "your annualized return" — it solves for the single
+  // constant annual rate that discounts every dated cash flow (each
+  // deposit as money going out of your pocket, each withdrawal + the
+  // portfolio's current value as money coming back) down to a net present
+  // value of zero. Unlike a flat "total return / years", it correctly
+  // weights money that was only in the account for a short time less than
+  // money that's been compounding for years — same idea as Excel's XIRR().
+
+  // Total portfolio value right now = net capital ever contributed + all
+  // realized P&L (closed trades) + all unrealized/marked P&L (open trades
+  // that have a mark price set) — the closest this app can get to "what
+  // would land in your bank account if you cashed out today" without a
+  // live market data feed.
+  function currentPortfolioValue(){
+    const trades = db.trades||[];
+    const realizedPnl = trades.filter(t=> t.pnl!==undefined && t.pnl!=='' && !isNaN(parseFloat(t.pnl))).reduce((s,t)=>s+parseFloat(t.pnl),0);
+    const unrealizedPnl = trades.filter(t=> !t.exitDT).reduce((s,t)=>{ const u=parseFloat(t.unrealizedPnl); return isNaN(u)?s:s+u; }, 0);
+    return netContributedCapital() + realizedPnl + unrealizedPnl;
+  }
+
+  // Builds the dated cash-flow list XIRR solves over: every deposit is a
+  // negative flow (money you put in), every withdrawal is a positive flow
+  // (money you took out), and today's portfolio value is appended as one
+  // final positive flow (what you'd walk away with if you stopped now).
+  function buildXirrCashflows(){
+    const capSorted = sortedCapitalHistory();
+    if(capSorted.length===0) return [];
+    const flows = capSorted.map(ev=>{
+      const amt = parseFloat(ev.amount)||0;
+      const d = ev.date ? new Date(ev.date+'T00:00:00') : null;
+      if(!d || isNaN(d.getTime()) || amt===0) return null;
+      return {date:d, amount: (ev.type==='withdraw' ? amt : -amt)};
+    }).filter(Boolean);
+    if(flows.length===0) return [];
+    flows.push({date: new Date(), amount: currentPortfolioValue()});
+    return flows.sort((a,b)=> a.date-b.date);
+  }
+
+  // Solves NPV(rate)=0 via Newton-Raphson, falling back to bisection over a
+  // wide range if Newton doesn't settle (common with very lopsided or
+  // single-swing cash flow histories) — same two-stage approach most XIRR
+  // implementations use. Returns the rate as a decimal (0.15 = 15%/yr), or
+  // null if there isn't enough distinct-dated history to solve for one.
+  function computeXIRR(cashflows){
+    if(!cashflows || cashflows.length<2) return null;
+    const t0 = cashflows[0].date.getTime();
+    const dayMs = 86400000;
+    if(!cashflows.some(cf=> cf.date.getTime()!==t0)) return null;
+    const years = cashflows.map(cf => (cf.date.getTime()-t0)/dayMs/365);
+    const npv = rate => cashflows.reduce((sum,cf,i)=> sum + cf.amount/Math.pow(1+rate, years[i]), 0);
+    const dnpv = rate => cashflows.reduce((sum,cf,i)=> sum - years[i]*cf.amount/Math.pow(1+rate, years[i]+1), 0);
+
+    let rate = 0.15;
+    for(let i=0;i<60;i++){
+      const f = npv(rate), df = dnpv(rate);
+      if(!isFinite(f) || !isFinite(df) || Math.abs(df)<1e-9){ rate = NaN; break; }
+      const next = rate - f/df;
+      if(!isFinite(next) || next<=-0.999){ rate = NaN; break; }
+      if(Math.abs(next-rate)<1e-8){ rate = next; break; }
+      rate = next;
+    }
+    if(isFinite(rate) && Math.abs(npv(rate))<1) return rate;
+
+    let lo=-0.999, hi=100, flo=npv(lo), fhi=npv(hi);
+    if(flo*fhi>0) return isFinite(rate) ? rate : null;
+    let mid = rate;
+    for(let i=0;i<200;i++){
+      mid = (lo+hi)/2;
+      const fm = npv(mid);
+      if(Math.abs(fm)<1e-6) return mid;
+      if((flo<0)===(fm<0)){ lo=mid; flo=fm; } else { hi=mid; fhi=fm; }
+    }
+    return mid;
+  }
+
+  // Portfolio value (net capital + cumulative P&L) at every date something
+  // changed, for the graph under the XIRR headline — same day-by-day walk
+  // as buildRocDepositsSeries but plotting absolute ₹ value instead of a
+  // %, and with a final "today" point that folds in unrealized P&L from
+  // open positions so the line reflects the current marked value too.
+  function buildPortfolioValueSeries(){
+    const capSorted = sortedCapitalHistory().map(ev=>({
+      date: ev.date || '',
+      amt: (ev.type==='withdraw' ? -1 : 1) * (parseFloat(ev.amount) || 0)
+    })).filter(e=>e.date).sort((a,b)=> a.date.localeCompare(b.date));
+
+    const tradeSorted = (db.trades||[]).filter(t=> t.pnl!==undefined && t.pnl!=='' && !isNaN(parseFloat(t.pnl)) && tradeBasisDate(t))
+      .map(t=>({date: tradeBasisDate(t), pnl: parseFloat(t.pnl), ts: tradeBasisTimestamp(t)}))
+      .sort((a,b)=> a.date.localeCompare(b.date) || (a.ts-b.ts));
+
+    const dateSet = new Set([...capSorted.map(e=>e.date), ...tradeSorted.map(e=>e.date)]);
+    const dates = Array.from(dateSet).sort();
+    if(dates.length===0) return [];
+
+    let capIdx=0, tradeIdx=0, netCap=0, cumPnl=0;
+    const points = [];
+    dates.forEach(d=>{
+      let dayDeposit=null;
+      while(capIdx<capSorted.length && capSorted[capIdx].date<=d){
+        netCap += capSorted[capIdx].amt;
+        dayDeposit = capSorted[capIdx];
+        capIdx++;
+      }
+      while(tradeIdx<tradeSorted.length && tradeSorted[tradeIdx].date<=d){ cumPnl += tradeSorted[tradeIdx].pnl; tradeIdx++; }
+      points.push({date:d, v: netCap+cumPnl, netCap, cumPnl, marker: dayDeposit ? (dayDeposit.amt<0?'withdraw':'deposit') : null});
+    });
+
+    const openTrades = (db.trades||[]).filter(t=> !t.exitDT);
+    const totalUnrealized = openTrades.reduce((s,t)=>{ const u=parseFloat(t.unrealizedPnl); return isNaN(u)?s:s+u; }, 0);
+    const tKey = todayKey();
+    const last = points[points.length-1];
+    if(last && last.date===tKey){
+      last.v = netCap+cumPnl+totalUnrealized;
+      last.cumPnl = cumPnl+totalUnrealized;
+    } else {
+      points.push({date:tKey, v: netCap+cumPnl+totalUnrealized, netCap, cumPnl: cumPnl+totalUnrealized, marker:null});
+    }
+    return points;
+  }
+
+  function renderPortfolioXirr(){
+    const cardEl = document.getElementById('tdXirrCard');
+    if(!cardEl) return;
+    if((db.capitalHistory||[]).length===0){
+      cardEl.style.display = 'none';
+      return;
+    }
+    cardEl.style.display = '';
+    const statEl = document.getElementById('tdXirrStat');
+    const curValEl = document.getElementById('tdXirrCurrentVal');
+    const netInvEl = document.getElementById('tdXirrNetInvested');
+    const subEl = document.getElementById('tdXirrSub');
+    const chartEl = document.getElementById('tdXirrChart');
+
+    const flows = buildXirrCashflows();
+    const rate = computeXIRR(flows);
+    const currentValue = currentPortfolioValue();
+    const netInvested = netContributedCapital();
+
+    if(statEl){
+      if(rate===null){ statEl.textContent = '—'; statEl.className = 'td-hero-stat-val'; }
+      else {
+        const pct = rate*100;
+        statEl.textContent = (pct>=0?'+':'')+pct.toFixed(2)+'%';
+        statEl.className = 'td-hero-stat-val '+(pct>=0?'pos':'neg');
+      }
+    }
+    if(curValEl) curValEl.textContent = fmtMoney(Math.round(currentValue));
+    if(netInvEl) netInvEl.textContent = fmtMoney(Math.round(netInvested));
+    if(subEl){
+      subEl.textContent = rate===null
+        ? 'Add at least two dated Capital History entries (on different days) to solve for XIRR.'
+        : `Solved from ${flows.length} cash flow${flows.length===1?'':'s'} — every deposit/withdrawal plus today's value, each weighted by exactly how long it's been in the account.`;
+    }
+
+    const series = buildPortfolioValueSeries();
+    const pts = series.map(p=>({v:p.v, date:p.date, marker:p.marker, netCap:p.netCap, cumPnl:p.cumPnl}));
+    renderSimpleSeriesSVG(chartEl, pts, {
+      emptyText: 'Portfolio value appears once you\u2019ve logged a deposit.',
+      forceColor: 'var(--accent)',
+      minSpan: 1,
+      onDotHover: p=>{
+        const evLabel = p.marker ? (p.marker==='withdraw' ? 'Withdrew' : 'Deposited') : 'Marked';
+        return `<div class="eq-tip-tk">Portfolio Value</div><div class="eq-tip-date">${escapeHtml(p.date||'')} · ${escapeHtml(evLabel)}</div><div class="eq-tip-pnl">${escapeHtml(fmtMoney(Math.round(p.v)))}</div>`;
+      }
+    });
+  }
+
   function renderRocDepositsRange(range){
     rocDepRange = range;
     const roiChartEl = document.getElementById('tdRocDepRoiChart');
@@ -6889,6 +6985,33 @@
           </div>`;
       }
     }
+    renderTopRoc(trades);
+    renderPortfolioXirr();
+  }
+
+  // ---- Top 5 · Return on Capital (Overview) --------------------------------
+  // Same per-trade Return on Capital % used by the Analytics scatter chart
+  // below, just ranked and trimmed to the 5 best closed trades so the
+  // headline winners surface right on Overview without digging into
+  // Analytics. Sorted strictly highest → lowest.
+  function renderTopRoc(trades){
+    const cardEl = document.getElementById('tdTopRocCard');
+    const listEl = document.getElementById('tdTopRocList');
+    if(!cardEl || !listEl) return;
+    const pairs = rocHoldPairs(trades).sort((a,b)=> b.roc-a.roc).slice(0,5);
+    if(pairs.length===0){ cardEl.style.display = 'none'; return; }
+    cardEl.style.display = '';
+    listEl.innerHTML = pairs.map(r=>{
+      const cls = r.roc>=0 ? 'pos' : 'neg';
+      const days = Math.round(r.days*10)/10;
+      return `<div class="td-list-row">
+        <div class="td-list-name-wrap">
+          <div class="td-list-name">${escapeHtml(r.t.ticker||'Trade')}</div>
+          <div class="td-list-sub">${days} day${days===1?'':'s'} held · ${fmtPnl(Math.round(parseFloat(r.t.pnl)))}</div>
+        </div>
+        <div class="td-list-right"><div class="td-list-val ${cls}">${r.roc>=0?'+':''}${r.roc.toFixed(2)}%</div></div>
+      </div>`;
+    }).join('');
   }
 
   // ---- Calendar panel ----
@@ -7177,110 +7300,53 @@
       </div>`;
     }).join('');
   }
-  // ================= Sector classification =================================
-  // Groww's exports (and every broker's) give you a company name, not a
-  // sector — so "which sector is actually making/losing me money" is a
-  // question the raw data can never answer on its own. This is a best-effort
-  // static map covering a broad slice of NSE/BSE large & mid-caps, checked
-  // as a substring match against the trade's ticker/company name (most
-  // specific names first, so e.g. "STERLITE TECHNOLOGIES" doesn't fall
-  // through to a shorter unrelated match). Anything not covered shows up
-  // honestly as "Uncategorized" rather than a guessed sector — and a
-  // trade's sector can always be corrected by hand in Settings, which is
-  // checked first and wins over the static map.
-  const SECTOR_MAP = [
-    // ---- IT / Technology ----
-    ['TATA CONSULTANCY','Information Technology'],['INFOSYS','Information Technology'],['WIPRO','Information Technology'],
-    ['HCL TECH','Information Technology'],['TECH MAHINDRA','Information Technology'],['LTIMINDTREE','Information Technology'],
-    ['MPHASIS','Information Technology'],['PERSISTENT','Information Technology'],['COFORGE','Information Technology'],
-    ['LTTS','Information Technology'],['L&T TECHNOLOGY','Information Technology'],['ZENSAR','Information Technology'],
-    ['SYRMA SGS','Electronics Manufacturing'],['DIXON TECHNOLOGIES','Electronics Manufacturing'],['AMBER ENTERPRISES','Electronics Manufacturing'],
-    ['KAYNES','Electronics Manufacturing'],['CYIENT','Information Technology'],
-    // ---- Banking & Financial Services ----
-    ['HDFC BANK','Banking & Financial Services'],['ICICI BANK','Banking & Financial Services'],['STATE BANK','Banking & Financial Services'],
-    ['KOTAK MAHINDRA BANK','Banking & Financial Services'],['AXIS BANK','Banking & Financial Services'],['INDUSIND BANK','Banking & Financial Services'],
-    ['BANK OF BARODA','Banking & Financial Services'],['PUNJAB NATIONAL BANK','Banking & Financial Services'],['CANARA BANK','Banking & Financial Services'],
-    ['IDFC FIRST BANK','Banking & Financial Services'],['FEDERAL BANK','Banking & Financial Services'],['YES BANK','Banking & Financial Services'],
-    ['BANDHAN BANK','Banking & Financial Services'],['AU SMALL FINANCE','Banking & Financial Services'],
-    ['BAJAJ FINANCE','NBFC'],['BAJAJ FINSERV','NBFC'],['CHOLAMANDALAM','NBFC'],['SHRIRAM FINANCE','NBFC'],['MUTHOOT FINANCE','NBFC'],
-    ['MANAPPURAM','NBFC'],['LIC HOUSING','NBFC'],['PNB HOUSING','NBFC'],['SBI CARDS','NBFC'],['JIO FINANCIAL','NBFC'],
-    ['LIFE INSURANCE CORP','Insurance'],['SBI LIFE','Insurance'],['HDFC LIFE','Insurance'],['ICICI PRUDENTIAL','Insurance'],
-    ['ICICI LOMBARD','Insurance'],['STAR HEALTH','Insurance'],['NEW INDIA ASSURANCE','Insurance'],
-    ['MOTILAL OSWAL','Banking & Financial Services'],['ANGEL ONE','Banking & Financial Services'],['CDSL','Banking & Financial Services'],
-    ['BSE LIMITED','Banking & Financial Services'],['MULTI COMMODITY','Banking & Financial Services'],
-    // ---- Pharma & Healthcare ----
-    ['SUN PHARMA','Pharmaceuticals & Healthcare'],['CIPLA','Pharmaceuticals & Healthcare'],["DR REDDY",'Pharmaceuticals & Healthcare'],
-    ['DIVI\'S LAB','Pharmaceuticals & Healthcare'],['DIVIS LAB','Pharmaceuticals & Healthcare'],['LUPIN','Pharmaceuticals & Healthcare'],
-    ['AUROBINDO PHARMA','Pharmaceuticals & Healthcare'],['TORRENT PHARMA','Pharmaceuticals & Healthcare'],['ALKEM','Pharmaceuticals & Healthcare'],
-    ['ZYDUS','Pharmaceuticals & Healthcare'],['MANKIND PHARMA','Pharmaceuticals & Healthcare'],['GLENMARK','Pharmaceuticals & Healthcare'],
-    ['BIOCON','Pharmaceuticals & Healthcare'],['LAURUS LABS','Pharmaceuticals & Healthcare'],['RUBICON RESEARCH','Pharmaceuticals & Healthcare'],
-    ['APOLLO HOSPITALS','Pharmaceuticals & Healthcare'],['FORTIS HEALTHCARE','Pharmaceuticals & Healthcare'],['MAX HEALTHCARE','Pharmaceuticals & Healthcare'],
-    ['GLAND PHARMA','Pharmaceuticals & Healthcare'],['ABBOTT INDIA','Pharmaceuticals & Healthcare'],['PFIZER','Pharmaceuticals & Healthcare'],
-    // ---- Automobile & Ancillaries ----
-    ['MARUTI SUZUKI','Automobile & Ancillaries'],['TATA MOTORS','Automobile & Ancillaries'],['MAHINDRA & MAHINDRA','Automobile & Ancillaries'],
-    ['BAJAJ AUTO','Automobile & Ancillaries'],['HERO MOTOCORP','Automobile & Ancillaries'],['EICHER MOTORS','Automobile & Ancillaries'],
-    ['TVS MOTOR','Automobile & Ancillaries'],['ASHOK LEYLAND','Automobile & Ancillaries'],['MOTHERSON','Automobile & Ancillaries'],
-    ['BOSCH','Automobile & Ancillaries'],['BALKRISHNA IND','Automobile & Ancillaries'],['MRF LIMITED','Automobile & Ancillaries'],
-    ['APOLLO TYRES','Automobile & Ancillaries'],['CEAT','Automobile & Ancillaries'],['EXIDE','Automobile & Ancillaries'],
-    ['BHARAT FORGE','Automobile & Ancillaries'],['BALU FORGE','Automobile & Ancillaries'],['SONA BLW','Automobile & Ancillaries'],
-    ['ENDURANCE TECH','Automobile & Ancillaries'],['UNO MINDA','Automobile & Ancillaries'],
-    // ---- FMCG ----
-    ['HINDUSTAN UNILEVER','FMCG'],['ITC LIMITED','FMCG'],['NESTLE INDIA','FMCG'],['BRITANNIA','FMCG'],['DABUR','FMCG'],
-    ['GODREJ CONSUMER','FMCG'],['MARICO','FMCG'],['COLGATE','FMCG'],['TATA CONSUMER','FMCG'],['VARUN BEVERAGES','FMCG'],
-    ['UNITED SPIRITS','FMCG'],['UNITED BREWERIES','FMCG'],['EMAMI','FMCG'],['PATANJALI','FMCG'],
-    // ---- Energy & Power ----
-    ['RELIANCE INDUSTRIES','Energy & Conglomerate'],['OIL AND NATURAL GAS','Energy & Power'],['OIL & NATURAL GAS','Energy & Power'],
-    ['INDIAN OIL','Energy & Power'],['BHARAT PETROLEUM','Energy & Power'],['HINDUSTAN PETROLEUM','Energy & Power'],
-    ['NTPC','Energy & Power'],['POWER GRID','Energy & Power'],['ADANI POWER','Energy & Power'],['ADANI GREEN','Energy & Power'],
-    ['ADANI ENERGY','Energy & Power'],['TATA POWER','Energy & Power'],['JSW ENERGY','Energy & Power'],['NHPC','Energy & Power'],
-    ['SJVN','Energy & Power'],['COAL INDIA','Energy & Power'],['GAIL','Energy & Power'],['PETRONET LNG','Energy & Power'],
-    // ---- Metals & Mining ----
-    ['TATA STEEL','Metals & Mining'],['JSW STEEL','Metals & Mining'],['HINDALCO','Metals & Mining'],['VEDANTA','Metals & Mining'],
-    ['JINDAL STEEL','Metals & Mining'],['STEEL AUTHORITY','Metals & Mining'],['SAIL','Metals & Mining'],['NMDC','Metals & Mining'],
-    ['HINDUSTAN ZINC','Metals & Mining'],['NATIONAL ALUMINIUM','Metals & Mining'],['KINGFA','Chemicals'],
-    // ---- Infrastructure, Construction & Capital Goods ----
-    ['LARSEN & TOUBRO','Infrastructure & Capital Goods'],['LARSEN AND TOUBRO','Infrastructure & Capital Goods'],
-    ['SIEMENS','Infrastructure & Capital Goods'],['ABB INDIA','Infrastructure & Capital Goods'],['CUMMINS INDIA','Infrastructure & Capital Goods'],
-    ['HAVELLS','Consumer Durables'],['POLYCAB','Infrastructure & Capital Goods'],['KEC INTERNATIONAL','Infrastructure & Capital Goods'],
-    ['THERMAX','Infrastructure & Capital Goods'],['BHEL','Infrastructure & Capital Goods'],['BEML','Infrastructure & Capital Goods'],
-    ['IRCON','Infrastructure & Capital Goods'],['RAIL VIKAS','Infrastructure & Capital Goods'],['NBCC','Infrastructure & Capital Goods'],
-    ['NITIN SPINNERS','Textiles'],['GMR AIRPORTS','Infrastructure & Capital Goods'],['ADANI PORTS','Infrastructure & Capital Goods'],
-    ['CONCOR','Infrastructure & Capital Goods'],['IRB INFRA','Infrastructure & Capital Goods'],
-    // ---- Realty ----
-    ['DLF LIMITED','Realty'],['GODREJ PROPERTIES','Realty'],['OBEROI REALTY','Realty'],['PRESTIGE ESTATES','Realty'],
-    ['MACROTECH','Realty'],['PHOENIX MILLS','Realty'],['SOBHA','Realty'],['BRIGADE ENTERPRISES','Realty'],
-    // ---- Telecom ----
-    ['BHARTI AIRTEL','Telecom'],['VODAFONE IDEA','Telecom'],['INDUS TOWERS','Telecom'],['HFCL','Telecom Equipment'],
-    ['STERLITE TECHNOLOGIES','Telecom Equipment'],['VINDHYA TELELINKS','Telecom Equipment'],['TEJAS NETWORKS','Telecom Equipment'],
-    ['ROUTE MOBILE','Telecom'],
-    // ---- Chemicals ----
-    ['PIDILITE','Chemicals'],['SRF LIMITED','Chemicals'],['UPL LIMITED','Chemicals'],['DEEPAK NITRITE','Chemicals'],
-    ['AARTI INDUSTRIES','Chemicals'],['NAVIN FLUORINE','Chemicals'],['ATUL LIMITED','Chemicals'],['TATA CHEMICALS','Chemicals'],
-    ['GUJARAT FLUOROCHEMICALS','Chemicals'],['PI INDUSTRIES','Chemicals'],['LINDE INDIA','Chemicals'],
-    // ---- Cement ----
-    ['ULTRATECH CEMENT','Cement'],['SHREE CEMENT','Cement'],['AMBUJA CEMENT','Cement'],['ACC LIMITED','Cement'],
-    ['DALMIA BHARAT','Cement'],['JK CEMENT','Cement'],['RAMCO CEMENTS','Cement'],
-    // ---- Consumer Durables / Retail ----
-    ['TITAN COMPANY','Consumer Durables'],['ASIAN PAINTS','Paints'],['BERGER PAINTS','Paints'],['KANSAI NEROLAC','Paints'],
-    ['VOLTAS','Consumer Durables'],['BLUE STAR','Consumer Durables'],['WHIRLPOOL','Consumer Durables'],['CROMPTON GREAVES','Consumer Durables'],
-    ['NILKAMAL','Consumer Durables'],['TARSONS PRODUCTS','Consumer Durables'],['RELAXO FOOTWEARS','Consumer Durables'],
-    ['DMART','Retail'],['AVENUE SUPERMARTS','Retail'],['TRENT LIMITED','Retail'],['ABFRL','Retail'],['VMART RETAIL','Retail'],
-    // ---- Aviation / Logistics ----
-    ['INDIGO','Aviation'],['INTERGLOBE AVIATION','Aviation'],['SPICEJET','Aviation'],['BLUE DART','Logistics'],['DELHIVERY','Logistics'],
-    // ---- Diversified / Industrials ----
-    ['AEROFLEX INDUSTRIES','Industrial Manufacturing'],['ADANI ENTERPRISES','Diversified / Conglomerate'],
-    ['GRASIM INDUSTRIES','Diversified / Conglomerate'],['ITC HOTELS','Hospitality'],['INDIAN HOTELS','Hospitality'],
-    // ---- Agriculture / Chemicals fertilizer ----
-    ['COROMANDEL INTERNATIONAL','Agrochemicals'],['CHAMBAL FERTILISERS','Agrochemicals'],['GODREJ AGROVET','Agrochemicals'],
-    // ---- Media ----
-    ['ZEE ENTERTAINMENT','Media & Entertainment'],['SUN TV NETWORK','Media & Entertainment'],['PVR INOX','Media & Entertainment'],
+  // ================= Intelligent catalyst / setup classification ===========
+  // The structured "Setup type" pills (Breakout, Pullback, Reversal, Range,
+  // Momentum, Earnings/Event, Chart Pattern, Other) only exist from the day
+  // that field was added — older trades, and anyone typing quickly, only
+  // ever filled in the freeform Catalyst text box. Grouping on
+  // `setupType || catalyst` as raw strings used to fragment the exact same
+  // idea into lookalike buckets ("BREAKOUT" vs "Breakout" vs "breakout, vol
+  // spike"), because it never normalized case or recognized synonyms. This
+  // keyword map folds common freeform phrasing into the same canonical
+  // buckets the structured pills already use (plus a couple of categories
+  // — Earnings/Result, IPO Allotment, IPO Trading — that come up constantly
+  // in Indian trading journals but aren't one of the fixed pills), so
+  // "RESULT", "Q1 result", "earnings beat" etc. all land in one place
+  // instead of three. Anything that matches nothing still gets its casing
+  // normalized (title case) so at least identical text in different case
+  // collapses into a single row. Order matters — more specific phrases are
+  // checked before their broader/shorter relatives.
+  const CATALYST_KEYWORDS = [
+    ['IPO ALLOTMENT','IPO Allotment'],
+    ['IPO LISTING','IPO Trading'],['IPO LISTING GAIN','IPO Trading'],['IPO TRADING','IPO Trading'],
+    ['IPO','IPO Trading'],
+    ['RESULT','Earnings / Result'],['EARNING','Earnings / Result'],['GUIDANCE','Earnings / Result'],
+    ['Q1','Earnings / Result'],['Q2','Earnings / Result'],['Q3','Earnings / Result'],['Q4','Earnings / Result'],
+    ['ORDER WIN','Order Win / News'],['CONTRACT WIN','Order Win / News'],['NEWS','Order Win / News'],
+    ['VCP','Breakout'],['BREAKOUT','Breakout'],['52 WEEK HIGH','Breakout'],['ATH','Breakout'],
+    ['PULLBACK','Pullback'],['BUY THE DIP','Pullback'],['DIP BUY','Pullback'],['RETEST','Pullback'],
+    ['REVERSAL','Reversal'],['REVERSE','Reversal'],['TREND CHANGE','Reversal'],
+    ['SIDEWAYS','Range'],['RANGE','Range'],['CONSOLIDATION','Range'],
+    ['VOLUME SPIKE','Momentum'],['MOMENTUM','Momentum'],['RELATIVE STRENGTH','Momentum'],
+    ['CHART PATTERN','Chart Pattern'],['FLAG','Chart Pattern'],['CUP','Chart Pattern'],
+    ['TRIANGLE','Chart Pattern'],['WEDGE','Chart Pattern'],['DOUBLE BOTTOM','Chart Pattern'],['DOUBLE TOP','Chart Pattern'],
   ];
-  function tickerSector(ticker){
-    const overrides = db.tickerSectors||{};
-    const key = (ticker||'').trim().toUpperCase();
-    if(overrides[key]) return overrides[key];
-    const match = SECTOR_MAP.find(([kw])=> key.includes(kw));
-    return match ? match[1] : 'Uncategorized';
+  // Title-cases freeform text as a last-resort normalizer, so unmatched
+  // catalysts at least merge on casing ("VCP TRADE" and "vcp trade" become
+  // the same row) instead of silently staying separate forever.
+  function titleCaseCatalyst(text){
+    return text.toLowerCase().replace(/(^|[\s/&-])([a-z])/g, (m,sep,ch)=> sep+ch.toUpperCase());
+  }
+  function classifyCatalyst(t){
+    const structured = (t.setupType||'').trim();
+    const raw = (t.catalyst||'').trim();
+    const text = structured || raw;
+    if(!text) return '';
+    const key = text.toUpperCase();
+    const match = CATALYST_KEYWORDS.find(([kw])=> key.includes(kw));
+    if(match) return match[1];
+    return titleCaseCatalyst(text);
   }
 
   // ---- Position-size tercile: is this small/medium/large *for this trader*,
@@ -7301,14 +7367,81 @@
   function renderStrategyBreakdown(){
     const trades = db.trades||[];
     renderTickerBreakdown();
-    // Groups by the structured Setup type; falls back to the old freeform
-    // Catalyst text for trades logged before Setup type existed, so nothing
-    // drops out of this breakdown for older data.
-    renderBreakdownGroups('tdByCatalyst', trades, t=>t.setupType||t.catalyst, 'Tag a setup type on your trades to see performance by strategy.');
+    // Intelligently classifies each trade's setup type / freeform catalyst
+    // text into a small set of canonical buckets — see classifyCatalyst()
+    // above — instead of grouping on raw, case-sensitive text.
+    renderBreakdownGroups('tdByCatalyst', trades, t=>classifyCatalyst(t), 'Tag a setup type on your trades to see performance by strategy.');
     renderBreakdownGroups('tdByTimeframe', trades, t=>t.timeframe, 'No trades logged yet.');
-    renderBreakdownGroups('tdBySector', trades, t=>tickerSector(t.ticker), 'No trades logged yet.');
     const allSizes = trades.map(t=>parseFloat(t.posSize)).filter(n=>!isNaN(n)&&n>0);
     renderBreakdownGroups('tdByPosSize', trades, t=>positionSizeTier(t, allSizes) || 'Unspecified', 'Not enough trades with a position size yet to split into small/medium/large.');
+    renderRocHoldChart(trades);
+  }
+
+  // ---- Return on Capital % vs Holding Period (scatter) ---------------------
+  // Every closed trade with a position size plotted as one dot: how many
+  // days it was held (x) against what it returned as a % of the capital it
+  // tied up (y). Makes it easy to eyeball things like "my best trades are
+  // actually the short-held ones" or "I bleed % the longer I hold" at a
+  // glance, instead of only seeing the average in a stat card.
+  function renderRocHoldChart(trades){
+    const el = document.getElementById('tdRocHoldChart');
+    const subEl = document.getElementById('tdRocHoldSub');
+    if(!el) return;
+    const pairs = rocHoldPairs(trades);
+    if(pairs.length===0){
+      el.innerHTML = '<div class="td-empty-note">No closed trades with a position size &amp; exit date yet.</div>';
+      if(subEl) subEl.textContent = '';
+      return;
+    }
+    if(subEl){
+      const avgRoc = pairs.reduce((s,r)=>s+r.roc,0)/pairs.length;
+      const avgDays = pairs.reduce((s,r)=>s+r.days,0)/pairs.length;
+      subEl.textContent = `${pairs.length} closed trade${pairs.length===1?'':'s'} · avg ${avgRoc>=0?'+':''}${avgRoc.toFixed(2)}% over ${avgDays.toFixed(1)} day${avgDays===1?'':'s'} held`;
+    }
+    const w=640, h=260, padL=40, padR=14, padT=14, padB=28;
+    const maxDay = Math.max(1, ...pairs.map(p=>p.days));
+    const minRoc = Math.min(0, ...pairs.map(p=>p.roc));
+    const maxRoc = Math.max(0, ...pairs.map(p=>p.roc));
+    const spanRoc = (maxRoc-minRoc) || 1;
+    const xFor = d => padL + (d/maxDay)*(w-padL-padR);
+    const yFor = r => padT + (1-((r-minRoc)/spanRoc))*(h-padT-padB);
+    const zeroY = yFor(0).toFixed(1);
+    // A handful of horizontal gridlines + day-axis ticks so the scatter has
+    // readable scale, not just floating dots.
+    const yTicks = [minRoc, minRoc+spanRoc*0.5, maxRoc].map(v=>({v, y:yFor(v).toFixed(1)}));
+    const xTicks = [0, maxDay/2, maxDay].map(v=>({v, x:xFor(v).toFixed(1)}));
+    const gridSvg = yTicks.map(t=> `<line x1="${padL}" y1="${t.y}" x2="${w-padR}" y2="${t.y}" stroke="var(--line)" stroke-width="1" stroke-dasharray="2,3" opacity="0.5"/><text x="${padL-6}" y="${(parseFloat(t.y)+3).toFixed(1)}" font-size="9" fill="var(--ink-faint)" text-anchor="end" font-family="IBM Plex Mono">${Math.round(t.v)}%</text>`).join('');
+    const xAxisSvg = xTicks.map(t=> `<text x="${t.x}" y="${h-padB+16}" font-size="9" fill="var(--ink-faint)" text-anchor="middle" font-family="IBM Plex Mono">${Math.round(t.v)}d</text>`).join('');
+    const dots = pairs.map((p,i)=>{
+      const cx = xFor(p.days).toFixed(1), cy = yFor(p.roc).toFixed(1);
+      const fill = p.roc>=0 ? 'var(--teal)' : 'var(--rose)';
+      return `<circle class="eq-dot-hit" data-i="${i}" cx="${cx}" cy="${cy}" r="10" fill="transparent"/>` +
+        `<circle class="eq-dot" data-i="${i}" cx="${cx}" cy="${cy}" r="3.4" fill="${fill}" opacity="0.8" pointer-events="none"/>`;
+    }).join('');
+    el.innerHTML = `
+      <svg class="td-chart-svg eq-svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+        <line x1="${padL}" y1="${zeroY}" x2="${w-padR}" y2="${zeroY}" stroke="var(--ink-faint)" stroke-width="1"/>
+        <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${h-padB}" stroke="var(--line)" stroke-width="1"/>
+        ${gridSvg}
+        ${xAxisSvg}
+        ${dots}
+      </svg>`;
+    const tip = ensureEquityTooltip();
+    el.querySelectorAll('.eq-dot-hit').forEach(dot=>{
+      const i = parseInt(dot.dataset.i,10);
+      const p = pairs[i];
+      const show = ()=>{
+        const days = Math.round(p.days*10)/10;
+        tip.innerHTML = `<div class="eq-tip-tk">${escapeHtml(p.t.ticker||'Trade')}</div><div class="eq-tip-date">${days} day${days===1?'':'s'} held</div><div class="eq-tip-pnl ${p.roc>=0?'pos':'neg'}">${p.roc>=0?'+':''}${p.roc.toFixed(2)}% · ${fmtPnl(Math.round(parseFloat(p.t.pnl)))}</div>`;
+        tip.style.display = 'block';
+        const dotRect = dot.getBoundingClientRect();
+        tip.style.left = (dotRect.left + dotRect.width/2 + window.scrollX) + 'px';
+        tip.style.top = (dotRect.top + window.scrollY - 6) + 'px';
+      };
+      dot.addEventListener('mouseenter', show);
+      dot.addEventListener('mouseleave', hideEquityTooltip);
+      dot.addEventListener('click', (e)=>{ e.stopPropagation(); show(); });
+    });
   }
 
   // ---- Discipline analytics ----------------------------------------------
@@ -10778,67 +10911,6 @@
       }
     });
 
-    // ---- Sector overrides (Broker Sync section) ----
-    function renderSectorOverrides(){
-      const el = document.getElementById('sectorOverridesList');
-      if(!el) return;
-      const overrides = db.tickerSectors||{};
-      const entries = Object.entries(overrides);
-      el.innerHTML = entries.length ? entries.map(([ticker,sector])=>`
-        <div class="subject-chip"><span>${escapeHtml(ticker)} → ${escapeHtml(sector)}</span><button data-sector-ticker="${escapeHtml(ticker)}" title="Remove override">✕</button></div>
-      `).join('') : '<span style="font-size:12.5px; color:var(--ink-faint);">No overrides yet — the built-in guesses are used everywhere.</span>';
-      el.querySelectorAll('[data-sector-ticker]').forEach(btn=>{
-        btn.addEventListener('click', ()=>{
-          delete db.tickerSectors[btn.dataset.sectorTicker];
-          saveDB();
-          renderSectorOverrides();
-          try{ renderStrategyBreakdown(); }catch(e){}
-          showToast('Sector override removed.', 'success');
-        });
-      });
-    }
-    renderSectorOverrides();
-    const sectorOverrideAddBtnEl = document.getElementById('sectorOverrideAddBtn');
-    if(sectorOverrideAddBtnEl){
-      sectorOverrideAddBtnEl.addEventListener('click', ()=>{
-        const tickerInput = document.getElementById('sectorOverrideTicker');
-        const sectorInput = document.getElementById('sectorOverrideSector');
-        const ticker = (tickerInput.value||'').trim().toUpperCase();
-        const sector = (sectorInput.value||'').trim();
-        if(!ticker || !sector){ showToast('Enter both a ticker and a sector.', 'error'); return; }
-        db.tickerSectors = db.tickerSectors||{};
-        db.tickerSectors[ticker] = sector;
-        saveDB();
-        tickerInput.value=''; sectorInput.value='';
-        renderSectorOverrides();
-        try{ renderStrategyBreakdown(); }catch(e){}
-        showToast('Sector override saved.', 'success');
-      });
-    }
-
-    // ---- Groww API — Auto Sync ----
-    const growwEndpointEl = document.getElementById('growwSyncEndpoint');
-    const growwSecretEl = document.getElementById('growwSyncSecret');
-    const growwAutoSyncEl = document.getElementById('growwAutoSyncToggle');
-    if(growwEndpointEl && growwSecretEl && growwAutoSyncEl){
-      const gs0 = appSettings.growwSync || {};
-      growwEndpointEl.value = gs0.endpoint||'';
-      growwSecretEl.value = gs0.secret||'';
-      growwAutoSyncEl.checked = !!gs0.autoSync;
-      updateGrowwSyncStatusText();
-      const saveGrowwSyncSettings = ()=>{
-        appSettings.growwSync = {
-          endpoint: growwEndpointEl.value.trim(), secret: growwSecretEl.value,
-          autoSync: growwAutoSyncEl.checked, lastSyncAt: (appSettings.growwSync&&appSettings.growwSync.lastSyncAt)||''
-        };
-        saveAppSettings();
-      };
-      growwEndpointEl.addEventListener('change', saveGrowwSyncSettings);
-      growwSecretEl.addEventListener('change', saveGrowwSyncSettings);
-      growwAutoSyncEl.addEventListener('change', saveGrowwSyncSettings);
-    }
-    const growwSyncNowBtnEl = document.getElementById('growwSyncNowBtn');
-    if(growwSyncNowBtnEl) growwSyncNowBtnEl.addEventListener('click', ()=> growwSyncNow(true));
   }
 
   document.querySelector('.tab-btn[data-view="study"]').addEventListener('click', renderStudyAnalysis);

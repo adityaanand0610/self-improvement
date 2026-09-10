@@ -2726,15 +2726,6 @@
         <div class="td-card-sub" id="tdXirrSub" style="margin-bottom:6px; display:block;"></div>
         <div id="tdXirrChart"></div>
       </div>
-      <div class="td-card" id="tdBenchmarkCard" style="display:none;">
-        <div class="td-card-head" style="flex-wrap:wrap; gap:8px;">
-          <span>XIRR vs Market Indices</span>
-          <button class="eq-range-btn" id="tdBenchmarkRefreshBtn" type="button" style="padding:4px 10px;">Refresh</button>
-        </div>
-        <div class="td-card-sub" style="margin-bottom:8px; display:block;">If the same deposits &amp; withdrawals had instead bought each index on those exact dates, here's the XIRR that would've produced — held up against your Portfolio XIRR above.</div>
-        <div class="td-hero-stats-row" id="tdBenchmarkList" style="margin:2px 0 10px;"></div>
-        <div class="td-card-sub" id="tdBenchmarkStatus" style="margin-bottom:0; display:block;"></div>
-      </div>
       <div class="td-card" id="tdTopRocCard" style="display:none;">
         <div class="td-card-head"><span>Top 5 · Return on Capital</span></div>
         <div class="td-card-sub" style="margin-bottom:8px; display:block;">Best individual closed trades by P&amp;L as a % of the capital each one tied up — highest to lowest.</div>
@@ -6208,17 +6199,25 @@
       if(rangeEl) rangeEl.textContent = '';
       return;
     }
-    let running=0, peak=0;
-    const pts = [{y:0, peak:0, pnl:0, label:'Start', ticker:'', fy:null}];
+    let running=0, peak=0, peakIdxSoFar=0;
+    const pts = [{y:0, peak:0, peakIdx:0, pnl:0, label:'Start', ticker:'', fy:null}];
     chronoTrades.forEach(t=>{
       const pnl = parseFloat(t.pnl);
       running += pnl;
-      if(running>peak) peak = running;
-      pts.push({ y:running, peak, pnl, label:tradeBasisDate(t), ticker:t.ticker||'', fy: opts.fyDividers ? fyKeyForDate(tradeBasisDate(t)) : null });
+      if(running>=peak){ peak = running; peakIdxSoFar = pts.length; }
+      pts.push({ y:running, peak, peakIdx:peakIdxSoFar, pnl, label:tradeBasisDate(t), ticker:t.ticker||'', fy: opts.fyDividers ? fyKeyForDate(tradeBasisDate(t)) : null });
     });
 
+    // Peak/Bottom are a matched pair: Bottom is the point of maximum
+    // drawdown, and Peak is the specific running-high it drew down from —
+    // not just the highest point anywhere on the curve. Using the curve's
+    // global high independently of the drawdown trough could label a Peak
+    // that isn't actually the one the Bottom fell from (e.g. an early, sharp
+    // dip off a lower local high, followed by later new highs with only a
+    // mild pullback) — pairing them off the same running peak keeps Peak
+    // and Bottom causally and chronologically consistent.
     let peakIdx=0, troughIdx=0, maxDD=0;
-    pts.forEach((p,i)=>{ if(p.y>=pts[peakIdx].y) peakIdx=i; const dd=p.peak-p.y; if(dd>maxDD){ maxDD=dd; troughIdx=i; } });
+    pts.forEach((p,i)=>{ const dd=p.peak-p.y; if(dd>maxDD){ maxDD=dd; troughIdx=i; peakIdx=p.peakIdx; } });
 
     const w=640, h=opts.height||190, padL=6, padR=6, padT=18, padB=6;
     const ys = pts.map(p=>p.y);
@@ -6627,198 +6626,6 @@
     });
   }
 
-  // ---- XIRR vs Market Indices (benchmark comparison) -----------------------
-  // Idea: replay your exact deposit/withdrawal dates & amounts as if that
-  // money had bought units of a market index instead, then solve XIRR on
-  // that alternate cash-flow history — a like-for-like "what if I'd just
-  // indexed instead" number to sit next to your real Portfolio XIRR.
-  // Tickers are Yahoo Finance symbols for each index.
-  const BENCHMARK_INDICES = [
-    {label:'Nifty 50', ticker:'^NSEI'},
-    {label:'Nifty Midcap 150', ticker:'NIFTYMIDCAP150.NS'},
-    {label:'Nifty Smallcap 100', ticker:'^CNXSC'},
-    {label:'BSE IPO Index', ticker:'BSE-IPO.BO'},
-    {label:'BSE SME IPO Index', ticker:'BSE-SMEIPO.BO'}
-  ];
-  const BENCHMARK_CACHE_KEY = 'fv_benchmark_cache_v1';
-  let benchmarkCache = {};
-  let benchmarkResults = {};
-  let benchmarkLoading = false;
-
-  function loadBenchmarkCache(){
-    try{
-      const raw = localStorage.getItem(BENCHMARK_CACHE_KEY);
-      if(raw) benchmarkCache = JSON.parse(raw) || {};
-    }catch(e){ benchmarkCache = {}; }
-  }
-  function saveBenchmarkCache(){
-    try{ localStorage.setItem(BENCHMARK_CACHE_KEY, JSON.stringify(benchmarkCache)); }catch(e){}
-  }
-
-  // The app is a static file with no backend, and Yahoo Finance's chart
-  // endpoint blocks direct cross-origin browser requests — so this routes
-  // through public CORS proxies (with fallback) instead of calling Yahoo
-  // directly. If every proxy is down, the comparison just shows
-  // "Unavailable" for that index rather than breaking the page.
-  async function fetchYahooHistory(ticker, fromDate, toDate){
-    const period1 = Math.floor(fromDate.getTime()/1000);
-    const period2 = Math.floor(toDate.getTime()/1000) + 86400;
-    const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?period1=${period1}&period2=${period2}&interval=1d&events=history`;
-    // Several public proxies, tried in order — different ones go down/get
-    // rate-limited at different times, so more candidates = more resilience.
-    // No "direct" (no-proxy) attempt: browsers always CORS-block a bare
-    // call to Yahoo, so it would only ever add a useless final error.
-    const proxies = [
-      {name:'codetabs', build: u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`, parse: r => r.json()},
-      {name:'allorigins-raw', build: u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`, parse: r => r.json()},
-      {name:'allorigins-get', build: u => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`, parse: async r => JSON.parse((await r.json()).contents)},
-      {name:'thingproxy', build: u => `https://thingproxy.freeboard.io/fetch/${u}`, parse: r => r.json()},
-      {name:'corsproxy.io', build: u => `https://corsproxy.io/?url=${encodeURIComponent(u)}`, parse: r => r.json()}
-    ];
-    const attempts = [];
-    for(const proxy of proxies){
-      try{
-        const res = await fetch(proxy.build(yahooUrl), {cache:'no-store'});
-        if(!res.ok) throw new Error('HTTP '+res.status);
-        const data = await proxy.parse(res);
-        if(data && data.chart && data.chart.error){
-          throw new Error('Yahoo: '+(data.chart.error.description||JSON.stringify(data.chart.error)));
-        }
-        const result = data && data.chart && data.chart.result && data.chart.result[0];
-        if(!result) throw new Error('No data in response');
-        const ts = result.timestamp || [];
-        const closes = (result.indicators && result.indicators.quote && result.indicators.quote[0] && result.indicators.quote[0].close) || [];
-        const prices = [];
-        for(let i=0;i<ts.length;i++){
-          const c = closes[i];
-          if(c===null || c===undefined || isNaN(c)) continue;
-          prices.push({date: todayKey(new Date(ts[i]*1000)), close: c});
-        }
-        if(prices.length===0) throw new Error('Empty price series');
-        return prices;
-      }catch(e){
-        const msg = (e && e.message) ? e.message : String(e);
-        attempts.push(`${proxy.name}: ${msg}`);
-        console.warn(`[Benchmark] ${ticker} via ${proxy.name} failed:`, msg);
-      }
-    }
-    throw new Error(attempts.length ? attempts.join(' | ') : 'All proxies failed');
-  }
-
-  // Cached per ticker, refreshed at most once a day (or on manual Refresh),
-  // so switching tabs doesn't re-fetch five index histories every time.
-  async function getBenchmarkPrices(ticker, fromDate, force){
-    const cached = benchmarkCache[ticker];
-    const tKey = todayKey();
-    const fromKey = todayKey(fromDate);
-    if(!force && cached && cached.fetchedAt===tKey && cached.fromDate && cached.fromDate<=fromKey){
-      return cached.prices;
-    }
-    const prices = await fetchYahooHistory(ticker, fromDate, new Date());
-    benchmarkCache[ticker] = {fetchedAt: tKey, fromDate: fromKey, prices};
-    saveBenchmarkCache();
-    return prices;
-  }
-
-  // Nearest-prior-trading-day close — a deposit logged on a weekend/holiday
-  // falls back to the last close before it, same as a real order would only
-  // fill on the next trading session.
-  function priceOnOrBefore(prices, dateKey){
-    let best = null;
-    for(let i=0;i<prices.length;i++){
-      if(prices[i].date<=dateKey) best = prices[i]; else break;
-    }
-    return best ? best.close : null;
-  }
-
-  function computeBenchmarkXIRR(prices, capSorted){
-    let units = 0;
-    const flows = [];
-    for(const ev of capSorted){
-      const amt = parseFloat(ev.amount)||0;
-      if(!ev.date || amt===0) continue;
-      const price = priceOnOrBefore(prices, ev.date);
-      if(price===null || price<=0) continue;
-      const signedAmt = ev.type==='withdraw' ? amt : -amt; // deposit negative, withdraw positive — matches buildXirrCashflows
-      units += -signedAmt/price;
-      flows.push({date:new Date(ev.date+'T00:00:00'), amount: signedAmt});
-    }
-    if(flows.length===0 || !prices.length) return null;
-    const lastPrice = prices[prices.length-1].close;
-    const currentValue = units*lastPrice;
-    flows.push({date:new Date(), amount: currentValue});
-    flows.sort((a,b)=>a.date-b.date);
-    return {rate: computeXIRR(flows), currentValue};
-  }
-
-  function renderBenchmarkCompare(){
-    const cardEl = document.getElementById('tdBenchmarkCard');
-    if(!cardEl) return;
-    const capSorted = sortedCapitalHistory();
-    if(capSorted.length===0){ cardEl.style.display = 'none'; return; }
-    cardEl.style.display = '';
-    const listEl = document.getElementById('tdBenchmarkList');
-    const statusEl = document.getElementById('tdBenchmarkStatus');
-    if(!listEl) return;
-
-    const portfolioRate = computeXIRR(buildXirrCashflows());
-
-    listEl.innerHTML = BENCHMARK_INDICES.map(idx=>{
-      const r = benchmarkResults[idx.ticker];
-      let valHtml = '<span class="td-hero-stat-val">—</span>';
-      let diffHtml = '';
-      if(r && r.error){
-        valHtml = `<span style="color:var(--ink-faint); font-size:13px;" title="${escapeHtml(r.msg||'')}">Unavailable</span>`;
-        if(r.msg) diffHtml = `<div style="font-size:10.5px; color:var(--ink-faint); margin-top:3px; word-break:break-word;">${escapeHtml(r.msg)}</div>`;
-      } else if(r && r.rate!==null && r.rate!==undefined){
-        const pct = r.rate*100;
-        valHtml = `<span class="td-hero-stat-val ${pct>=0?'pos':'neg'}">${pct>=0?'+':''}${pct.toFixed(2)}%</span>`;
-        if(portfolioRate!==null){
-          const diff = (portfolioRate-r.rate)*100;
-          diffHtml = `<div style="font-size:11px; color:var(--ink-faint); margin-top:3px;">You ${diff>=0?'beat':'trailed'} it by ${Math.abs(diff).toFixed(2)}pp</div>`;
-        }
-      } else if(benchmarkLoading){
-        valHtml = '<span style="color:var(--ink-faint); font-size:13px;">Loading…</span>';
-      }
-      return `<div class="td-hero-stat"><div class="td-hero-stat-lbl">${escapeHtml(idx.label)}</div>${valHtml}${diffHtml}</div>`;
-    }).join('');
-
-    if(statusEl){
-      statusEl.textContent = benchmarkLoading
-        ? 'Fetching index data…'
-        : 'Same deposit/withdrawal dates as your Capital History, replayed as if invested in each index instead.';
-    }
-  }
-
-  async function loadBenchmarkCompare(force){
-    const capSorted = sortedCapitalHistory();
-    if(capSorted.length===0) return;
-    const cardEl = document.getElementById('tdBenchmarkCard');
-    if(!cardEl) return;
-    cardEl.style.display = '';
-    benchmarkLoading = true;
-    renderBenchmarkCompare();
-
-    const firstDate = new Date((capSorted[0].date || todayKey())+'T00:00:00');
-    await Promise.all(BENCHMARK_INDICES.map(async idx=>{
-      if(!force && benchmarkResults[idx.ticker] && !benchmarkResults[idx.ticker].error) return;
-      try{
-        const prices = await getBenchmarkPrices(idx.ticker, firstDate, force);
-        const res = computeBenchmarkXIRR(prices, capSorted);
-        benchmarkResults[idx.ticker] = res ? {rate: res.rate, currentValue: res.currentValue} : {error:true, msg:'No overlapping price data'};
-      }catch(e){
-        benchmarkResults[idx.ticker] = {error:true, msg: (e && e.message) ? e.message : 'Fetch failed'};
-      }
-    }));
-
-    benchmarkLoading = false;
-    renderBenchmarkCompare();
-  }
-
-  loadBenchmarkCache();
-  const tdBenchmarkRefreshBtnEl = document.getElementById('tdBenchmarkRefreshBtn');
-  if(tdBenchmarkRefreshBtnEl) tdBenchmarkRefreshBtnEl.addEventListener('click', ()=> loadBenchmarkCompare(true));
-
   function renderRocDepositsRange(range){
     rocDepRange = range;
     const roiChartEl = document.getElementById('tdRocDepRoiChart');
@@ -7188,8 +6995,6 @@
     }
     renderTopRoc(trades);
     renderPortfolioXirr();
-    renderBenchmarkCompare();
-    loadBenchmarkCompare(false);
   }
 
   // ---- Top 5 · Return on Capital (Overview) --------------------------------

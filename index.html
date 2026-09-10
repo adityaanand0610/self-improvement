@@ -6666,15 +6666,16 @@
     const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?period1=${period1}&period2=${period2}&interval=1d&events=history`;
     // Several public proxies, tried in order — different ones go down/get
     // rate-limited at different times, so more candidates = more resilience.
+    // No "direct" (no-proxy) attempt: browsers always CORS-block a bare
+    // call to Yahoo, so it would only ever add a useless final error.
     const proxies = [
       {name:'codetabs', build: u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`, parse: r => r.json()},
       {name:'allorigins-raw', build: u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`, parse: r => r.json()},
       {name:'allorigins-get', build: u => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`, parse: async r => JSON.parse((await r.json()).contents)},
       {name:'thingproxy', build: u => `https://thingproxy.freeboard.io/fetch/${u}`, parse: r => r.json()},
-      {name:'corsproxy.io', build: u => `https://corsproxy.io/?url=${encodeURIComponent(u)}`, parse: r => r.json()},
-      {name:'direct', build: u => u, parse: r => r.json()}
+      {name:'corsproxy.io', build: u => `https://corsproxy.io/?url=${encodeURIComponent(u)}`, parse: r => r.json()}
     ];
-    let lastErr = null;
+    const attempts = [];
     for(const proxy of proxies){
       try{
         const res = await fetch(proxy.build(yahooUrl), {cache:'no-store'});
@@ -6696,11 +6697,12 @@
         if(prices.length===0) throw new Error('Empty price series');
         return prices;
       }catch(e){
-        lastErr = e;
-        console.warn(`[Benchmark] ${ticker} via ${proxy.name} failed:`, e && e.message ? e.message : e);
+        const msg = (e && e.message) ? e.message : String(e);
+        attempts.push(`${proxy.name}: ${msg}`);
+        console.warn(`[Benchmark] ${ticker} via ${proxy.name} failed:`, msg);
       }
     }
-    throw lastErr || new Error('All proxies failed');
+    throw new Error(attempts.length ? attempts.join(' | ') : 'All proxies failed');
   }
 
   // Cached per ticker, refreshed at most once a day (or on manual Refresh),

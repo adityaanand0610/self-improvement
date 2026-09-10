@@ -6373,10 +6373,10 @@
   // before finally showing an inline "couldn't load" note.
   const BENCHMARK_TICKERS = {
     nifty50: { yahoo: '^NSEI', label: 'Nifty 50', color: '#4A7FB5' },
-    midcap100: { yahoo: 'NIFTY_MIDCAP_100.NS', label: 'Nifty Midcap 100', color: 'var(--teal)' },
-    smallcap250: { yahoo: 'NIFTYSMLCAP250.NS', label: 'Nifty Smallcap 250', color: 'var(--rose)' }
+    midcap100: { yahoo: '^CRSMID', yahooAlt: ['NIFTY_MIDCAP_100.NS', 'NIFTYMIDCAP150.NS'], label: 'Nifty Midcap 100', color: 'var(--teal)' },
+    smallcap250: { yahoo: 'NIFTYSMLCAP250.NS', yahooAlt: ['HDFCSML250.NS'], label: 'Nifty Smallcap 250', color: 'var(--rose)' }
   };
-  const BENCHMARK_CACHE_KEY = 'fv_benchmark_cache_v1';
+  const BENCHMARK_CACHE_KEY = 'fv_benchmark_cache_v2';
   const BENCHMARK_CACHE_TTL = 12*60*60*1000; // 12h
   let benchmarkMemCache = {};      // key -> points array, 'loading', or 'error' (this session)
   let benchmarkVisible = { nifty50: true, midcap100: true, smallcap250: true }; // legend on/off, shared across both charts
@@ -6389,15 +6389,32 @@
     try{ localStorage.setItem(BENCHMARK_CACHE_KEY, JSON.stringify(c)); }catch(e){ /* storage full/unavailable — just skip caching */ }
   }
 
+  // Wraps fetch with a timeout so one slow/hanging proxy doesn't block the whole
+  // chain — we want to move on to the next proxy quickly rather than wait forever.
+  async function fetchWithTimeout(url, ms){
+    const controller = new AbortController();
+    const timer = setTimeout(()=> controller.abort(), ms);
+    try{
+      return await fetch(url, { signal: controller.signal });
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  // Free CORS proxies are individually flaky/rate-limited, which is why one
+  // benchmark can succeed while another (fetched moments later) fails outright —
+  // it's not usually the ticker symbol, it's whichever proxy answered that request.
+  // Trying several proxies per request makes a single flaky one a non-issue.
   async function fetchViaProxy(targetUrl){
     const attempts = [
       'https://api.allorigins.win/raw?url=' + encodeURIComponent(targetUrl),
+      'https://corsproxy.io/?url=' + encodeURIComponent(targetUrl),
       'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(targetUrl)
     ];
     let lastErr = null;
     for(const proxyUrl of attempts){
       try{
-        const res = await fetch(proxyUrl);
+        const res = await fetchWithTimeout(proxyUrl, 7000);
         if(!res.ok) throw new Error('HTTP '+res.status);
         return await res.json();
       }catch(err){ lastErr = err; }
@@ -6405,9 +6422,30 @@
     throw lastErr || new Error('all proxies failed');
   }
 
+  // Fetches+parses a single Yahoo symbol's chart data. Returns a points array,
+  // or throws if that symbol has no usable data.
+  async function fetchYahooSymbol(symbol){
+    const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=5y&interval=1d`;
+    const data = await fetchViaProxy(yahooUrl);
+    const result = data && data.chart && data.chart.result && data.chart.result[0];
+    if(!result) throw new Error('no result in Yahoo response for '+symbol);
+    const ts = result.timestamp || [];
+    const closes = (result.indicators && result.indicators.quote && result.indicators.quote[0] && result.indicators.quote[0].close) || [];
+    const points = ts.map((t,i)=> ({ date: new Date(t*1000).toISOString().slice(0,10), close: closes[i] }))
+      .filter(p=> p.close!=null && !isNaN(p.close));
+    if(!points.length) throw new Error('empty series for '+symbol);
+    return points;
+  }
+
   // Returns [{date:'YYYY-MM-DD', close:number}, ...] for a benchmark key, or null
-  // if it couldn't be loaded from cache or network.
-  async function fetchBenchmarkSeries(key){
+  // if it couldn't be loaded from cache or network. Some index symbols are served
+  // inconsistently (or renamed/discontinued) by Yahoo's public endpoint, so each
+  // benchmark can list alternate symbols in yahooAlt — they're tried in order and
+  // the first one that returns real data wins. On top of that, each individual
+  // attempt cycles through several CORS proxies (see fetchViaProxy) since a proxy
+  // being down/rate-limited — not the symbol being wrong — is the usual cause of
+  // one benchmark showing "unavailable" while another loads fine.
+  async function fetchBenchmarkSeries(key, attempt){
     const cfg = BENCHMARK_TICKERS[key];
     if(!cfg) return null;
     const disk = loadBenchmarkDiskCache();
@@ -6415,23 +6453,28 @@
     if(cached && (Date.now()-cached.fetchedAt) < BENCHMARK_CACHE_TTL){
       return cached.points;
     }
-    try{
-      const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(cfg.yahoo)}?range=5y&interval=1d`;
-      const data = await fetchViaProxy(yahooUrl);
-      const result = data && data.chart && data.chart.result && data.chart.result[0];
-      if(!result) throw new Error('no result in Yahoo response');
-      const ts = result.timestamp || [];
-      const closes = (result.indicators && result.indicators.quote && result.indicators.quote[0] && result.indicators.quote[0].close) || [];
-      const points = ts.map((t,i)=> ({ date: new Date(t*1000).toISOString().slice(0,10), close: closes[i] }))
-        .filter(p=> p.close!=null && !isNaN(p.close));
-      if(!points.length) throw new Error('empty series');
-      disk[key] = { points, fetchedAt: Date.now() };
-      saveBenchmarkDiskCache(disk);
-      return points;
-    }catch(err){
-      console.warn('Benchmark fetch failed for', key, err);
-      return cached ? cached.points : null; // fall back to stale cache if we have one
+    const candidates = [cfg.yahoo, ...(cfg.yahooAlt || [])];
+    let lastErr = null;
+    for(const symbol of candidates){
+      try{
+        const points = await fetchYahooSymbol(symbol);
+        disk[key] = { points, fetchedAt: Date.now(), symbol };
+        saveBenchmarkDiskCache(disk);
+        return points;
+      }catch(err){
+        lastErr = err;
+        console.warn('Benchmark fetch failed for', key, 'symbol', symbol, err);
+      }
     }
+    // Every symbol/proxy combo failed this round — likely a transient outage
+    // across proxies rather than a bad symbol, so retry once after a short pause
+    // before finally giving up and falling back to stale cache (if any).
+    if(!attempt){
+      await new Promise(r=> setTimeout(r, 1500));
+      return fetchBenchmarkSeries(key, 1);
+    }
+    console.warn('All symbols failed for benchmark', key, lastErr);
+    return cached ? cached.points : null; // fall back to stale cache if we have one
   }
 
   // Loads (or reuses this session's already-loaded) data for a benchmark key.

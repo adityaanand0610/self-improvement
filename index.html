@@ -6664,17 +6664,25 @@
     const period1 = Math.floor(fromDate.getTime()/1000);
     const period2 = Math.floor(toDate.getTime()/1000) + 86400;
     const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?period1=${period1}&period2=${period2}&interval=1d&events=history`;
+    // Several public proxies, tried in order — different ones go down/get
+    // rate-limited at different times, so more candidates = more resilience.
     const proxies = [
-      u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-      u => `https://corsproxy.io/?url=${encodeURIComponent(u)}`,
-      u => u
+      {name:'codetabs', build: u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`, parse: r => r.json()},
+      {name:'allorigins-raw', build: u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`, parse: r => r.json()},
+      {name:'allorigins-get', build: u => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`, parse: async r => JSON.parse((await r.json()).contents)},
+      {name:'thingproxy', build: u => `https://thingproxy.freeboard.io/fetch/${u}`, parse: r => r.json()},
+      {name:'corsproxy.io', build: u => `https://corsproxy.io/?url=${encodeURIComponent(u)}`, parse: r => r.json()},
+      {name:'direct', build: u => u, parse: r => r.json()}
     ];
     let lastErr = null;
-    for(const wrap of proxies){
+    for(const proxy of proxies){
       try{
-        const res = await fetch(wrap(yahooUrl), {cache:'no-store'});
+        const res = await fetch(proxy.build(yahooUrl), {cache:'no-store'});
         if(!res.ok) throw new Error('HTTP '+res.status);
-        const data = await res.json();
+        const data = await proxy.parse(res);
+        if(data && data.chart && data.chart.error){
+          throw new Error('Yahoo: '+(data.chart.error.description||JSON.stringify(data.chart.error)));
+        }
         const result = data && data.chart && data.chart.result && data.chart.result[0];
         if(!result) throw new Error('No data in response');
         const ts = result.timestamp || [];
@@ -6687,7 +6695,10 @@
         }
         if(prices.length===0) throw new Error('Empty price series');
         return prices;
-      }catch(e){ lastErr = e; }
+      }catch(e){
+        lastErr = e;
+        console.warn(`[Benchmark] ${ticker} via ${proxy.name} failed:`, e && e.message ? e.message : e);
+      }
     }
     throw lastErr || new Error('All proxies failed');
   }
@@ -6755,7 +6766,8 @@
       let valHtml = '<span class="td-hero-stat-val">—</span>';
       let diffHtml = '';
       if(r && r.error){
-        valHtml = '<span style="color:var(--ink-faint); font-size:13px;">Unavailable</span>';
+        valHtml = `<span style="color:var(--ink-faint); font-size:13px;" title="${escapeHtml(r.msg||'')}">Unavailable</span>`;
+        if(r.msg) diffHtml = `<div style="font-size:10.5px; color:var(--ink-faint); margin-top:3px; word-break:break-word;">${escapeHtml(r.msg)}</div>`;
       } else if(r && r.rate!==null && r.rate!==undefined){
         const pct = r.rate*100;
         valHtml = `<span class="td-hero-stat-val ${pct>=0?'pos':'neg'}">${pct>=0?'+':''}${pct.toFixed(2)}%</span>`;
@@ -6791,9 +6803,9 @@
       try{
         const prices = await getBenchmarkPrices(idx.ticker, firstDate, force);
         const res = computeBenchmarkXIRR(prices, capSorted);
-        benchmarkResults[idx.ticker] = res ? {rate: res.rate, currentValue: res.currentValue} : {error:true};
+        benchmarkResults[idx.ticker] = res ? {rate: res.rate, currentValue: res.currentValue} : {error:true, msg:'No overlapping price data'};
       }catch(e){
-        benchmarkResults[idx.ticker] = {error:true};
+        benchmarkResults[idx.ticker] = {error:true, msg: (e && e.message) ? e.message : 'Fetch failed'};
       }
     }));
 

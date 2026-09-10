@@ -1088,9 +1088,9 @@
 
   /* ================= COMPARISON CHART (Zerodha-style overlay) =================
      Shared across Equity Curve + Return on Capital: a "Compare vs index" toggle
-     switches those charts into a multi-line view — portfolio plus Nifty 500 /
-     Nifty Smallcap 250, each rebased to % change since the start of the visible
-     range, with a toggleable legend, a fixed "Since <date>" summary, and a
+     switches those charts into a multi-line view — portfolio plus Nifty 50 /
+     Nifty Midcap 100 / Nifty Smallcap 250, each rebased to % change since the
+     start of the visible range, with a toggleable legend, a fixed "Since <date>" summary, and a
      crosshair tooltip that shows every visible series at once (like tapping
      anywhere on a Zerodha/Groww portfolio chart). */
   .cmp-toggle{ display:flex; align-items:center; gap:5px; font-size:11.5px; color:var(--ink-dim); cursor:pointer; user-select:none; }
@@ -6358,10 +6358,10 @@
   // ================= BENCHMARK COMPARISON (Zerodha-style overlay) =================
   // Powers the "Compare vs index" toggle on the Equity Curve and Return on Capital
   // charts. Both charts, when compare mode is on, plot the portfolio's cumulative
-  // Return on Capital (%) alongside Nifty 500 and Nifty Smallcap 250, each rebased
-  // to "% change since the start of the visible range" so three differently-scaled
-  // things (₹ P&L, an index level in the thousands) can sit on one axis — exactly
-  // what Zerodha's own "Portfolio performance" chart does.
+  // Return on Capital (%) alongside Nifty 50, Nifty Midcap 100, and Nifty Smallcap
+  // 250, each rebased to "% change since the start of the visible range" so all
+  // these differently-scaled things (₹ P&L, an index level in the thousands) can
+  // sit on one axis — exactly what Zerodha's own "Portfolio performance" chart does.
   //
   // Index data comes from Yahoo Finance's public chart endpoint. Yahoo doesn't send
   // Access-Control-Allow-Origin headers, so a direct browser fetch from this app's
@@ -6372,13 +6372,14 @@
   // and if a fetch fails outright we fall back to whatever's cached (even if stale)
   // before finally showing an inline "couldn't load" note.
   const BENCHMARK_TICKERS = {
-    nifty500: { yahoo: '^CRSLDX', label: 'Nifty 500', color: '#B08D57' },
-    smallcap250: { yahoo: 'NIFTYSMLCAP250.NS', label: 'Nifty Smallcap 250', color: 'var(--ink-dim)' }
+    nifty50: { yahoo: '^NSEI', label: 'Nifty 50', color: '#4A7FB5' },
+    midcap100: { yahoo: 'NIFTY_MIDCAP_100.NS', label: 'Nifty Midcap 100', color: 'var(--teal)' },
+    smallcap250: { yahoo: 'NIFTYSMLCAP250.NS', label: 'Nifty Smallcap 250', color: 'var(--rose)' }
   };
   const BENCHMARK_CACHE_KEY = 'fv_benchmark_cache_v1';
   const BENCHMARK_CACHE_TTL = 12*60*60*1000; // 12h
   let benchmarkMemCache = {};      // key -> points array, 'loading', or 'error' (this session)
-  let benchmarkVisible = { nifty500: true, smallcap250: true }; // legend on/off, shared across both charts
+  let benchmarkVisible = { nifty50: true, midcap100: true, smallcap250: true }; // legend on/off, shared across both charts
   let cmpEnabled = { equity: false, roc: false };
 
   function loadBenchmarkDiskCache(){

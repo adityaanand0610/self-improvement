@@ -3127,6 +3127,27 @@
               <div class="chip rose" data-tag="panic-exit">panic-exit</div>
             </div>
           </div>
+
+          <div class="modal-field" id="trPartialExitWrap" style="display:none; margin-top:18px; padding-top:16px; border-top:1px dashed var(--line);">
+            <label>Partial exit <span style="font-weight:400; color:var(--ink-faint);">book part of this position and keep the rest open</span></label>
+            <div id="trPartialExitHint" style="font-size:12.5px; color:var(--ink-faint); margin:2px 0 10px;"></div>
+            <div class="modal-row">
+              <div class="modal-field"><label>Qty to exit</label><input type="number" id="trPartialQty" step="0.01" placeholder="e.g. 20 of 50"></div>
+              <div class="modal-field"><label>Exit price</label><input type="number" id="trPartialPrice" step="0.01"></div>
+            </div>
+            <div class="modal-field"><label>Exit date & time</label><input type="datetime-local" id="trPartialDT"></div>
+            <div class="modal-field">
+              <label>Exit reason <span style="font-weight:400; color:var(--ink-faint);">for this slice</span></label>
+              <div class="chip-group" id="trPartialExitReasonChips">
+                <div class="chip" data-tag="target-hit">target-hit</div><div class="chip rose" data-tag="sl-hit">sl-hit</div>
+                <div class="chip" data-tag="early-exit">early-exit</div><div class="chip" data-tag="time-exit">time-exit</div>
+                <div class="chip rose" data-tag="panic-exit">panic-exit</div>
+              </div>
+            </div>
+            <div class="modal-actions" style="margin-top:4px;">
+              <button class="btn primary" type="button" id="trPartialExitBtn">Record Partial Exit</button>
+            </div>
+          </div>
         </div>
       </details>
 
@@ -4859,7 +4880,7 @@
       chip.classList.toggle('on', (tags||[]).includes(chip.dataset.tag));
     });
   }
-  ['trPsychChips','trExitReasonChips','trVerdictChips'].forEach(setupChipGroup);
+  ['trPsychChips','trExitReasonChips','trVerdictChips','trPartialExitReasonChips'].forEach(setupChipGroup);
 
   function setupPicker(containerId){
     const container = document.getElementById(containerId);
@@ -4930,6 +4951,25 @@
     trPnlManuallyEdited = false; trRMultipleManuallyEdited = false; trPosSizeManuallyEdited = false;
     const riskInd = document.getElementById('trRiskIndicator'); if(riskInd){ riskInd.style.display='none'; riskInd.innerHTML=''; }
     const slipInd = document.getElementById('trSlippageIndicator'); if(slipInd){ slipInd.style.display='none'; slipInd.innerHTML=''; }
+    ['trPartialQty','trPartialPrice','trPartialDT'].forEach(id=>{ document.getElementById(id).value=''; });
+    setChips('trPartialExitReasonChips', []);
+    updatePartialExitAvailability();
+  }
+
+  // ---- Partial exit: only makes sense once a trade actually exists in db
+  // and still has open quantity (no full exit recorded yet). Hidden during
+  // brand-new-trade entry and once a trade is fully closed.
+  function updatePartialExitAvailability(){
+    const wrap = document.getElementById('trPartialExitWrap');
+    const hint = document.getElementById('trPartialExitHint');
+    if(!wrap) return;
+    const t = editingTradeId ? (db.trades||[]).find(tr=>tr.id===editingTradeId) : null;
+    const remainingQty = t ? parseFloat(t.qty) : NaN;
+    const eligible = !!(t && !t.exitDT && !isNaN(remainingQty) && remainingQty > 0);
+    wrap.style.display = eligible ? '' : 'none';
+    if(eligible && hint){
+      hint.textContent = `${remainingQty} currently open on ${t.ticker||'this trade'}. Exiting part of it books that slice as closed and leaves the remainder open here.`;
+    }
   }
 
   function readTradeForm(){
@@ -5148,18 +5188,88 @@
 
   document.getElementById('trCancelBtn').addEventListener('click', resetTradeForm);
 
-  function editTrade(id){
+  function editTrade(id, opts){
     const t = db.trades.find(tr=>tr.id===id);
     if(!t) return;
     editingTradeId = id;
     fillTradeForm(t);
+    updatePartialExitAvailability();
     document.getElementById('tradeFormTitle').textContent = 'Edit Trade — '+t.ticker;
     document.getElementById('trSaveBtn').textContent = 'Update Trade';
     document.getElementById('trCancelBtn').style.display = 'block';
     document.querySelector('[data-view="trades"]').click();
     activateTradePanel('entry');
-    window.scrollTo({top:0, behavior:'smooth'});
+    if(opts && opts.focusPartialExit){
+      const wrapEl = document.getElementById('trPartialExitWrap');
+      const exitDetails = wrapEl ? wrapEl.closest('details.form-section') : null;
+      if(exitDetails) exitDetails.open = true;
+      setTimeout(()=>{
+        const wrap = document.getElementById('trPartialExitWrap');
+        if(wrap) wrap.scrollIntoView({behavior:'smooth', block:'center'});
+        const qtyInput = document.getElementById('trPartialQty');
+        if(qtyInput) qtyInput.focus();
+      }, 150);
+    } else {
+      window.scrollTo({top:0, behavior:'smooth'});
+    }
   }
+
+  document.getElementById('trPartialExitBtn').addEventListener('click', ()=>{
+    if(!editingTradeId){ showToast('Save the trade first, then use Edit → Partial Exit.', 'error'); return; }
+    const idx = db.trades.findIndex(tr=>tr.id===editingTradeId);
+    if(idx===-1){ showToast('Trade not found.', 'error'); return; }
+    const t = db.trades[idx];
+    const totalQty = parseFloat(t.qty);
+    const exitQty = parseFloat(document.getElementById('trPartialQty').value);
+    const exitPrice = document.getElementById('trPartialPrice').value;
+    const exitDT = document.getElementById('trPartialDT').value;
+
+    if(t.exitDT){ showToast('This trade is already fully closed.', 'error'); return; }
+    if(isNaN(totalQty) || totalQty<=0){ showToast('This trade has no open quantity to exit.', 'error'); return; }
+    if(isNaN(exitQty) || exitQty<=0){ showToast('Enter a valid qty to exit.', 'error'); return; }
+    if(exitQty >= totalQty){ showToast("That's the full open qty — use the Exit fields above to close the trade instead.", 'error'); return; }
+    if(!exitPrice){ showToast('Enter an exit price.', 'error'); return; }
+    if(!exitDT){ showToast('Enter the exit date & time.', 'error'); return; }
+
+    const dir = t.direction || 'long';
+    const sliceAuto = computeAutoTradeValues(t.entryPrice, exitPrice, exitQty, t.slPrice, dir);
+
+    // The exited slice becomes its own closed trade record, carrying over the
+    // qualitative context (setup, thesis, psychology, etc.) from the parent —
+    // everything downstream (list, analytics, exports) already knows how to
+    // handle a normal closed trade, so no other code needs to change.
+    // Screenshot is intentionally left off the slice (it stays on the parent)
+    // so repeated partial exits don't duplicate the same image in storage.
+    const closedSlice = {
+      ...t,
+      id: 'trade_'+Date.now()+'_'+Math.random().toString(36).slice(2,7),
+      qty: exitQty,
+      posSize: sliceAuto.posSize,
+      exitDT: exitDT,
+      exitPrice: exitPrice,
+      pnl: sliceAuto.pnl,
+      rMultiple: sliceAuto.rMultiple,
+      exitReasonTags: getSelectedChips('trPartialExitReasonChips'),
+      screenshot: null,
+      partialExit: true,
+      parentTradeId: t.id
+    };
+    db.trades.push(closedSlice);
+
+    // Shrink the original trade to whatever qty remains open; it stays open
+    // (no exitDT/exitPrice) and keeps everything else about it unchanged.
+    const remainingQty = Math.round((totalQty - exitQty)*10000)/10000;
+    const remainingAuto = computeAutoTradeValues(t.entryPrice, '', remainingQty, t.slPrice, dir);
+    db.trades[idx] = {...t, qty: remainingQty, posSize: remainingAuto.posSize, partiallyExited: true};
+
+    saveDB();
+    ['trPartialQty','trPartialPrice','trPartialDT'].forEach(id=>{ document.getElementById(id).value=''; });
+    setChips('trPartialExitReasonChips', []);
+    fillTradeForm(db.trades[idx]);
+    updatePartialExitAvailability();
+    renderAll();
+    showToast(`Booked ${exitQty} @ ${exitPrice}. ${remainingQty} still open on ${t.ticker||'this trade'}.`, 'success');
+  });
 
   function deleteTrade(id){
     if(!confirm('Delete this trade entry permanently?')) return;
@@ -6101,6 +6211,8 @@
                 <span class="trade-ticker">${escapeHtml(t.ticker||'')}</span>
                 <span class="trade-outcome-badge ${outcome}">${badgeLabel}</span>
                 <span class="trade-dir-badge ${t.direction==='short'?'short':'long'}"><span class="dir-arrow">${t.direction==='short'?'▼':'▲'}</span>${t.direction==='short'?'Short':'Long'}</span>
+                ${t.partialExit?'<span class="trade-outcome-badge open" style="opacity:.8;">partial exit</span>':''}
+                ${(t.partiallyExited && !t.exitDT)?'<span class="trade-outcome-badge open" style="opacity:.8;">part exited</span>':''}
               </div>
               <div class="trade-date">${tradeBasisDate(t)||'—'}${t.exitDT?'':' · open'} · ${escapeHtml(t.timeframe||'')} ${t.grade?('· Grade '+escapeHtml(t.grade)):''}</div>
             </div>
@@ -6129,6 +6241,7 @@
             ${t.screenshot?`<img src="${t.screenshot}" style="max-width:100%; border-radius:6px; margin-top:6px; border:1px solid var(--line);">`:''}
             <div class="trade-actions">
               <button class="btn ghost" data-edit-trade="${t.id}">Edit</button>
+              ${(!t.exitDT && parseFloat(t.qty)>0)?`<button class="btn ghost" data-partial-exit-trade="${t.id}">Partial Exit</button>`:''}
               <button class="btn ghost" data-del-trade="${t.id}" style="border-color:var(--rose-dim); color:var(--rose);">Delete</button>
             </div>
           </div>
@@ -6143,6 +6256,7 @@
       });
     });
     el.querySelectorAll('[data-edit-trade]').forEach(btn=> btn.addEventListener('click', (e)=>{ e.stopPropagation(); editTrade(btn.dataset.editTrade); }));
+    el.querySelectorAll('[data-partial-exit-trade]').forEach(btn=> btn.addEventListener('click', (e)=>{ e.stopPropagation(); editTrade(btn.dataset.partialExitTrade, {focusPartialExit:true}); }));
     el.querySelectorAll('[data-del-trade]').forEach(btn=> btn.addEventListener('click', (e)=>{ e.stopPropagation(); deleteTrade(btn.dataset.delTrade); }));
   }
 
